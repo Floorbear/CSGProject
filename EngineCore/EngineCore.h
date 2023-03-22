@@ -9,5 +9,7 @@ public:
 	static void EngineInit();
 private:
 	static void ProcessInput(struct GLFWwindow* _Window);
+
+	static int CgalTestFunction();
 };
 

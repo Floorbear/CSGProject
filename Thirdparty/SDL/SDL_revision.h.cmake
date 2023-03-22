@@ -1,8 +1,3 @@
-#cmakedefine SDL_VENDOR_INFO "@SDL_VENDOR_INFO@"
-#define SDL_REVISION_NUMBER 0
-
-#ifdef SDL_VENDOR_INFO
-#define SDL_REVISION "@SDL_REVISION@ (" SDL_VENDOR_INFO ")"
-#else
-#define SDL_REVISION "@SDL_REVISION@"
-#endif
+version https://git-lfs.github.com/spec/v1
+oid sha256:c067d4a25bd0f8604a7011e156a721b82c9a0025dd269219b027eaddb78ba08a
+size 214
