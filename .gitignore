@@ -3,8 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-# CSG
-!Thirdparty/
 
 # User-specific files
 *.rsuser
@@ -366,5 +364,5 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # CSGProject
-Thirdparty/*
-!Thirdparty/*
+!Thirdparty/
+!Thirdparty/boost/**
