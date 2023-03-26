@@ -7,5 +7,7 @@
 
 int main()
 {
-	EngineCore::Start();
+	EngineCore* NewCore = new EngineCore();
+	NewCore->Start();
+	delete NewCore;
 }

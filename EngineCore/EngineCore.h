@@ -1,15 +1,36 @@
 #pragma once
 #include <iostream>
+#include "Imgui/imgui.h"
 
 class EngineCore
 {
 public:
-	static void Start();
+	EngineCore();
+	~EngineCore();
+	 void Start();
 
-	static void EngineInit();
+	 EngineCore* GetInst();
+
 private:
-	static void ProcessInput(struct GLFWwindow* _Window);
+	 void ProcessInput(struct GLFWwindow* _Window);
+	 void InitEngine();
+	 void UpdateEngine();
+	 void EndEngine();
 
-	static int CgalTestFunction();
+	 void InitGlfw();
+
+	 void InitImgui();
+	 void UpdateImgui();
+
+	 void Render();
+
+	 //Singleton
+private:
+	 static EngineCore* inst;
+
+private:
+	 struct GLFWwindow* window;
+	 struct ImGuiIO io;
+	 unsigned int VBO;
 };
 
