@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include "EngineMinimal.h"
+#include "EngineCore/EngineShader.h"
 
 class EngineCore
 {
@@ -24,19 +25,19 @@ private:
 
 	 void Render();
 
-	 //Singleton
 private:
 	 static EngineCore* inst;
 
+
+	 //---------------------- Init GLFW Related  --------------------------------------------
 private:
 	 struct GLFWwindow* window;
 	 struct ImGuiIO io;
-	 unsigned int VBO;
-	 unsigned int vertexShader;
 
+	 //---------------------- Shader Related  --------------------------------------------
+	 class EngineShader shader;
 
-	 //---------------------- Test Member --------------------------------------------
 private:
-	std::vector<float> vertices = {-0.5f,-0.5f,0.0f,0.5f,-0.5f,0.0f,0.0f,0.5f,0.0f};
+	
 };
 

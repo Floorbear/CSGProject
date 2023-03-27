@@ -12,7 +12,8 @@
 #pragma comment(lib,"glu32.lib")
 #pragma comment(lib,"glfw3.lib")
 
-#include <filesystem>
+
+#include "EngineCore/EngineShader.h"
 
 #define CGAL_EIGEN3_ENABLED
 
@@ -20,8 +21,7 @@ EngineCore* EngineCore::inst = nullptr;
 
 EngineCore::EngineCore():
 	window(),
-	VBO(),
-	vertexShader()
+	shader()
 {
 	assert(inst == nullptr && "Already exists Core");
 	inst = this;
@@ -48,6 +48,8 @@ void EngineCore::InitEngine()
 	InitGlfw();
 	//I dont set Window resize callback
 	InitImgui();
+
+	//CgalMeshDraw()
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -81,24 +83,7 @@ void EngineCore::InitGlfw()
 
 	glViewport(0, 0, 1280, 720);
 
-	//Init Vertex Buffer Object
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-
-	int VerticesSize = sizeof(vertices.size() * 4);
-	glBufferData(GL_ARRAY_BUFFER, VerticesSize, vertices.data(), GL_STATIC_DRAW);
-
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	EnginePath NewPath = EngineFilesystem::GetProjectPath();
-	NewPath.Move("EngineResource");
-	NewPath.Move("Shader");
-	NewPath.Move("EngineShader.glsl");
-	std::string ShaderTEXT = NewPath.ReadFile();
-	const char* VertexSource = ShaderTEXT.c_str();
-	/*char a[] = "ddf";
-	glShaderSource(vertexShader, 1, a, NULL);*/
-	glShaderSource(vertexShader, 1, &VertexSource, NULL);
+	shader.Init();
 }
 
 void EngineCore::InitImgui()

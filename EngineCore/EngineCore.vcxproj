@@ -14658,6 +14658,7 @@
     <ClInclude Include="..\Thirdparty\SDL\SDL_vulkan.h" />
     <ClInclude Include="EngineCore.h" />
     <ClInclude Include="EngineMinimal.h" />
+    <ClInclude Include="EngineShader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Thirdparty\glad\glad.c" />
@@ -14670,6 +14671,7 @@
     <ClCompile Include="..\Thirdparty\Imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp" />
     <ClCompile Include="EngineCore.cpp" />
+    <ClCompile Include="EngineShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.pdb">
@@ -14691,7 +14693,8 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\EngineResource\Shader\EngineShader.glsl" />
+    <None Include="..\EngineResource\Shader\EngineFragmentShader.glsl" />
+    <None Include="..\EngineResource\Shader\EngineVertexShader.glsl" />
     <None Include="..\Thirdparty\Eigen\AccelerateSupport" />
     <None Include="..\Thirdparty\Eigen\Cholesky" />
     <None Include="..\Thirdparty\Eigen\CholmodSupport" />

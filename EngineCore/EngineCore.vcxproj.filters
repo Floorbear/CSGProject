@@ -43520,6 +43520,9 @@
       <Filter>ThirdParty\Eigen</Filter>
     </ClInclude>
     <ClInclude Include="EngineMinimal.h" />
+    <ClInclude Include="EngineShader.h">
+      <Filter>Shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -43549,6 +43552,9 @@
     </ClCompile>
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp">
       <Filter>ThirdParty\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineShader.cpp">
+      <Filter>Shader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -43668,7 +43674,10 @@
     <None Include="..\Thirdparty\Eigen\Eigen">
       <Filter>ThirdParty\Eigen</Filter>
     </None>
-    <None Include="..\EngineResource\Shader\EngineShader.glsl">
+    <None Include="..\EngineResource\Shader\EngineFragmentShader.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\EngineVertexShader.glsl">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>
