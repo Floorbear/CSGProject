@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-#include "Imgui/imgui.h"
+#include "EngineMinimal.h"
 
 class EngineCore
 {
@@ -32,5 +32,11 @@ private:
 	 struct GLFWwindow* window;
 	 struct ImGuiIO io;
 	 unsigned int VBO;
+	 unsigned int vertexShader;
+
+
+	 //---------------------- Test Member --------------------------------------------
+private:
+	std::vector<float> vertices = {-0.5f,-0.5f,0.0f,0.5f,-0.5f,0.0f,0.0f,0.5f,0.0f};
 };
 

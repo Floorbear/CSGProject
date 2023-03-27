@@ -102,6 +102,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\;;$(SolutionDir)Thirdparty\</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,6 +119,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\;;$(SolutionDir)Thirdparty\</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -134,6 +136,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\;;$(SolutionDir)Thirdparty\</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,6 +153,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\;;$(SolutionDir)Thirdparty\</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -14653,6 +14657,7 @@
     <ClInclude Include="..\Thirdparty\SDL\SDL_video.h" />
     <ClInclude Include="..\Thirdparty\SDL\SDL_vulkan.h" />
     <ClInclude Include="EngineCore.h" />
+    <ClInclude Include="EngineMinimal.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Thirdparty\glad\glad.c" />
@@ -14686,6 +14691,7 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\EngineResource\Shader\EngineShader.glsl" />
     <None Include="..\Thirdparty\Eigen\AccelerateSupport" />
     <None Include="..\Thirdparty\Eigen\Cholesky" />
     <None Include="..\Thirdparty\Eigen\CholmodSupport" />

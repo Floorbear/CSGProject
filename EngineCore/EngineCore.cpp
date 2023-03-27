@@ -11,9 +11,8 @@
 #pragma comment(lib,"opengl32.lib")
 #pragma comment(lib,"glu32.lib")
 #pragma comment(lib,"glfw3.lib")
-//#pragma comment(lib,"SDL2.lib")
-//#pragma comment(lib,"SDL2main.lib")
-#include <cassert>
+
+#include <filesystem>
 
 #define CGAL_EIGEN3_ENABLED
 
@@ -21,7 +20,8 @@ EngineCore* EngineCore::inst = nullptr;
 
 EngineCore::EngineCore():
 	window(),
-	VBO()
+	VBO(),
+	vertexShader()
 {
 	assert(inst == nullptr && "Already exists Core");
 	inst = this;
@@ -63,7 +63,7 @@ void EngineCore::InitGlfw()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	window = glfwCreateWindow(800, 600, "CSGProject", NULL, NULL);
+	window = glfwCreateWindow(1280, 720, "CSGProject", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -79,11 +79,26 @@ void EngineCore::InitGlfw()
 		std::cout << "Failed to initialize GLAD" << std::endl;
 	}
 
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, 1280, 720);
 
 	//Init Vertex Buffer Object
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+
+	int VerticesSize = sizeof(vertices.size() * 4);
+	glBufferData(GL_ARRAY_BUFFER, VerticesSize, vertices.data(), GL_STATIC_DRAW);
+
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	EnginePath NewPath = EngineFilesystem::GetProjectPath();
+	NewPath.Move("EngineResource");
+	NewPath.Move("Shader");
+	NewPath.Move("EngineShader.glsl");
+	std::string ShaderTEXT = NewPath.ReadFile();
+	const char* VertexSource = ShaderTEXT.c_str();
+	/*char a[] = "ddf";
+	glShaderSource(vertexShader, 1, a, NULL);*/
+	glShaderSource(vertexShader, 1, &VertexSource, NULL);
 }
 
 void EngineCore::InitImgui()

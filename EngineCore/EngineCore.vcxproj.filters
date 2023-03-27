@@ -34,6 +34,9 @@
     <Filter Include="ThirdParty\Eigen">
       <UniqueIdentifier>{ffb07e20-490c-4bff-992c-72e891ffdef3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{d80a19cb-c983-4e64-8922-2e49a25125e0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineCore.h" />
@@ -43516,6 +43519,7 @@
     <ClInclude Include="..\Thirdparty\Eigen\src\UmfPackSupport\UmfPackSupport.h">
       <Filter>ThirdParty\Eigen</Filter>
     </ClInclude>
+    <ClInclude Include="EngineMinimal.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -43663,6 +43667,9 @@
     </None>
     <None Include="..\Thirdparty\Eigen\Eigen">
       <Filter>ThirdParty\Eigen</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\EngineShader.glsl">
+      <Filter>Shader</Filter>
     </None>
   </ItemGroup>
 </Project>
