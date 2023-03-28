@@ -51,6 +51,8 @@ void EngineCore::InitEngine()
 	//I dont set Window resize callback
 	InitImgui();
 
+
+
 	//CgalMeshDraw()
 
 	while (!glfwWindowShouldClose(window))
@@ -85,7 +87,7 @@ void EngineCore::InitGlfw()
 
 	glViewport(0, 0, 1280, 720);
 
-	shader.Init();
+	//shader.Init();
 }
 
 void EngineCore::InitImgui()
@@ -173,12 +175,15 @@ void EngineCore::UpdateImgui()
 void EngineCore::Render()
 {
 	//Render
+	shader.RenderTri();
 	glClearColor(0.5f, 0.3f, 0.2f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+
+
 	//Check Event & Swap buffer
 	glfwPollEvents();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	//ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	glfwSwapBuffers(window);
 }
 
@@ -187,7 +192,7 @@ void EngineCore::UpdateEngine()
 	//Input
 	ProcessInput(window);
 	//IMGUI
-	UpdateImgui();
+	//UpdateImgui();
 	
 	Render();
 }
