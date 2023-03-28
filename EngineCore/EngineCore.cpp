@@ -7,6 +7,8 @@
 #include <Imgui/imgui_impl_glfw.h>
 #include <Imgui/imgui_impl_opengl3.h>
 
+#include "CGAL/Surface_mesh.h"
+
 
 #pragma comment(lib,"opengl32.lib")
 #pragma comment(lib,"glu32.lib")

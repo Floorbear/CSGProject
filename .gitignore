@@ -366,3 +366,4 @@ FodyWeavers.xsd
 # CSGProject
 !Thirdparty/
 !Thirdparty/boost/**
+!Thirdparty/CGAL/**
