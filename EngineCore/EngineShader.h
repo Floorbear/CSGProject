@@ -8,9 +8,11 @@ public:
 	~EngineShader();
 
 	void Init();
+	void RenderTri();
 
 
 private:
+	unsigned int VAO = 0;
 	unsigned int VBO = 0;
 	unsigned int vertexShader = 0;
 	unsigned int fragmentShader = 0;

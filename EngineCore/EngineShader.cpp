@@ -8,12 +8,8 @@ EngineShader::~EngineShader()
 {
 }
 
-
-
-	int VerticesSize = sizeof(vertices.size() * 4);
-	glBufferData(GL_ARRAY_BUFFER, VerticesSize, vertices.data(), GL_STATIC_DRAW);
-
-
+void EngineShader::Init()
+{
 	//-------------------- Init VertexShader ----------------------------------
 	{
 		vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -51,8 +47,10 @@ EngineShader::~EngineShader()
 	}
 
 	//-------------------- Init shaerProgram ----------------------------------
-	//shaderProgram = glCreateProgram();
-	//glAttachShader
+	shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
 
 	//-------------------- Delete shader ----------------------------------
 	{
@@ -63,12 +61,11 @@ EngineShader::~EngineShader()
 	//-------------------- Init VAO ----------------------------------
 	{
 		glGenVertexArrays(1, &VAO);
-
+		glBindVertexArray(VAO);
 	}
 	//-------------------- Init VBO ----------------------------------
 	{
 		glGenBuffers(1, &VBO);
-		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
 		//int VerticesSize = sizeof(vertices.size() * 4);
@@ -84,7 +81,9 @@ EngineShader::~EngineShader()
 	{
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
-
+	}
+	//-------------------- Unbind Buffer ----------------------------------
+	{
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 	}
