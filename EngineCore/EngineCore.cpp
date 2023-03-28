@@ -21,6 +21,7 @@
 
 EngineCore* EngineCore::inst = nullptr;
 
+
 EngineCore::EngineCore():
 	window(),
 	shader()
@@ -50,6 +51,7 @@ void EngineCore::InitEngine()
 	InitGlfw();
 	//I dont set Window resize callback
 	InitImgui();
+	shader.Init();
 
 	//CgalMeshDraw()
 
@@ -172,9 +174,11 @@ void EngineCore::UpdateImgui()
 
 void EngineCore::Render()
 {
-	//Render
+	////Render
 	glClearColor(0.5f, 0.3f, 0.2f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
+	shader.RenderTri();
+
 
 	//Check Event & Swap buffer
 	glfwPollEvents();

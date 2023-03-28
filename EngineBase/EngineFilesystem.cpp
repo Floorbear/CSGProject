@@ -38,6 +38,7 @@ std::string EnginePath::ReadFile()
 	{
 		TextData += Line + "\n";
 	}
+	TextData += '\0';
 	File.close();
 	return TextData;
 }
