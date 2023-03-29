@@ -177,7 +177,7 @@ void EngineCore::Render()
 	////Render
 	glClearColor(0.5f, 0.3f, 0.2f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	shader.RenderTri();
+	shader.RenderSquare();
 
 
 	//Check Event & Swap buffer
