@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineFilesystem.h" />
+    <ClInclude Include="EngineTransform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineFilesystem.cpp" />
+    <ClCompile Include="EngineTransform.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

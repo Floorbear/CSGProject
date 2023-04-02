@@ -71,6 +71,13 @@ EngineRenderer::~EngineRenderer()
 void EngineRenderer::RenderTriangle()
 {
 	shader->Use();
+	transform.SetRotation(glm::vec4(0.0f, 0.f, 1.f, 100*glfwGetTime()));
+
+	transform.Calculate();
+	int transformLocation = glGetUniformLocation(shader->GetShaderProgram(),"transform");
+	glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(*transform.GetTransformMat()));
+	
+
 	//int uniformLocation = glGetUniformLocation(shaderProgram, "ourColor");
 	//float timeValue = (sin(glfwGetTime()) / 0.5f) + 0.5f;
 	//glUniform4f(uniformLocation, timeValue, 0.1f, 0.1f, 1.0f);

@@ -17,6 +17,7 @@
 #pragma comment(lib,"glfw3.lib")
 
 #include "EngineBase/EngineFilesystem.h"
+#include "EngineBase/EngineTransform.h"
 #pragma comment(lib,"EngineBase.lib")
 
 

@@ -9,6 +9,11 @@ public:
 
 	void Use();
 
+	inline unsigned int GetShaderProgram()
+	{
+		return shaderProgram;
+	}
+
 
 private:
 	unsigned int vertexShader = 0;
