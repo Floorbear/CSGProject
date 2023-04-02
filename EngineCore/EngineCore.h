@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include "EngineMinimal.h"
-#include "EngineCore/EngineShader.h"
 
 class EngineCore
 {
@@ -34,9 +33,8 @@ private:
 	 struct GLFWwindow* window;
 	 struct ImGuiIO io;
 
-	 //---------------------- Shader Related  --------------------------------------------
-	 class EngineShader shader;
-
+	 //---------------------- Renderer Related  --------------------------------------------
+	 class EngineRenderer* renderer;
 private:
 	
 };

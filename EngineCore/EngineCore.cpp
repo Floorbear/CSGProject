@@ -15,7 +15,8 @@
 #pragma comment(lib,"glfw3.lib")
 
 
-#include "EngineCore/EngineShader.h"
+#include "EngineCore/EngineRenderer.h"
+
 
 #define CGAL_EIGEN3_ENABLED
 
@@ -24,7 +25,7 @@ EngineCore* EngineCore::inst = nullptr;
 
 EngineCore::EngineCore():
 	window(),
-	shader()
+	renderer(nullptr)
 {
 	assert(inst == nullptr && "Already exists Core");
 	inst = this;
@@ -51,10 +52,13 @@ void EngineCore::InitEngine()
 	InitGlfw();
 	//I dont set Window resize callback
 	InitImgui();
-	shader.Init();
 
+	renderer = new EngineRenderer();
 	//CgalMeshDraw()
-
+	glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+	glm::mat4 trans = glm::mat4(1.0f);
+	trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
+	vec = trans * vec;
 	while (!glfwWindowShouldClose(window))
 	{
 		UpdateEngine();
@@ -87,7 +91,7 @@ void EngineCore::InitGlfw()
 
 	glViewport(0, 0, 1280, 720);
 
-	shader.Init();
+	
 }
 
 void EngineCore::InitImgui()
@@ -177,8 +181,8 @@ void EngineCore::Render()
 	////Render
 	glClearColor(0.5f, 0.3f, 0.2f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	shader.RenderSquare();
 
+	renderer->RenderTriangle();
 
 	//Check Event & Swap buffer
 	glfwPollEvents();
@@ -198,6 +202,8 @@ void EngineCore::UpdateEngine()
 
 void EngineCore::EndEngine()
 {
+	delete renderer;
+
 	// Cleanup
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
