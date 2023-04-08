@@ -14940,7 +14940,7 @@
     <ClInclude Include="..\Thirdparty\SDL\SDL_vulkan.h" />
     <ClInclude Include="EngineCore.h" />
     <ClInclude Include="EngineMinimal.h" />
-    <ClInclude Include="EngineRenderer.h" />
+    <ClInclude Include="EngineModel.h" />
     <ClInclude Include="EngineShader.h" />
   </ItemGroup>
   <ItemGroup>
@@ -14956,7 +14956,7 @@
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp" />
     <ClCompile Include="EngineCore.cpp" />
     <ClCompile Include="EngineRenderer.cpp" />
-    <ClCompile Include="EngineShader.cpp" />
+    <ClCompile Include="EngineModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.pdb">

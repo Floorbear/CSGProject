@@ -32,9 +32,10 @@ private:
 private:
 	 struct GLFWwindow* window;
 	 struct ImGuiIO io;
+	 vector2 windowSize;
 
-	 //---------------------- Renderer Related  --------------------------------------------
-	 class EngineRenderer* renderer;
+	 //---------------------- Model Related  --------------------------------------------
+	 class EngineModel* renderer;
 private:
 	
 };

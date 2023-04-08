@@ -1,7 +1,7 @@
-#include "EngineRenderer.h"
+#include "EngineModel.h"
 #include "EngineShader.h"
 
-EngineRenderer::EngineRenderer():
+EngineModel::EngineModel():
 	shader(nullptr)
 {
 	shader = new EngineShader();
@@ -16,6 +16,7 @@ EngineRenderer::EngineRenderer():
 		glGenBuffers(1, &VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
+		//vertex & color
 		float vertices[] = {
 
 			 0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
@@ -58,7 +59,7 @@ EngineRenderer::EngineRenderer():
 	}
 }
 
-EngineRenderer::~EngineRenderer()
+EngineModel::~EngineModel()
 {
 	if (shader != nullptr)
 	{
@@ -68,14 +69,17 @@ EngineRenderer::~EngineRenderer()
 	glDeleteBuffers(1, &VBO);
 }
 
-void EngineRenderer::RenderTriangle()
+void EngineModel::RenderTriangle()
 {
 	shader->Use();
-	transform.SetRotation(glm::vec4(0.0f, 0.f, 1.f, 100*glfwGetTime()));
+	//transform.AddLocalRotation(glm::vec3(1.0f, 0.f, 0.f)); //매 프레임 x축을 기준으로 1도 회전함
+	//transform.SetLocalPosition(glm::vec3(sin(glfwGetTime()), 0, 0)); // 좌우로 이동
+	//transform.SetLocalScale(glm::vec3(cos(glfwGetTime()), cos(glfwGetTime()), 0)); //커졌다 작아졌다.
 
-	transform.Calculate();
 	int transformLocation = glGetUniformLocation(shader->GetShaderProgram(),"transform");
 	glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(*transform.GetTransformMat()));
+
+
 	
 
 	//int uniformLocation = glGetUniformLocation(shaderProgram, "ourColor");

@@ -43526,7 +43526,7 @@
     <ClInclude Include="EngineShader.h">
       <Filter>Shader &amp; Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="EngineRenderer.h">
+    <ClInclude Include="EngineModel.h">
       <Filter>Shader &amp; Rendering</Filter>
     </ClInclude>
     <ClInclude Include="..\Thirdparty\glm\common.hpp">
@@ -44405,7 +44405,7 @@
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp">
       <Filter>ThirdParty\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="EngineShader.cpp">
+    <ClCompile Include="EngineModel.cpp">
       <Filter>Shader &amp; Rendering</Filter>
     </ClCompile>
     <ClCompile Include="EngineRenderer.cpp">

@@ -2,11 +2,11 @@
 #include "EngineCore/EngineMinimal.h"
 
 
-class EngineRenderer
+class EngineModel
 {
 public:
-	EngineRenderer();
-	~EngineRenderer();
+	EngineModel();
+	~EngineModel();
 
 	void RenderTriangle();
 	//void RenderSquare();
@@ -14,6 +14,11 @@ public:
 	EngineTransform* GetTransform()
 	{
 		return &transform;
+	}
+
+	class EngineShader* GetShader()
+	{
+		return shader;
 	}
 
 private:
