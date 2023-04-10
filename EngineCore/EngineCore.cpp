@@ -15,7 +15,7 @@
 #pragma comment(lib,"glfw3.lib")
 
 
-#include "EngineCore/EngineModel.h"
+#include "EngineCore/EngineMesh.h"
 #include "EngineCore/EngineShader.h"
 
 
@@ -56,8 +56,11 @@ void EngineCore::InitEngine()
 	//I dont set Window resize callback
 	InitImgui();
 
-	renderer = new EngineModel();
+	renderer = new EngineMesh(); 
+
 	renderer->GetTransform()->SetLocalPosition(vector3(0.0, 0.f, 0.f));
+
+	renderer->SetMesh(MeshType::Cube);
 	while (!glfwWindowShouldClose(window))
 	{
 		UpdateEngine();
@@ -183,7 +186,7 @@ void EngineCore::Render()
 
 	//----------------------------- view & projection
 	glm::mat4 view = glm::mat4(1.0f);
-	view = translate(view, vector3(0.0, 0., -3.f));
+	view = translate(view, vector3(0.0, 0., -5.f));
 
 	glm::mat4 projection = glm::mat4(1.0f);
 	float fov = 45.f;
@@ -195,9 +198,15 @@ void EngineCore::Render()
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
-
-
-	renderer->RenderTriangle();
+	if (glfwGetTime()> 3)
+	{
+		renderer->SetMesh(MeshType::Square);
+	}
+	else if (glfwGetTime() > 6)
+	{
+		renderer->SetMesh(MeshType::Triangle);
+	}
+	renderer->Render();
 
 	//Check Event & Swap buffer
 	glfwPollEvents();

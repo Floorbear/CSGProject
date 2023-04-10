@@ -14,7 +14,6 @@ public:
 		return shaderProgram;
 	}
 
-
 private:
 	unsigned int vertexShader = 0;
 	unsigned int fragmentShader = 0;

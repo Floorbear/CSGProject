@@ -16,7 +16,6 @@ EngineShader::EngineShader()
 		glShaderSource(vertexShader, 1, &shaderSource, NULL);
 		glCompileShader(vertexShader);
 
-
 		int success = 0;
 		glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
 		assert(success != 0);
@@ -44,7 +43,6 @@ EngineShader::EngineShader()
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);
 	glLinkProgram(shaderProgram);
-
 	//-------------------- Delete shader ----------------------------------
 	{
 		glDeleteShader(vertexShader);

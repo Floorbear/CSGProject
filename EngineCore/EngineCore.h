@@ -35,8 +35,10 @@ private:
 	 vector2 windowSize;
 
 	 //---------------------- Model Related  --------------------------------------------
-	 class EngineModel* renderer;
+	 class EngineMesh* renderer;
 private:
 	
+	//---------------------- Test Related  --------------------------------------------
+	float Time = 0;
 };
 

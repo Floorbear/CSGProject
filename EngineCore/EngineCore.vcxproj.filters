@@ -43526,7 +43526,7 @@
     <ClInclude Include="EngineShader.h">
       <Filter>Shader &amp; Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="EngineModel.h">
+    <ClInclude Include="EngineMesh.h">
       <Filter>Shader &amp; Rendering</Filter>
     </ClInclude>
     <ClInclude Include="..\Thirdparty\glm\common.hpp">
@@ -44408,7 +44408,7 @@
     <ClCompile Include="EngineShader.cpp">
       <Filter>Shader &amp; Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="EngineModel.cpp">
+    <ClCompile Include="EngineMesh.cpp">
       <Filter>Shader &amp; Rendering</Filter>
     </ClCompile>
     <ClCompile Include="..\Thirdparty\glm\detail\glm.cpp">
