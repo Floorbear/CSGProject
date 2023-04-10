@@ -44405,10 +44405,10 @@
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp">
       <Filter>ThirdParty\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="EngineModel.cpp">
+    <ClCompile Include="EngineShader.cpp">
       <Filter>Shader &amp; Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="EngineRenderer.cpp">
+    <ClCompile Include="EngineModel.cpp">
       <Filter>Shader &amp; Rendering</Filter>
     </ClCompile>
     <ClCompile Include="..\Thirdparty\glm\detail\glm.cpp">

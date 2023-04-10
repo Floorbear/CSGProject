@@ -72,6 +72,7 @@ void EngineCore::InitGlfw()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+
 	window = glfwCreateWindow((int)windowSize.x, (int)windowSize.y, "CSGProject", NULL, NULL);
 	if (window == NULL)
 	{
@@ -89,8 +90,7 @@ void EngineCore::InitGlfw()
 	}
 
 	glViewport(0, 0, (int)windowSize.x, (int)windowSize.y);
-
-	
+	glEnable(GL_DEPTH_TEST);
 }
 
 void EngineCore::InitImgui()
@@ -179,7 +179,7 @@ void EngineCore::Render()
 {
 	////Render
 	glClearColor(0.5f, 0.3f, 0.2f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//----------------------------- view & projection
 	glm::mat4 view = glm::mat4(1.0f);

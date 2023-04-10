@@ -1,76 +1,95 @@
+#include "EngineModel.h"
 #include "EngineShader.h"
 
-EngineShader::EngineShader()
+EngineModel::EngineModel():
+	shader(nullptr)
 {
-	//Can make instance
-	//-------------------- Init VertexShader ----------------------------------
+	shader = new EngineShader();
+	//-------------------- Can make Instance ----------------------------------
+	//-------------------- Init VAO ----------------------------------
 	{
-		vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		EnginePath NewPath = EngineFilesystem::GetProjectPath();
-		NewPath.Move("EngineResource");
-		NewPath.Move("Shader");
-		NewPath.Move("EngineVertexShader.glsl");
-		std::string ShaderTEXT = NewPath.ReadFile();
-		const char* shaderSource = ShaderTEXT.c_str();
-
-		glShaderSource(vertexShader, 1, &shaderSource, NULL);
-		glCompileShader(vertexShader);
-
-
-		int success = 0;
-		glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-		assert(success != 0);
+		glGenVertexArrays(1, &VAO);
+		glBindVertexArray(VAO);
 	}
-	//-------------------- Init FragmentShader ----------------------------------
+	//-------------------- Init VBO ----------------------------------
 	{
-		fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+		glGenBuffers(1, &VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-		EnginePath NewPath = EngineFilesystem::GetProjectPath();
-		NewPath.Move("EngineResource");
-		NewPath.Move("Shader");
-		NewPath.Move("EngineFragmentShader.glsl");
-		std::string ShaderTEXT = NewPath.ReadFile();
-		const char* shaderSource = ShaderTEXT.c_str();
+		//vertex & color
+		//float vertices[] = {
 
-		glShaderSource(fragmentShader, 1, &shaderSource, NULL);
-		glCompileShader(fragmentShader);
-		int success = 0;
-		glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-		assert(success != 0);
+		//	 0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+		//	-0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+		//	 0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
+		//};
+
+		//Square
+			// vertex pos			vertex color
+		float vertices[] = {
+			-0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 0.0f, // left down  
+			 0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 0.0f, // right down
+			-0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 0.0f, // left top
+			 0.5f,  0.5f, 0.0f,	0.0f, 0.0f, 0.0f  // right top
+		};
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	}
+	//-------------------- Init EBO ----------------------------------
+	{
+		glGenBuffers(1, &EBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		std::vector<unsigned int> ind = { 0, 1, 2,
+			2, 3, 1 };
+		unsigned int indices[] = {
+			0, 1, 2,
+			2, 3, 1
+		};
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	}
 
-	//-------------------- Init shaerProgram ----------------------------------
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	//-------------------- Delete shader ----------------------------------
+	//Linking Vertex Attribute
 	{
-		glDeleteShader(vertexShader);
-		glDeleteShader(fragmentShader);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+	}
+	//-------------------- Unbind Buffer ----------------------------------
+	{
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 }
 
-EngineShader::~EngineShader()
+EngineModel::~EngineModel()
 {
+	if (shader != nullptr)
+	{
+		delete shader;
+	}
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 }
 
-void EngineShader::Use()
+void EngineModel::RenderTriangle()
 {
-	glUseProgram(shaderProgram);
+	shader->Use();
+	//transform.AddLocalRotation(glm::vec3(1.0f, 0.f, 0.f)); //매 프레임 x축을 기준으로 1도 회전함
+	//transform.SetLocalPosition(glm::vec3(sin(glfwGetTime()), 0, 0)); // 좌우로 이동
+	//transform.SetLocalScale(glm::vec3(cos(glfwGetTime()), cos(glfwGetTime()), 0)); //커졌다 작아졌다.
+
+	int transformLocation = glGetUniformLocation(shader->GetShaderProgram(),"transform");
+	glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(*transform.GetTransformMat()));
+
+
+	
+
+	//int uniformLocation = glGetUniformLocation(shaderProgram, "ourColor");
+	//float timeValue = (sin(glfwGetTime()) / 0.5f) + 0.5f;
+	//glUniform4f(uniformLocation, timeValue, 0.1f, 0.1f, 1.0f);
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
-
-
-//void EngineShader::RenderTri()
-//{
-//
-//}
-//
-//void EngineShader::RenderSquare()
-//{
-//	glUseProgram(shaderProgram);
-//	glBindVertexArray(VAO);
-//	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-//	//glBindVertexArray(0);
-//}

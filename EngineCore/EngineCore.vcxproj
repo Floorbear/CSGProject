@@ -14955,8 +14955,8 @@
     <ClCompile Include="..\Thirdparty\Imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp" />
     <ClCompile Include="EngineCore.cpp" />
-    <ClCompile Include="EngineRenderer.cpp" />
     <ClCompile Include="EngineModel.cpp" />
+    <ClCompile Include="EngineShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.pdb">

@@ -1,6 +1,12 @@
 #pragma once
 #include "EngineCore/EngineMinimal.h"
 
+struct Vertex
+{
+	vector3 postition;
+	//vector3 normal
+	//vector2 texcoords
+};
 
 class EngineModel
 {
@@ -27,6 +33,9 @@ private:
 	unsigned int EBO = 0;
 
 	class EngineShader* shader;
+
+	std::vector<Vertex> vertex;
+	std::vector<unsigned int> indices;
 
 	EngineTransform transform;
 };
