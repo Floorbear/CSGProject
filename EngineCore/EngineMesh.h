@@ -12,15 +12,34 @@ struct Vertex
 	}
 };
 
+struct MeshData
+{
+	std::vector<Vertex> vertex;
+	std::vector<unsigned int> indices;
+};
+
 enum class MeshType
 {
 	Square,
 	Triangle,
-	Cube
+	Cube,
+	Max
 };
+
+class InitEngineMesh
+{
+public:
+	InitEngineMesh();
+	~InitEngineMesh();
+
+private:
+
+};
+
 
 class EngineMesh
 {
+	friend InitEngineMesh;
 public:
 	EngineMesh();
 	~EngineMesh();
@@ -30,6 +49,7 @@ public:
 	//----------------	Mesh Related	----------------------------------------------
 public:
 	void SetMesh(MeshType _meshType);
+	void SetMesh(MeshData _meshData);
 	//----------------	Buffer Related	----------------------------------------------
 private:
 	unsigned int VAO = 0;
@@ -38,6 +58,9 @@ private:
 
 	std::vector<Vertex> vertex;
 	std::vector<unsigned int> indices;
+
+public:
+	static std::vector<MeshData> basicShapes;
 	//----------------	Shader Related	----------------------------------------------
 private:
 	class EngineShader* shader;
@@ -54,5 +77,6 @@ public:
 	}
 private:
 	EngineTransform transform;
+
 };
 

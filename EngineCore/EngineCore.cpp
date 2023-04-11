@@ -60,7 +60,11 @@ void EngineCore::InitEngine()
 
 	renderer->GetTransform()->SetLocalPosition(vector3(0.0, 0.f, 0.f));
 
-	renderer->SetMesh(MeshType::Cube);
+	//renderer->SetMesh(MeshType::Cube);
+	MeshData newMeshData;
+	newMeshData.vertex = { Vertex(0.5,-0.5,0),Vertex(-0.5,-0.5,0),Vertex(0,0.5,0) };
+	newMeshData.indices = { 0,1,2 };
+	renderer->SetMesh(newMeshData);
 	while (!glfwWindowShouldClose(window))
 	{
 		UpdateEngine();
@@ -198,14 +202,14 @@ void EngineCore::Render()
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
-	if (glfwGetTime()> 3)
-	{
-		renderer->SetMesh(MeshType::Square);
-	}
-	else if (glfwGetTime() > 6)
-	{
-		renderer->SetMesh(MeshType::Triangle);
-	}
+	//if (glfwGetTime()> 3)
+	//{
+	//	renderer->SetMesh(MeshType::Square);
+	//}
+	//else if (glfwGetTime() > 6)
+	//{
+	//	renderer->SetMesh(MeshType::Triangle);
+	//}
 	renderer->Render();
 
 	//Check Event & Swap buffer
