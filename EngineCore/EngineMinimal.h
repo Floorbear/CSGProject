@@ -18,6 +18,7 @@
 
 #include "EngineBase/EngineFilesystem.h"
 #include "EngineBase/EngineTransform.h"
+#include "EngineBase/EngineNameObject.h"
 #pragma comment(lib,"EngineBase.lib")
 
 

@@ -20,10 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineFilesystem.h" />
+    <ClInclude Include="EngineNameObject.h" />
     <ClInclude Include="EngineTransform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineFilesystem.cpp" />
+    <ClCompile Include="EngineNameObject.cpp" />
     <ClCompile Include="EngineTransform.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -37,11 +37,11 @@ private:
 };
 
 
-class EngineMesh
+class EngineMesh : public EngineNameObject
 {
 	friend InitEngineMesh;
 public:
-	EngineMesh();
+	EngineMesh(MeshType _meshType = MeshType::Square);
 	~EngineMesh();
 
 	void Render();
@@ -61,20 +61,16 @@ private:
 
 public:
 	static std::vector<MeshData> basicShapes;
-	//----------------	Shader Related	----------------------------------------------
-private:
-	class EngineShader* shader;
+
+public:
+
+	//----------------	Transform Related	----------------------------------------------
 public:
 	EngineTransform* GetTransform()
 	{
 		return &transform;
 	}
-	//----------------	Transform Related	----------------------------------------------
-public:
-	class EngineShader* GetShader()
-	{
-		return shader;
-	}
+
 private:
 	EngineTransform transform;
 

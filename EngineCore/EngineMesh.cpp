@@ -47,17 +47,15 @@ InitEngineMesh::InitEngineMesh()
 			Vertex(1, 1, 1),
 			Vertex(-1, 1, 1)
 	};
-
 }
 
 InitEngineMesh::~InitEngineMesh()
 {
+
 }
 
-EngineMesh::EngineMesh():
-	shader(nullptr)
+EngineMesh::EngineMesh(MeshType _meshType)
 {
-	shader = new EngineShader();
 	//-------------------- Can make Instance ----------------------------------
 	//-------------------- Init VAO ----------------------------------
 	{
@@ -69,15 +67,14 @@ EngineMesh::EngineMesh():
 		glGenBuffers(1, &VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-
-		vertex = basicShapes[static_cast<int>(MeshType::Square)].vertex;
+		vertex = basicShapes[static_cast<int>(_meshType)].vertex;
 		glBufferData(GL_ARRAY_BUFFER, vertex.size() * sizeof(Vertex), &vertex[0], GL_STATIC_DRAW);
 	}
 	//-------------------- Init EBO ----------------------------------
 	{
 		glGenBuffers(1, &EBO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		indices = basicShapes[static_cast<int>(MeshType::Square)].indices;
+		indices = basicShapes[static_cast<int>(_meshType)].indices;
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices[0], GL_STATIC_DRAW);
 	}
 
@@ -100,10 +97,7 @@ EngineMesh::EngineMesh():
 
 EngineMesh::~EngineMesh()
 {
-	if (shader != nullptr)
-	{
-		delete shader;
-	}
+
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
@@ -111,13 +105,14 @@ EngineMesh::~EngineMesh()
 
 void EngineMesh::Render()
 {
-	shader->Use();
-	transform.AddLocalRotation(glm::vec3(0.05f, 0.f, 0.f)); 
+	//transform.AddLocalRotation(glm::vec3(0.05f, 0.f, 0.f)); 
 	//transform.SetLocalPosition(glm::vec3(sin(glfwGetTime()), 0, 0)); //
 	//transform.SetLocalScale(glm::vec3(cos(glfwGetTime()), cos(glfwGetTime()), 0)); //
 
-	int transformLocation = glGetUniformLocation(shader->GetShaderProgram(),"transform");
-	glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(*transform.GetTransformMat()));
+
+
+	//int transformLocation = glGetUniformLocation(shader->GetShaderProgram(),"transform");
+	//glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(*transform.GetTransformMat()));
 	
 
 	//int uniformLocation = glGetUniformLocation(shaderProgram, "ourColor");
@@ -169,3 +164,4 @@ void EngineMesh::SetMesh(MeshData _meshData)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
+

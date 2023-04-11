@@ -44375,6 +44375,9 @@
     <ClInclude Include="..\Thirdparty\glm\simd\vector_relational.h">
       <Filter>ThirdParty\glm</Filter>
     </ClInclude>
+    <ClInclude Include="EngineModel.h">
+      <Filter>Shader &amp; Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -44413,6 +44416,9 @@
     </ClCompile>
     <ClCompile Include="..\Thirdparty\glm\detail\glm.cpp">
       <Filter>ThirdParty\glm</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineModel.cpp">
+      <Filter>Shader &amp; Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

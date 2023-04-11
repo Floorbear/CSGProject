@@ -15,6 +15,7 @@
 #pragma comment(lib,"glfw3.lib")
 
 
+#include "EngineCore/EngineModel.h"
 #include "EngineCore/EngineMesh.h"
 #include "EngineCore/EngineShader.h"
 
@@ -25,8 +26,7 @@ EngineCore* EngineCore::inst = nullptr;
 
 
 EngineCore::EngineCore():
-	window(),
-	renderer(nullptr)
+	window()
 {
 	assert(inst == nullptr && "Already exists Core");
 	inst = this;
@@ -56,15 +56,11 @@ void EngineCore::InitEngine()
 	//I dont set Window resize callback
 	InitImgui();
 
-	renderer = new EngineMesh(); 
-
-	renderer->GetTransform()->SetLocalPosition(vector3(0.0, 0.f, 0.f));
 
 	//renderer->SetMesh(MeshType::Cube);
-	MeshData newMeshData;
-	newMeshData.vertex = { Vertex(0.5,-0.5,0),Vertex(-0.5,-0.5,0),Vertex(0,0.5,0) };
-	newMeshData.indices = { 0,1,2 };
-	renderer->SetMesh(newMeshData);
+	EngineModel* newModel = CreateEngineModel("MyModel");
+	EngineMesh* newMesh = newModel->CreateMesh(MeshType::Cube,"Cube1");
+	newMesh->GetTransform()->AddLocalPosition({ 3.f,0,0 });
 	while (!glfwWindowShouldClose(window))
 	{
 		UpdateEngine();
@@ -196,26 +192,59 @@ void EngineCore::Render()
 	float fov = 45.f;
 	projection = glm::perspective(glm::radians(fov), windowSize.x/ windowSize.y, 0.1f, 100.f);
 
-	int viewLocation = glGetUniformLocation(renderer->GetShader()->GetShaderProgram(), "view");
-	int projectionLocation = glGetUniformLocation(renderer->GetShader()->GetShaderProgram(), "projection");
+	for (auto iter = engineModels.begin(); iter != engineModels.end(); ++iter)
+	{
+		(*iter)->GetShader()->Use();
+		int viewLocation = glGetUniformLocation((*iter)->GetShader()->GetShaderProgram(), "view");
+		int projectionLocation = glGetUniformLocation((*iter)->GetShader()->GetShaderProgram(), "projection");
 
-	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+		(*iter)->Render();
+	}
 
-	//if (glfwGetTime()> 3)
-	//{
-	//	renderer->SetMesh(MeshType::Square);
-	//}
-	//else if (glfwGetTime() > 6)
-	//{
-	//	renderer->SetMesh(MeshType::Triangle);
-	//}
-	renderer->Render();
+
 
 	//Check Event & Swap buffer
 	glfwPollEvents();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	glfwSwapBuffers(window);
+}
+
+EngineModel* EngineCore::CreateEngineModel()
+{
+	EngineModel* newModel = new EngineModel();
+	engineModels.push_back(newModel);
+	return newModel;
+}
+
+EngineModel* EngineCore::CreateEngineModel(std::string_view _name)
+{
+	EngineModel* newModel = CreateEngineModel();
+	newModel->SetName(_name.data());
+	return newModel;
+}
+
+EngineModel* EngineCore::FindModel(std::string_view _name)
+{
+	EngineModel* findModel = nullptr;
+	for (auto iter = engineModels.begin(); iter != engineModels.end(); ++iter)
+	{
+		if ((*iter)->GetNameCopy() == _name.data())
+		{
+			findModel = (*iter);
+			break;
+		}
+	}
+	return findModel;
+}
+
+void EngineCore::UpdateTestCode()
+{
+	EngineMesh* newMesh = FindModel("MyModel")->FindMesh("Cube1");
+	newMesh->GetTransform()->SetLocalPosition(vector3(cos(glfwGetTime()), sin(glfwGetTime()),0));
+	newMesh->GetTransform()->SetLocalScale(vector3(0.5f, 0.5f, 0.5f));
+	newMesh->GetTransform()->SetLocalRotation(vector3(glfwGetTime()*100, 0, 0));
 }
 
 void EngineCore::UpdateEngine()
@@ -224,13 +253,16 @@ void EngineCore::UpdateEngine()
 	ProcessInput(window);
 	//IMGUI
 	UpdateImgui();
-	
+	UpdateTestCode();
 	Render();
 }
 
 void EngineCore::EndEngine()
 {
-	delete renderer;
+	for (auto iter = engineModels.begin(); iter != engineModels.end(); ++iter)
+	{
+		delete* iter;
+	}
 
 	// Cleanup
 	ImGui_ImplOpenGL3_Shutdown();

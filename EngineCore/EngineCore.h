@@ -35,10 +35,17 @@ private:
 	 vector2 windowSize;
 
 	 //---------------------- Model Related  --------------------------------------------
-	 class EngineMesh* renderer;
+public:
+	class EngineModel* CreateEngineModel();
+	class EngineModel* CreateEngineModel(std::string_view _name);
+	class EngineModel* FindModel(std::string_view _name);
+
+private:
+	 std::list<class EngineModel*> engineModels;
 private:
 	
 	//---------------------- Test Related  --------------------------------------------
 	float Time = 0;
+	void UpdateTestCode();
 };
 

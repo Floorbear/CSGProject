@@ -10,11 +10,13 @@
       <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="EngineTransform.cpp" />
+    <ClCompile Include="EngineNameObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineFilesystem.h">
       <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="EngineTransform.h" />
+    <ClInclude Include="EngineNameObject.h" />
   </ItemGroup>
 </Project>
