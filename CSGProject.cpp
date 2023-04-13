@@ -1,13 +1,11 @@
-﻿#include <iostream>
+#include <iostream>
 //built in
-#include "EngineCore/EngineCore.h"
+#include "EngineCore/Core.h"
 
 #pragma comment(lib,"EngineCore.lib")
 
 
-int main()
-{
-	EngineCore* NewCore = new EngineCore();
-	NewCore->Start();
-	delete NewCore;
+int main(){
+	Core::get()->start();
+	return 0;
 }

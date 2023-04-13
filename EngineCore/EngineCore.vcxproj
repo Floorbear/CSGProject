@@ -136,7 +136,8 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\;;$(SolutionDir)Thirdparty\</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -14938,11 +14939,16 @@
     <ClInclude Include="..\Thirdparty\SDL\SDL_version.h" />
     <ClInclude Include="..\Thirdparty\SDL\SDL_video.h" />
     <ClInclude Include="..\Thirdparty\SDL\SDL_vulkan.h" />
-    <ClInclude Include="EngineCore.h" />
+    <ClInclude Include="Core.h" />
+    <ClInclude Include="FileSystem.h" />
+    <ClInclude Include="GUI.h" />
     <ClInclude Include="EngineMinimal.h" />
-    <ClInclude Include="EngineMesh.h" />
-    <ClInclude Include="EngineModel.h" />
-    <ClInclude Include="EngineShader.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Task.h" />
+    <ClInclude Include="Transform.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Thirdparty\glad\glad.c" />
@@ -14955,10 +14961,15 @@
     <ClCompile Include="..\Thirdparty\Imgui\imgui_impl_sdl2.cpp" />
     <ClCompile Include="..\Thirdparty\Imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp" />
-    <ClCompile Include="EngineCore.cpp" />
-    <ClCompile Include="EngineMesh.cpp" />
-    <ClCompile Include="EngineModel.cpp" />
-    <ClCompile Include="EngineShader.cpp" />
+    <ClCompile Include="Core.cpp" />
+    <ClCompile Include="FileSystem.cpp" />
+    <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Task.cpp" />
+    <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.pdb">
@@ -14980,8 +14991,8 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\EngineResource\Shader\EngineFragmentShader.glsl" />
-    <None Include="..\EngineResource\Shader\EngineVertexShader.glsl" />
+    <None Include="..\EngineResource\Shader\DefaultFragmentShader.glsl" />
+    <None Include="..\EngineResource\Shader\DefaultVertexShader.glsl" />
     <None Include="..\Thirdparty\Eigen\AccelerateSupport" />
     <None Include="..\Thirdparty\Eigen\Cholesky" />
     <None Include="..\Thirdparty\Eigen\CholmodSupport" />

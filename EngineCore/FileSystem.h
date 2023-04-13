@@ -18,7 +18,7 @@ private:
 };
 
 
-class EngineFilesystem
+class FileSystem
 {
 public:
 	static EnginePath GetProjectPath()

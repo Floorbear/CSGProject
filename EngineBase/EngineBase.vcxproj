@@ -19,14 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EngineFilesystem.h" />
     <ClInclude Include="EngineNameObject.h" />
-    <ClInclude Include="EngineTransform.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EngineFilesystem.cpp" />
     <ClCompile Include="EngineNameObject.cpp" />
-    <ClCompile Include="EngineTransform.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -142,7 +138,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\;;$(SolutionDir)Thirdparty\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>

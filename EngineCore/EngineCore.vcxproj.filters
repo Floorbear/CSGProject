@@ -34,15 +34,18 @@
     <Filter Include="ThirdParty\Eigen">
       <UniqueIdentifier>{ffb07e20-490c-4bff-992c-72e891ffdef3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shader &amp; Rendering">
-      <UniqueIdentifier>{d80a19cb-c983-4e64-8922-2e49a25125e0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ThirdParty\glm">
       <UniqueIdentifier>{5e6b0a22-532d-4767-a020-f2cb875db684}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Rendering">
+      <UniqueIdentifier>{d80a19cb-c983-4e64-8922-2e49a25125e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Base">
+      <UniqueIdentifier>{7bf88432-ad31-4197-a04d-d4df73c6c84d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EngineCore.h" />
+    <ClInclude Include="Core.h" />
     <ClInclude Include="..\Thirdparty\GLFW\glfw3.h">
       <Filter>ThirdParty\GLFW</Filter>
     </ClInclude>
@@ -43523,11 +43526,11 @@
       <Filter>ThirdParty\Eigen</Filter>
     </ClInclude>
     <ClInclude Include="EngineMinimal.h" />
-    <ClInclude Include="EngineShader.h">
-      <Filter>Shader &amp; Rendering</Filter>
+    <ClInclude Include="Shader.h">
+      <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="EngineMesh.h">
-      <Filter>Shader &amp; Rendering</Filter>
+    <ClInclude Include="Mesh.h">
+      <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="..\Thirdparty\glm\common.hpp">
       <Filter>ThirdParty\glm</Filter>
@@ -44375,12 +44378,19 @@
     <ClInclude Include="..\Thirdparty\glm\simd\vector_relational.h">
       <Filter>ThirdParty\glm</Filter>
     </ClInclude>
-    <ClInclude Include="EngineModel.h">
-      <Filter>Shader &amp; Rendering</Filter>
+    <ClInclude Include="GUI.h" />
+    <ClInclude Include="Utils.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Transform.h">
+      <Filter>Base</Filter>
     </ClInclude>
+    <ClInclude Include="FileSystem.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Task.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EngineCore.cpp" />
+    <ClCompile Include="Core.cpp" />
     <ClCompile Include="..\Thirdparty\glad\glad.c">
       <Filter>ThirdParty\glad</Filter>
     </ClCompile>
@@ -44408,18 +44418,25 @@
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp">
       <Filter>ThirdParty\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="EngineShader.cpp">
-      <Filter>Shader &amp; Rendering</Filter>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="EngineMesh.cpp">
-      <Filter>Shader &amp; Rendering</Filter>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="..\Thirdparty\glm\detail\glm.cpp">
       <Filter>ThirdParty\glm</Filter>
     </ClCompile>
-    <ClCompile Include="EngineModel.cpp">
-      <Filter>Shader &amp; Rendering</Filter>
+    <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="Utils.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Transform.cpp">
+      <Filter>Base</Filter>
     </ClCompile>
+    <ClCompile Include="FileSystem.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Task.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.lib">
@@ -44538,11 +44555,11 @@
     <None Include="..\Thirdparty\Eigen\Eigen">
       <Filter>ThirdParty\Eigen</Filter>
     </None>
-    <None Include="..\EngineResource\Shader\EngineFragmentShader.glsl">
-      <Filter>Shader &amp; Rendering</Filter>
+    <None Include="..\EngineResource\Shader\DefaultFragmentShader.glsl">
+      <Filter>Rendering</Filter>
     </None>
-    <None Include="..\EngineResource\Shader\EngineVertexShader.glsl">
-      <Filter>Shader &amp; Rendering</Filter>
+    <None Include="..\EngineResource\Shader\DefaultVertexShader.glsl">
+      <Filter>Rendering</Filter>
     </None>
     <None Include="..\Thirdparty\glm\detail\func_common.inl">
       <Filter>ThirdParty\glm</Filter>

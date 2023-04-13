@@ -1,11 +1,11 @@
 #pragma once
 #include "EngineMinimal.h"
 
-class EngineShader
+class Shader
 {
 public:
-	EngineShader();
-	~EngineShader();
+	Shader();
+	~Shader();
 
 	void Use();
 

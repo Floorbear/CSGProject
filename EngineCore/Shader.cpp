@@ -1,15 +1,16 @@
-#include "EngineShader.h"
+#include "Shader.h"
+#include "FileSystem.h"
 
-EngineShader::EngineShader()
+Shader::Shader()
 {
 	//Can make instance
 	//-------------------- Init VertexShader ----------------------------------
 	{
 		vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		EnginePath NewPath = EngineFilesystem::GetProjectPath();
+		EnginePath NewPath = FileSystem::GetProjectPath();
 		NewPath.Move("EngineResource");
 		NewPath.Move("Shader");
-		NewPath.Move("EngineVertexShader.glsl");
+		NewPath.Move("DefaultVertexShader.glsl");
 		std::string ShaderTEXT = NewPath.ReadFile();
 		const char* shaderSource = ShaderTEXT.c_str();
 
@@ -24,10 +25,10 @@ EngineShader::EngineShader()
 	{
 		fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-		EnginePath NewPath = EngineFilesystem::GetProjectPath();
+		EnginePath NewPath = FileSystem::GetProjectPath();
 		NewPath.Move("EngineResource");
 		NewPath.Move("Shader");
-		NewPath.Move("EngineFragmentShader.glsl");
+		NewPath.Move("DefaultFragmentShader.glsl");
 		std::string ShaderTEXT = NewPath.ReadFile();
 		const char* shaderSource = ShaderTEXT.c_str();
 
@@ -50,11 +51,11 @@ EngineShader::EngineShader()
 	}
 }
 
-EngineShader::~EngineShader()
+Shader::~Shader()
 {
 }
 
-void EngineShader::Use()
+void Shader::Use()
 {
 	glUseProgram(shaderProgram);
 }
