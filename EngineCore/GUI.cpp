@@ -58,7 +58,7 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     gui_csgtree = false;
     //TODO : 여기서 도킹 설정?
 
-    renderer.viewport_size = parent->window_size; // TODO : view창 만들면서 view창 크기로 지정
+    renderer.viewport_size = vec2(512,512);//parent->window_size; // TODO : view창 만들면서 view창 크기로 지정
     renderer.set_parent(parent);
     renderer.init();
 }
@@ -93,12 +93,58 @@ void WorkSpace::render(){
     window_flags |= ImGuiWindowFlags_NoBackground;
     #endif
 
+    static int view_w = 512;
+    static int view_h = 512;
+
     {// TODO : 여러 view에서 models를 참조해서 그려야함. (렌더러 개수만큼 수행)
-        
+        // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
+        static unsigned int fbo = 0;
+        static GLuint f_tex;
+        if(fbo==0){
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        //GLuint  f_tex = CreateTexture(512, 512, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+        glGenTextures(1, &f_tex);
+        glBindTexture(GL_TEXTURE_2D, f_tex);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+        glBindTexture(GL_TEXTURE_2D, 0); // 
+
+        glBindTexture(GL_TEXTURE_2D, f_tex);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, f_tex, 0); 
+
+        GLuint depthrenderbuffer;
+        glGenRenderbuffers(1, &depthrenderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);  
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glViewport(0, 0, 512,512);
+        ImVec4 clear_color = ImVec4(1.0f, 0.05f, 0.00f, 1.00f);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         renderer.render(models);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
         ImGui::Begin(Utils::format("View##%1%", id).c_str(), 0, window_flags);
-        // TODO : imgui 이미지에 방금 만든 텍스쳐 씌우기
-        ImGui::Text("ImGui::Image(fsdfassd)");
+        view_w = ImGui::GetWindowSize().x;
+        view_h = ImGui::GetWindowSize().y;
+        renderer.viewport_size.x=view_w;
+        renderer.viewport_size.y=view_h;
+        ImVec2 sss = ImVec2(ImGui::GetWindowPos().x+ImGui::GetWindowSize().x, ImGui::GetWindowPos().y+ImGui::GetWindowSize().y);
+        ImGui::GetWindowDrawList()->
+            AddImage((void*)f_tex, ImGui::GetWindowPos(), sss, ImVec2(0, 0), ImVec2(1, 1));
         ImGui::End();
     }
 
@@ -377,10 +423,6 @@ void GUI::render_end(){
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    if(active_workspace!=NULL){ // TEST
-        active_workspace->renderer.render(active_workspace->models);
-    }
 
     if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable){
         GLFWwindow* backup_current_context = glfwGetCurrentContext();
