@@ -73,6 +73,7 @@ Transform Model::get_transform(){
     return *(csgmesh->get_transform());
 }
 
+
 Transform* Model::test_get_main_transform(){ // TEST
     return csgmesh->get_transform();
 }
@@ -82,27 +83,6 @@ Shader* Model::get_shader(){
 }
 
 void Model::render(Renderer* renderer){
-    // TODO : 정리 필요
-    shader->Use();
-
-    //----------------------------- view & projection
-    mat4 view = mat4(1.0f);
-    view = glm::translate(view, vec3(0.0, 0.0, -5.f));
-
-    mat4 projection = mat4(1.0f);
-    float fov = 45.f;
-    projection = glm::perspective(glm::radians(fov), renderer->viewport_size.x / renderer->viewport_size.y, 0.1f, 100.f);
-
-    // TODO 여기까진 고정인걸 어떻게 전달할지 다시 고민?
-
-    int worldLocation = glGetUniformLocation(shader->GetShaderProgram(), "world");
-    int viewLocation = glGetUniformLocation(shader->GetShaderProgram(), "view");
-    int projectionLocation = glGetUniformLocation(shader->GetShaderProgram(), "projection");
-    
-    glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(*(get_transform().GetTransformMat())));
-    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
-
     csgmesh->render();
 }
 
@@ -127,21 +107,101 @@ void Renderer::render(const std::list<Model*>& models){
         newModel = new Model("MyModel");
         newModel->set_new(Mesh::Cube);
 
-        newModel->test_get_main_transform()->AddLocalPosition({ 3.f,0,0 });
+      //  newModel->get_transform().AddLocalPosition({ 3,0,0 });
         parent->active_workspace->models.push_back(newModel);// 원래는 이런걸 참조할일이 많지 않다
-                                                             //newModel->main_child()->get_transform()->AddLocalPosition({3.f,0,0}); 내일 이거 열어보기
+                                                             //newModel->main_child()->get_transform()->AddLocalPosition({3.f,0,0}); 안됨
     }
 
     Model* model = parent->active_workspace->find_model("MyModel");
     if(model!=NULL){
         //CSGMesh* newMesh = 
         Transform* newMesh = model->test_get_main_transform();//->FindMesh("Cube1");
-        newMesh->SetLocalPosition(vec3(cos(Utils::time_acc()), sin(Utils::time_acc()), 0));
+        newMesh->SetLocalPosition(vec3(0,0, 5));
+       // newMesh->SetLocalPosition(vec3(cos(Utils::time_acc()), sin(Utils::time_acc()), Utils::time_acc()));
         newMesh->SetLocalScale(vec3(0.5f, 0.5f, 0.5f));
-        newMesh->SetLocalRotation(vec3(Utils::time_acc() * 100, 0, 0));
+        //newMesh->SetLocalRotation(vec3(Utils::time_acc() * 100, 0, 0));
     }
 
+
+    //====== Set view & projection =====
+    mat4 view = mat4(1.0f);
+    view = glm::translate(view, vec3(0.0, 0.0, -5.f));
+
+    
+
+    mat4 projection = mat4(1.0f);
+    float fov = 45.f;
+    projection = glm::perspective(glm::radians(fov), viewport_size.x / viewport_size.y, 0.1f, 100.f);
+
+    //===== Camera =====
+    {
+        static int testValue = 0;
+        //bind Key
+        if (testValue == 0)
+        {
+            testValue = 1;
+            parent->shortcuts.push_back(Shortcut("D", false, false, false, ImGuiKey_D, [=]() {
+                xPos += 0.5f;
+                }));
+            parent->shortcuts.push_back(Shortcut("A", false, false, false, ImGuiKey_A, [=]() {
+                xPos -= 0.5f;
+                }));
+            parent->shortcuts.push_back(Shortcut("W", false, false, false, ImGuiKey_W, [=]() {
+                yPos += 0.5f;
+                }));
+            parent->shortcuts.push_back(Shortcut("S", false, false, false, ImGuiKey_S, [=]() {
+                yPos -= 0.5f;
+                }));
+            parent->shortcuts.push_back(Shortcut("Q", false, false, false, ImGuiKey_Q, [=]() {
+                zPos += 0.5f;
+                }));
+            parent->shortcuts.push_back(Shortcut("E", false, false, false, ImGuiKey_E, [=]() {
+                zPos -= 0.5f;
+                }));
+            parent->shortcuts.push_back(Shortcut("Z", false, false, false, ImGuiKey_Z, [=]() {
+                xDegree -= 10.f;
+                }));
+            parent->shortcuts.push_back(Shortcut("X", false, false, false, ImGuiKey_X, [=]() {
+                xDegree += 10.0f;
+                }));
+            parent->shortcuts.push_back(Shortcut("C", false, false, false, ImGuiKey_C, [=]() {
+                yDegree -= 10.0f;
+                }));
+            parent->shortcuts.push_back(Shortcut("V", false, false, false, ImGuiKey_V, [=]() {
+                yDegree += 10.0f;
+                }));
+        }
+
+
+        vec3 cameraPos = glm::vec3(-xPos, -yPos, zPos);
+        //
+       // vec3 cameraTar = vec3(-xPos, -yPos, zPos + 1) + Utils::get_vecFromPitchYaw(0, 12);
+        vec3 cameraDir = normalize(Utils::get_vecFromPitchYaw(-xDegree, -yDegree));
+
+        vec3 up = vec3(0, 1.f, 0);
+        vec3 cameraRight = normalize(cross(up, cameraDir));
+
+        vec3 cameraUp = cross(cameraDir, cameraRight);
+
+        view = lookAt(cameraPos, cameraPos + cameraDir, cameraUp);
+    }
+
+
+
     for (Model* model : models){
+        model->get_shader()->Use();
+
+        {
+            unsigned int shaderProgram = model->get_shader()->get_shaderProgram();
+            int worldLocation = glGetUniformLocation(shaderProgram, "world");
+            int viewLocation = glGetUniformLocation(shaderProgram, "view");
+            int projectionLocation = glGetUniformLocation(shaderProgram, "projection");
+
+            glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(*(model->get_transform().GetTransformMat())));
+            glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+            glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+        }
+
         model->render(this);
     }
 }

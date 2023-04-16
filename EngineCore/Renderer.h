@@ -70,5 +70,15 @@ public:
     void init();
     void render(const std::list<Model*>& models);
     void dispose();
+
+    //===== Camera ======
+    float xPos = 0.f;
+    float yPos = 0.f;
+    float zPos = 0.f;
+
+    float xDegree = 0.f;
+    float yDegree = 0.f;
+
+    Transform cameraTransfrom;
 };
 

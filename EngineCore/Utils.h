@@ -2,6 +2,8 @@
 
 #include <string>
 #include <list>
+#include <glm/glm.hpp>
+
 
 class Utils{
     static double time_prev_frame; //...
@@ -15,5 +17,9 @@ public:
     static double time_acc(); // 프로그램 시작부터 누적
     static double time_delta(); // 프레임 사이 간격
     static double time_update(); // TODO : 메인루프 에서 호출
+
+
+
+    static glm::vec3 get_vecFromPitchYaw(float pitch_, float yaw_); //pitch : xAxis , yaw : yAxis
 
 };

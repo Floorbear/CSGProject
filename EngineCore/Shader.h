@@ -9,7 +9,7 @@ public:
 
 	void Use();
 
-	inline unsigned int GetShaderProgram()
+	inline unsigned int get_shaderProgram()
 	{
 		return shaderProgram;
 	}
