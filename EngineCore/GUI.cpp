@@ -98,40 +98,10 @@ void WorkSpace::render(){
 
     {// TODO : 여러 view에서 models를 참조해서 그려야함. (렌더러 개수만큼 수행)
         // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
-        static unsigned int fbo = 0;
-        static GLuint f_tex;
-        if(fbo==0){
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        //GLuint  f_tex = CreateTexture(512, 512, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
-        glGenTextures(1, &f_tex);
-        glBindTexture(GL_TEXTURE_2D, f_tex);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-        glBindTexture(GL_TEXTURE_2D, 0); // 
-
-        glBindTexture(GL_TEXTURE_2D, f_tex);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, f_tex, 0); 
-
-        GLuint depthrenderbuffer;
-        glGenRenderbuffers(1, &depthrenderbuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
-        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);  
-        }
-
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        GLuint f_tex = init_fbo(view_w,view_h);
+ 
         glViewport(0, 0, 512,512);
-        ImVec4 clear_color = ImVec4(1.0f, 0.05f, 0.00f, 1.00f);
+        ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         renderer.render(models);
@@ -184,6 +154,43 @@ void WorkSpace::render(){
 
 WorkSpace* WorkSpace::create_new(GUI* parent_){
     return new WorkSpace(parent_, "test"); // TEST
+}
+
+GLuint WorkSpace::init_fbo(int w_, int _h)
+{
+    static unsigned int fbo = 0;
+    static GLuint f_tex;
+    if (fbo == 0) {
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        //GLuint  f_tex = CreateTexture(512, 512, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+        glGenTextures(1, &f_tex);
+        glBindTexture(GL_TEXTURE_2D, f_tex);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w_, _h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+        glBindTexture(GL_TEXTURE_2D, 0); // 
+
+        glBindTexture(GL_TEXTURE_2D, f_tex);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, f_tex, 0);
+
+        GLuint depthrenderbuffer;
+        glGenRenderbuffers(1, &depthrenderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, w_, _h);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    return f_tex;
 }
 
 

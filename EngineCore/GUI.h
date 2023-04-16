@@ -58,6 +58,8 @@ public:
     void render();
 
     static WorkSpace* create_new(GUI* parent_);
+
+    GLuint init_fbo(int w_, int _h);
 };
 
 class GUI{
