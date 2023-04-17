@@ -46,6 +46,7 @@ private:
 	float height = 0.f;
 	float fov = 45.f;
 
+
 	glm::mat4 view;
 	glm::mat4 projection;
 };

@@ -28,9 +28,11 @@ void Camera::calculate_view()
     projection = glm::perspective(glm::radians(fov), width/ height, 0.1f, 100.f);
 
     vec3 cameraPos = -transform.get_worldPosition();
+    cameraPos.z = -cameraPos.z;
+    vec3 cameraRot = -transform.get_worldRotation();
+    cameraRot.x = clamp(cameraRot.x, -89.9f, 89.9f);
 
-    vec3 cameraRot = transform.get_worldRotation();
-    vec3 cameraDir = normalize(Utils::get_vecFromPitchYaw(-cameraRot.x, -cameraRot.y));
+    vec3 cameraDir = normalize(Utils::get_vecFromPitchYaw(cameraRot.x, cameraRot.y));
 
     vec3 up = vec3(0, 1.f, 0);
     vec3 cameraRight = normalize(cross(up, cameraDir));

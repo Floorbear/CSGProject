@@ -63,6 +63,37 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     mainCamera->set_parent(parent_);
     cameras.push_back(mainCamera);
 
+    parent->shortcuts.push_back(Shortcut("D", false, false, false, ImGuiKey_D, [=]() {
+        mainCamera->get_transform()->add_localPosition({ 0.5f,0,0 });
+        }));
+    parent->shortcuts.push_back(Shortcut("A", false, false, false, ImGuiKey_A, [=]() {
+        mainCamera->get_transform()->add_localPosition({ -0.5f,0,0 });
+        }));
+    parent->shortcuts.push_back(Shortcut("W", false, false, false, ImGuiKey_W, [=]() {
+        mainCamera->get_transform()->add_localPosition({ 0.f,0.5f,0 });
+        }));
+    parent->shortcuts.push_back(Shortcut("S", false, false, false, ImGuiKey_S, [=]() {
+        mainCamera->get_transform()->add_localPosition({ 0.f,-0.5f,0 });
+        }));
+    parent->shortcuts.push_back(Shortcut("Q", false, false, false, ImGuiKey_Q, [=]() {
+        mainCamera->get_transform()->add_localPosition({ 0.f,0.0f,0.5f });
+        }));
+    parent->shortcuts.push_back(Shortcut("E", false, false, false, ImGuiKey_E, [=]() {
+        mainCamera->get_transform()->add_localPosition({ 0.f,0.f,-0.5f });
+        }));
+    parent->shortcuts.push_back(Shortcut("Z", false, false, false, ImGuiKey_Z, [=]() {
+        mainCamera->get_transform()->add_localRotation({-1.5f,0.f,0.f });//내려보이기
+        }));
+    parent->shortcuts.push_back(Shortcut("X", false, false, false, ImGuiKey_X, [=]() {
+        mainCamera->get_transform()->add_localRotation({ 1.5f,0.f,0.f });//올려보기
+        }));
+    parent->shortcuts.push_back(Shortcut("C", false, false, false, ImGuiKey_C, [=]() {
+        mainCamera->get_transform()->add_localRotation({ 0.f,-1.5f,0.f });
+        }));
+    parent->shortcuts.push_back(Shortcut("V", false, false, false, ImGuiKey_V, [=]() {
+        mainCamera->get_transform()->add_localRotation({0.f,1.5f,0.f });
+        }));
+
     renderer.viewport_size = vec2(512,512);//parent->window_size; // TODO : view창 만들면서 view창 크기로 지정
     renderer.set_parent(parent);
     renderer.init();
