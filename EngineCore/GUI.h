@@ -8,23 +8,30 @@
 #include <Imgui/imgui_impl_glfw.h>
 #include <Imgui/imgui_impl_opengl3.h>
 
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
 #include <iostream>
 
 using namespace glm;
 
-class Shortcut{
+class Shortcut{ // TODO : 공통 부모를 가진 두 클래스로 쪼개기
+    enum class Type{
+        Continuous, Discrete
+    };
+    Type type;
 public:
     std::string name;
     bool ctrl;
     bool alt;
     bool shift;
-    ImGuiKey key;
+    ImGuiKey discrete_key;
+    int continuous_key;
     std::function<void()> callback;
 
-    Shortcut(const char* name_, bool ctrl_, bool alt_, bool shift_, ImGuiKey key_, std::function<void()> callback_);
-    bool is_pressed();
+    Shortcut(const char* name_, bool ctrl_, bool alt_, bool shift_, ImGuiKey discrete_key_, std::function<void()> callback_);
+    Shortcut(const char* name_, int continuous_key_, std::function<void()> callback_);
+    void check_execute(GLFWwindow* glfw_window);
     std::string to_string();
 };
 
@@ -33,6 +40,8 @@ class WorkSpace{
     static int id_counter;
 
     GUI* parent; // WorkSpace는 GUI에 종속
+
+    void render_popup_menu();
 
 public:
     int id;

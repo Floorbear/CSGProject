@@ -48,6 +48,7 @@ TransactionTaskManager::TransactionTaskManager(){
 
 void TransactionTaskManager::add(std::string detail_, std::function<void()> work_, std::function<void()> work_undo_){
     work_queue.push(TransactionTask(detail_, work_, work_undo_));
+    redo_stack.clear();
 }
 
 void TransactionTaskManager::add(const TransactionTask task_){

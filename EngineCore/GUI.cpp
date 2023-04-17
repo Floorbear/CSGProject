@@ -1,43 +1,68 @@
+#include "GUI.h"
 #include "Core.h"
 #include "Utils.h"
+#include "Camera.h"
+
+#include "Imgui/imgui_internal.h"
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include "EngineCore/Camera.h"
 
 #define NO_BACKGROUND
 
 // ===== Shortcut ===== //
 
-Shortcut::Shortcut(const char* name_, bool ctrl_, bool alt_, bool shift_, ImGuiKey key_, std::function<void()> callback_) :
+Shortcut::Shortcut(const char* name_, bool ctrl_, bool alt_, bool shift_, ImGuiKey discrete_key_, std::function<void()> callback_) :
     name(name_),
     ctrl(ctrl_),
     alt(alt_),
     shift(shift_),
-    key(key_),
+    discrete_key(discrete_key_),
     callback(callback_){
+    type = Type::Discrete;
 }
 
-bool Shortcut::is_pressed(){
-    return ctrl == ImGui::GetIO().KeyCtrl
-        && alt == ImGui::GetIO().KeyAlt
-        && shift == ImGui::GetIO().KeyShift
-        && ImGui::IsKeyPressed(ImGui::GetKeyIndex(key));
+Shortcut::Shortcut(const char* name_, int continuous_key_, std::function<void()> callback_) :
+    name(name_),
+    ctrl(false), // 가능하게 할까? 일단은 막아놓음.
+    alt(false),
+    shift(false),
+    continuous_key(continuous_key_),
+    callback(callback_){
+    type = Type::Continuous;
+}
+
+void Shortcut::check_execute(GLFWwindow* glfw_window){
+    if (type == Type::Continuous){
+        if (glfwGetKey(glfw_window, continuous_key) == GLFW_PRESS){
+            callback();
+        }
+    } else if (type == Type::Discrete){
+        if (ctrl == ImGui::GetIO().KeyCtrl &&
+            alt == ImGui::GetIO().KeyAlt &&
+            shift == ImGui::GetIO().KeyShift &&
+            ImGui::IsKeyPressed(ImGui::GetKeyIndex(discrete_key))){
+            callback();
+        }
+    }
 }
 
 std::string Shortcut::to_string(){
     std::string ret;
-    if (ctrl) ret += "Ctrl+";
-    if (alt) ret += "Alt+";
-    if (shift) ret += "Shift+";
-    if (key == '\t') ret += "Tab";
-    else if (key == ImGuiKey_Space) ret += "Space";
-    else if (key == ImGuiKey_Enter) ret += "Enter";
-    else if (key == ImGuiKey_Backspace) ret += "Backspace";
-    else if (key == ImGuiKey_Delete) ret += "Delete";
-    else if (key == ImGuiKey_Escape) ret += "ESC (None)";
-    else{
-        ret += (char)key;
+    if (type == Type::Discrete){
+        if (ctrl) ret += "Ctrl+";
+        if (alt) ret += "Alt+";
+        if (shift) ret += "Shift+";
+        if (discrete_key == ImGuiKey_Tab) ret += "Tab";
+        else if (discrete_key == ImGuiKey_Space) ret += "Space";
+        else if (discrete_key == ImGuiKey_Enter) ret += "Enter";
+        else if (discrete_key == ImGuiKey_Backspace) ret += "Backspace";
+        else if (discrete_key == ImGuiKey_Delete) ret += "Delete";
+        else if (discrete_key == ImGuiKey_Escape) ret += "ESC (None)";
+        else{
+            ret += (char)discrete_key;
+        }
+    } else if (type == Type::Continuous){
+        ret += "aaaaaaaaaaaa";// TEST
     }
     return ret;
 }
@@ -135,8 +160,8 @@ void WorkSpace::render(){
     window_flags |= ImGuiWindowFlags_NoBackground;
     #endif
 
-    static int view_w = 512;
-    static int view_h = 512;
+    static float view_w = 512;
+    static float view_h = 512;
 
     {// TODO : 여러 view에서 models를 참조해서 그려야함. (렌더러 개수만큼 수행)
         // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
@@ -161,6 +186,7 @@ void WorkSpace::render(){
         ImVec2 sss = ImVec2(ImGui::GetWindowPos().x+ImGui::GetWindowSize().x, ImGui::GetWindowPos().y+ImGui::GetWindowSize().y);
         ImGui::GetWindowDrawList()->
             AddImage((void*)f_tex, ImGui::GetWindowPos(), sss, ImVec2(0, 0), ImVec2(1, 1));
+        render_popup_menu();
         ImGui::End();
     }
 
@@ -195,6 +221,49 @@ void WorkSpace::render(){
         ImGui::Begin(Utils::format("Logs##%1%", id).c_str(), 0, window_flags);
         ImGui::Text(Utils::format("Text%1%", id).c_str());
         ImGui::End();
+    }
+}
+
+void WorkSpace::render_popup_menu(){
+    if (ImGui::GetIO().MouseClicked[1]){
+        ImGui::OpenPopup("View_Popup_Edit");
+    }
+    if (ImGui::BeginPopup("View_Popup_Edit")){
+        if (ImGui::MenuItem("Cut", "CTRL+X")){}
+        if (ImGui::MenuItem("Copy", "CTRL+C")){}
+        if (ImGui::MenuItem("Paste", "CTRL+V")){}
+        if (ImGui::MenuItem("Delete", "Del")){}
+        ImGui::Separator();
+        if (ImGui::BeginMenu("Select")){
+            if (ImGui::MenuItem("Select Parent")){}
+            if (ImGui::MenuItem("Reverse Selection")){}
+            if (ImGui::MenuItem("Filter Selection")){}
+            // TODO : 옵션 추가
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
+        if (ImGui::BeginMenu("Add Shape")){
+            if (ImGui::MenuItem("Cube")){}
+            if (ImGui::MenuItem("Sphere")){}
+            if (ImGui::MenuItem("Cylinder")){}
+            if (ImGui::MenuItem("Cone")){}
+            if (ImGui::MenuItem("Pyramid")){}
+            if (ImGui::MenuItem("Torus")){}
+            // TODO : 여러가지 추가
+            ImGui::EndMenu();
+        }
+        if (ImGui::MenuItem("Load Model")){}
+        ImGui::Separator();
+        if (ImGui::MenuItem("Union Selected Objects")){}
+        if (ImGui::MenuItem("Intersect Selected Objects")){}
+        if (ImGui::MenuItem("Difference Selected Objects")){
+            // TODO : selection에 순서가 있어야함
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Set To Selection Group")){
+            // csg연산 한거 나눠서 선택 안되게
+        }
+        ImGui::EndPopup();
     }
 }
 
@@ -280,12 +349,9 @@ void GUI::process_input(){
     if (glfwGetKey(glfw_window, GLFW_KEY_ESCAPE) == GLFW_PRESS){ // 있어야 하나?
         glfwSetWindowShouldClose(glfw_window, true);
     }
-    // TODO : wasd 등등 연속키 입력
 
     for (Shortcut shortcut : shortcuts){
-        if (shortcut.is_pressed()){
-            shortcut.callback();
-        }
+        shortcut.check_execute(glfw_window);
     }
 }
 
@@ -337,6 +403,9 @@ void GUI::init_gui(){
 
 int tcnt; // TEST
 void GUI::init_shortcut(){
+    shortcuts.push_back(Shortcut("saveee", GLFW_KEY_W, [](){
+        printf("www\n");
+    }));
     shortcuts.push_back(Shortcut("save", true, false, false, ImGuiKey_S, [](){
         printf("save");
     }));
