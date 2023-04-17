@@ -28,6 +28,7 @@ public:
     std::string to_string();
 };
 
+class Camera;
 class WorkSpace{
     static int id_counter;
 
@@ -60,6 +61,17 @@ public:
     static WorkSpace* create_new(GUI* parent_);
 
     GLuint init_fbo(int w_, int _h);
+
+    //===== Camera =====
+public:
+    inline Camera* get_mainCamera() //TODO : 다른 카메라(카메라1, 카메라2) 반환 함수도 만들수도있음
+    {
+        return mainCamera;
+    }
+
+private:
+    Camera* mainCamera;
+    std::list<Camera*> cameras;
 };
 
 class GUI{

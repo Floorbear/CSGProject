@@ -12,37 +12,40 @@ public:
 	Transform(vec4& _Vec4);
 	~Transform();
 
-	void AddLocalPosition(const vec3& _Position);
-	void AddLocalRotation( const vec3& _Rotation);
-	void AddLocalScale(const vec3& _Scale);
+	void add_localPosition(const vec3& _Position);
+	void add_localRotation( const vec3& _Rotation);
+	void add_localScale(const vec3& _Scale);
 
-	void SetLocalPosition(const vec3& _Position);
-	void SetLocalRotation(const vec3& _Rotation);
-	void SetLocalScale(const vec3& _Scale);
+	void set_localPostition(const vec3& _Position);
+	void set_localRotation(const vec3& _Rotation);
+	void set_localScale(const vec3& _Scale);
 
-	inline vec3 GetWorldPosition()
+	inline vec3 get_worldPosition()
 	{
-		return position;
+		return worldPosition;
+	}
+	inline vec3 get_worldRotation()
+	{
+		return worldRotation;
 	}
 
 
-	void CalculateWorld();
-	void UpdateTransform();
+	void calculate_world();
+	void update_transform();
 
-	glm::mat4* GetTransformMat()
+	glm::mat4* get_transformMat()
 	{
 		return &transformMat;
 	}
 
 private:
 	glm::vec4 vector;
-	vec3 position; // 메인 프로퍼티
+	vec3 localPosition; // 메인 프로퍼티
 	vec3 localScale;
 	vec3 localRotation = vec3(0.f, 0.f, 0.f);
 
 
-	// 월드좌표 캐시
-	vec3 world_position = vec3(0.f, 0.f, 0.f);
+	vec3 worldPosition = vec3(0.f, 0.f, 0.f);
 	vec3 worldScale = vec3(1.f, 1.f, 1.f);
 	vec3 worldRotation = vec3(0.f, 0.f, 0.f); // w : Radian
 

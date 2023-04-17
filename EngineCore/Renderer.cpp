@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "EngineCore/Camera.h"
 // ===== CSGMesh ===== // TODO : CSGNode?
 
 CSGNode::CSGNode(const Mesh& mesh) : result(mesh){
@@ -92,6 +93,7 @@ void Model::render(Renderer* renderer){
 Renderer::Renderer(){
     parent = NULL;
     viewport_size = vec2(100, 100); // default
+    camera = nullptr;
 }
 
 void Renderer::set_parent(GUI* parent_){
@@ -102,38 +104,33 @@ void Renderer::init(){
 }
 
 void Renderer::render(const std::list<Model*>& models){
+
+    if (camera == nullptr) //디폴트 카메라 = mainCamera
+    {
+        camera = parent->active_workspace->get_mainCamera();
+    }
+
     static Model* newModel = NULL;
     if (newModel == NULL){
         newModel = new Model("MyModel");
         newModel->set_new(Mesh::Cube);
 
-      //  newModel->get_transform().AddLocalPosition({ 3,0,0 });
-        parent->active_workspace->models.push_back(newModel);// 원래는 이런걸 참조할일이 많지 않다
-                                                             //newModel->main_child()->get_transform()->AddLocalPosition({3.f,0,0}); 안됨
+        parent->active_workspace->models.push_back(newModel);                                                     
     }
 
     Model* model = parent->active_workspace->find_model("MyModel");
     if(model!=NULL){
         //CSGMesh* newMesh = 
         Transform* newMesh = model->test_get_main_transform();//->FindMesh("Cube1");
-        newMesh->SetLocalPosition(vec3(0,0, 5));
+        newMesh->set_localPostition(vec3(0,0, 5));
        // newMesh->SetLocalPosition(vec3(cos(Utils::time_acc()), sin(Utils::time_acc()), Utils::time_acc()));
-        newMesh->SetLocalScale(vec3(0.5f, 0.5f, 0.5f));
+        newMesh->set_localScale(vec3(0.5f, 0.5f, 0.5f));
         //newMesh->SetLocalRotation(vec3(Utils::time_acc() * 100, 0, 0));
     }
 
 
-    //====== Set view & projection =====
-    mat4 view = mat4(1.0f);
-    view = glm::translate(view, vec3(0.0, 0.0, -5.f));
 
-    
-
-    mat4 projection = mat4(1.0f);
-    float fov = 45.f;
-    projection = glm::perspective(glm::radians(fov), viewport_size.x / viewport_size.y, 0.1f, 100.f);
-
-    //===== Camera =====
+    //===== Camera ====
     {
         static int testValue = 0;
         //bind Key
@@ -141,16 +138,16 @@ void Renderer::render(const std::list<Model*>& models){
         {
             testValue = 1;
             parent->shortcuts.push_back(Shortcut("D", false, false, false, ImGuiKey_D, [=]() {
-                xPos += 0.5f;
+                camera->get_transform()->add_localPosition({ 0.5f,0,0 });
                 }));
             parent->shortcuts.push_back(Shortcut("A", false, false, false, ImGuiKey_A, [=]() {
-                xPos -= 0.5f;
+                camera->get_transform()->add_localPosition({ -0.5f,0,0 });
                 }));
             parent->shortcuts.push_back(Shortcut("W", false, false, false, ImGuiKey_W, [=]() {
-                yPos += 0.5f;
+                camera->get_transform()->add_localPosition({ 0.f,0.5f,0 });
                 }));
             parent->shortcuts.push_back(Shortcut("S", false, false, false, ImGuiKey_S, [=]() {
-                yPos -= 0.5f;
+                camera->get_transform()->add_localPosition({ 0.f,-0.5f,0 });
                 }));
             parent->shortcuts.push_back(Shortcut("Q", false, false, false, ImGuiKey_Q, [=]() {
                 zPos += 0.5f;
@@ -171,19 +168,6 @@ void Renderer::render(const std::list<Model*>& models){
                 yDegree += 10.0f;
                 }));
         }
-
-
-        vec3 cameraPos = glm::vec3(-xPos, -yPos, zPos);
-        //
-       // vec3 cameraTar = vec3(-xPos, -yPos, zPos + 1) + Utils::get_vecFromPitchYaw(0, 12);
-        vec3 cameraDir = normalize(Utils::get_vecFromPitchYaw(-xDegree, -yDegree));
-
-        vec3 up = vec3(0, 1.f, 0);
-        vec3 cameraRight = normalize(cross(up, cameraDir));
-
-        vec3 cameraUp = cross(cameraDir, cameraRight);
-
-        view = lookAt(cameraPos, cameraPos + cameraDir, cameraUp);
     }
 
 
@@ -197,9 +181,9 @@ void Renderer::render(const std::list<Model*>& models){
             int viewLocation = glGetUniformLocation(shaderProgram, "view");
             int projectionLocation = glGetUniformLocation(shaderProgram, "projection");
 
-            glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(*(model->get_transform().GetTransformMat())));
-            glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
-            glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+            glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(*(model->get_transform().get_transformMat())));
+            glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(camera->get_view()));
+            glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera->get_projection()));
         }
 
         model->render(this);

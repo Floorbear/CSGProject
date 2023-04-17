@@ -3,6 +3,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "EngineCore/Camera.h"
 
 #define NO_BACKGROUND
 
@@ -58,6 +59,10 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     gui_csgtree = false;
     //TODO : 여기서 도킹 설정?
 
+    mainCamera = new Camera(parent->window_size.x, parent->window_size.y);
+    mainCamera->set_parent(parent_);
+    cameras.push_back(mainCamera);
+
     renderer.viewport_size = vec2(512,512);//parent->window_size; // TODO : view창 만들면서 view창 크기로 지정
     renderer.set_parent(parent);
     renderer.init();
@@ -75,6 +80,12 @@ WorkSpace::~WorkSpace(){
 
     for (Model* model : models){
         delete model;
+    }
+
+
+    for (Camera* camera : cameras)
+    {
+        delete camera;
     }
 }
 
@@ -104,6 +115,10 @@ void WorkSpace::render(){
         ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        for (Camera* camera : cameras)
+        {
+            camera->calculate_view();
+        }
         renderer.render(models);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

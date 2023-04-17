@@ -44380,7 +44380,6 @@
     </ClInclude>
     <ClInclude Include="GUI.h" />
     <ClInclude Include="Utils.h" />
-    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Transform.h">
       <Filter>Base</Filter>
     </ClInclude>
@@ -44388,6 +44387,12 @@
       <Filter>Base</Filter>
     </ClInclude>
     <ClInclude Include="Task.h" />
+    <ClInclude Include="Renderer.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44429,7 +44434,6 @@
     </ClCompile>
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="Utils.cpp" />
-    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Transform.cpp">
       <Filter>Base</Filter>
     </ClCompile>
@@ -44437,6 +44441,12 @@
       <Filter>Base</Filter>
     </ClCompile>
     <ClCompile Include="Task.cpp" />
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.lib">

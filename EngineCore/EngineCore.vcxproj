@@ -14939,6 +14939,7 @@
     <ClInclude Include="..\Thirdparty\SDL\SDL_version.h" />
     <ClInclude Include="..\Thirdparty\SDL\SDL_video.h" />
     <ClInclude Include="..\Thirdparty\SDL\SDL_vulkan.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="GUI.h" />
@@ -14961,6 +14962,7 @@
     <ClCompile Include="..\Thirdparty\Imgui\imgui_impl_sdl2.cpp" />
     <ClCompile Include="..\Thirdparty\Imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="GUI.cpp" />

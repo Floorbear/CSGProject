@@ -57,6 +57,7 @@ public:
     void render(class Renderer* renderer);
 };
 
+class Camera;
 class Renderer{
     GUI* parent;
 
@@ -80,5 +81,7 @@ public:
     float yDegree = 0.f;
 
     Transform cameraTransfrom;
+
+    Camera* camera;
 };
 
