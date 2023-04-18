@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Utils.h"
+
 using namespace glm;
 
 class Transform{
@@ -36,6 +38,25 @@ public:
 	glm::mat4* get_transformMat()
 	{
 		return &transformMat;
+	}
+
+	inline glm::vec3 get_frontDir()
+	{
+		glm::vec3 frontDir = Utils::get_vecFromPitchYaw(worldRotation.x, worldRotation.y);
+		frontDir = glm::normalize(frontDir);
+		return frontDir;
+	}
+
+	inline glm::vec3 get_rightDir()
+	{
+		glm::vec3 rightDir;
+		glm::vec3 frontDir = Utils::get_vecFromPitchYaw(worldRotation.x, worldRotation.y);
+		glm::vec3 up = glm::vec3(0, 1, 0);
+
+		rightDir = -glm::cross(frontDir, up);
+
+		rightDir = glm::normalize(rightDir);
+		return rightDir;
 	}
 
 private:

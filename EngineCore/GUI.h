@@ -30,7 +30,7 @@ public:
     std::function<void()> callback;
 
     Shortcut(const char* name_, bool ctrl_, bool alt_, bool shift_, ImGuiKey discrete_key_, std::function<void()> callback_);
-    Shortcut(const char* name_, int continuous_key_, std::function<void()> callback_);
+    Shortcut(const char* name_, int glfw_continuous_key_, std::function<void()> callback_);
     void check_execute(GLFWwindow* glfw_window);
     std::string to_string();
 };

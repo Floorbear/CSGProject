@@ -115,9 +115,6 @@ void Renderer::render(const std::list<Model*>& models){
         newModel = new Model("MyModel");
         newModel->set_new(Mesh::Cube);
         parent->active_workspace->models.push_back(newModel);
-
-
-
     }
 
 
@@ -128,50 +125,6 @@ void Renderer::render(const std::list<Model*>& models){
         newMesh->set_localPostition(vec3(0,0, 5));
         newMesh->set_localScale(vec3(0.5f, 0.5f, 0.5f));
     }
-
-
-
-    //===== Camera ====
-    {
-        static int testValue = 0;
-        //bind Key
-        if (testValue == 0)
-        {
-            testValue = 1;
-            //parent->shortcuts.push_back(Shortcut("D", false, false, false, ImGuiKey_D, [=]() {
-            //    camera->get_transform()->add_localPosition({ 0.5f,0,0 });
-            //    }));
-            //parent->shortcuts.push_back(Shortcut("A", false, false, false, ImGuiKey_A, [=]() {
-            //    camera->get_transform()->add_localPosition({ -0.5f,0,0 });
-            //    }));
-            //parent->shortcuts.push_back(Shortcut("W", false, false, false, ImGuiKey_W, [=]() {
-            //    camera->get_transform()->add_localPosition({ 0.f,0.5f,0 });
-            //    }));
-            //parent->shortcuts.push_back(Shortcut("S", false, false, false, ImGuiKey_S, [=]() {
-            //    camera->get_transform()->add_localPosition({ 0.f,-0.5f,0 });
-            //    }));
-            //parent->shortcuts.push_back(Shortcut("Q", false, false, false, ImGuiKey_Q, [=]() {
-            //    zPos += 0.5f;
-            //    }));
-            //parent->shortcuts.push_back(Shortcut("E", false, false, false, ImGuiKey_E, [=]() {
-            //    zPos -= 0.5f;
-            //    }));
-            //parent->shortcuts.push_back(Shortcut("Z", false, false, false, ImGuiKey_Z, [=]() {
-            //    xDegree -= 10.f;
-            //    }));
-            //parent->shortcuts.push_back(Shortcut("X", false, false, false, ImGuiKey_X, [=]() {
-            //    xDegree += 10.0f;
-            //    }));
-            //parent->shortcuts.push_back(Shortcut("C", false, false, false, ImGuiKey_C, [=]() {
-            //    yDegree -= 10.0f;
-            //    }));
-            //parent->shortcuts.push_back(Shortcut("V", false, false, false, ImGuiKey_V, [=]() {
-            //    yDegree += 10.0f;
-            //    }));       
-        }
-    }
-
-
 
     for (Model* model : models){
         model->get_shader()->Use();

@@ -21,12 +21,12 @@ Shortcut::Shortcut(const char* name_, bool ctrl_, bool alt_, bool shift_, ImGuiK
     type = Type::Discrete;
 }
 
-Shortcut::Shortcut(const char* name_, int continuous_key_, std::function<void()> callback_) :
+Shortcut::Shortcut(const char* name_, int glfw_continuous_key_, std::function<void()> callback_) :
     name(name_),
     ctrl(false), // 가능하게 할까? 일단은 막아놓음.
     alt(false),
     shift(false),
-    continuous_key(continuous_key_),
+    continuous_key(glfw_continuous_key_),
     callback(callback_){
     type = Type::Continuous;
 }
@@ -88,35 +88,42 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     mainCamera->set_parent(parent_);
     cameras.push_back(mainCamera);
 
-    parent->shortcuts.push_back(Shortcut("D", false, false, false, ImGuiKey_D, [=]() {
-        mainCamera->get_transform()->add_localPosition({ 0.5f,0,0 });
+    float speed = 0.01f;
+    float rotateSpeed = 0.1f;
+
+    parent->shortcuts.push_back(Shortcut("D", GLFW_KEY_D, [=]() {
+        vec3 Dir = mainCamera->get_transform()->get_rightDir() * speed;
+        mainCamera->get_transform()->add_localPosition(Dir);
         }));
-    parent->shortcuts.push_back(Shortcut("A", false, false, false, ImGuiKey_A, [=]() {
-        mainCamera->get_transform()->add_localPosition({ -0.5f,0,0 });
+    parent->shortcuts.push_back(Shortcut("A", GLFW_KEY_A, [=]() {
+        vec3 Dir = mainCamera->get_transform()->get_rightDir() * -speed;
+    mainCamera->get_transform()->add_localPosition(Dir);
         }));
-    parent->shortcuts.push_back(Shortcut("W", false, false, false, ImGuiKey_W, [=]() {
-        mainCamera->get_transform()->add_localPosition({ 0.f,0.5f,0 });
+    parent->shortcuts.push_back(Shortcut("Q", GLFW_KEY_Q,[=]() {
+        mainCamera->get_transform()->add_localPosition({ 0.f,speed,0 });
         }));
-    parent->shortcuts.push_back(Shortcut("S", false, false, false, ImGuiKey_S, [=]() {
-        mainCamera->get_transform()->add_localPosition({ 0.f,-0.5f,0 });
+    parent->shortcuts.push_back(Shortcut("E", GLFW_KEY_E, [=]() {
+        mainCamera->get_transform()->add_localPosition({ 0.f,-speed,0 });
         }));
-    parent->shortcuts.push_back(Shortcut("Q", false, false, false, ImGuiKey_Q, [=]() {
-        mainCamera->get_transform()->add_localPosition({ 0.f,0.0f,0.5f });
+    parent->shortcuts.push_back(Shortcut("W", GLFW_KEY_W, [=]() {
+        vec3 Dir = mainCamera->get_transform()->get_frontDir() * speed;
+    mainCamera->get_transform()->add_localPosition(Dir);
         }));
-    parent->shortcuts.push_back(Shortcut("E", false, false, false, ImGuiKey_E, [=]() {
-        mainCamera->get_transform()->add_localPosition({ 0.f,0.f,-0.5f });
+    parent->shortcuts.push_back(Shortcut("S", GLFW_KEY_S, [=]() {
+        vec3 Dir = mainCamera->get_transform()->get_frontDir() * -speed;
+    mainCamera->get_transform()->add_localPosition(Dir);
         }));
-    parent->shortcuts.push_back(Shortcut("Z", false, false, false, ImGuiKey_Z, [=]() {
-        mainCamera->get_transform()->add_localRotation({-1.5f,0.f,0.f });//내려보이기
+    parent->shortcuts.push_back(Shortcut("Z", GLFW_KEY_Z, [=]() {
+        mainCamera->get_transform()->add_localRotation({-rotateSpeed,0.f,0.f });//내려보이기
         }));
-    parent->shortcuts.push_back(Shortcut("X", false, false, false, ImGuiKey_X, [=]() {
-        mainCamera->get_transform()->add_localRotation({ 1.5f,0.f,0.f });//올려보기
+    parent->shortcuts.push_back(Shortcut("X", GLFW_KEY_X, [=]() {
+        mainCamera->get_transform()->add_localRotation({ rotateSpeed,0.f,0.f });//올려보기
         }));
-    parent->shortcuts.push_back(Shortcut("C", false, false, false, ImGuiKey_C, [=]() {
-        mainCamera->get_transform()->add_localRotation({ 0.f,-1.5f,0.f });
+    parent->shortcuts.push_back(Shortcut("C", GLFW_KEY_C, [=]() {
+        mainCamera->get_transform()->add_localRotation({ 0.f,-rotateSpeed,0.f });
         }));
-    parent->shortcuts.push_back(Shortcut("V", false, false, false, ImGuiKey_V, [=]() {
-        mainCamera->get_transform()->add_localRotation({0.f,1.5f,0.f });
+    parent->shortcuts.push_back(Shortcut("V", GLFW_KEY_V, [=]() {
+        mainCamera->get_transform()->add_localRotation({0.f,rotateSpeed,0.f });
         }));
 
     renderer.viewport_size = vec2(512,512);//parent->window_size; // TODO : view창 만들면서 view창 크기로 지정
