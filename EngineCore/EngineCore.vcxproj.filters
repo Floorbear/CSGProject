@@ -44393,6 +44393,8 @@
     <ClInclude Include="Camera.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="Component.h" />
+    <ClInclude Include="GUI_Actions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44447,6 +44449,8 @@
     <ClCompile Include="Camera.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="Component.cpp" />
+    <ClCompile Include="GUI_Actions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.lib">

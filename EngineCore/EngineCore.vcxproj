@@ -14940,10 +14940,12 @@
     <ClInclude Include="..\Thirdparty\SDL\SDL_video.h" />
     <ClInclude Include="..\Thirdparty\SDL\SDL_vulkan.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Component.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="EngineMinimal.h" />
+    <ClInclude Include="GUI_Actions.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
@@ -14963,9 +14965,11 @@
     <ClCompile Include="..\Thirdparty\Imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Thirdparty\Imgui\imgui_widgets.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Component.cpp" />
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="GUI_Actions.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />

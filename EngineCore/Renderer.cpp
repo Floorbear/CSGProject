@@ -115,6 +115,7 @@ void Renderer::render(const std::list<Model*>& models){
         newModel = new Model("MyModel");
         newModel->set_new(Mesh::Cube);
         parent->active_workspace->models.push_back(newModel);
+        camera->get_transform()->set_localPostition(vec3(0.0f, 0.0f, -5.0f));
     }
 
 
@@ -122,7 +123,7 @@ void Renderer::render(const std::list<Model*>& models){
     if(model!=NULL){
         //CSGMesh* newMesh = 
         Transform* newMesh = model->test_get_main_transform();//->FindMesh("Cube1");
-        newMesh->set_localPostition(vec3(0,0, 5));
+        newMesh->set_localPostition(vec3(0,0, 2));
         newMesh->set_localScale(vec3(0.5f, 0.5f, 0.5f));
     }
 

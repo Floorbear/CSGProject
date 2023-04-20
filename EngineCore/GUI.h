@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GUI_Actions.h"
 #include "Renderer.h"
 #include "Task.h"
 
@@ -23,14 +24,14 @@ class Shortcut{ // TODO : 공통 부모를 가진 두 클래스로 쪼개기
 public:
     std::string name;
     bool ctrl;
-    bool alt;
     bool shift;
-    ImGuiKey discrete_key;
-    int continuous_key;
+    bool alt;
+    ImGuiKey discrete_key = ImGuiKey::ImGuiKey_None;
+    int continuous_key = 0;
     std::function<void()> callback;
 
-    Shortcut(const char* name_, bool ctrl_, bool alt_, bool shift_, ImGuiKey discrete_key_, std::function<void()> callback_);
-    Shortcut(const char* name_, int glfw_continuous_key_, std::function<void()> callback_);
+    Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, ImGuiKey discrete_key_, std::function<void()> callback_);
+    Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, int glfw_continuous_key_, std::function<void()> callback_);
     void check_execute(GLFWwindow* glfw_window);
     std::string to_string();
 };
@@ -40,6 +41,7 @@ class WorkSpace{
     static int id_counter;
 
     GUI* parent; // WorkSpace는 GUI에 종속
+    WorkSpace_Actions actions;
 
     void render_popup_menu();
 
@@ -78,12 +80,13 @@ public:
         return mainCamera;
     }
 
-private:
     Camera* mainCamera;
+private:
     std::list<Camera*> cameras;
 };
 
 class GUI{
+    GUI_Actions actions;
     int frame_count;
 
     void init_glfw();

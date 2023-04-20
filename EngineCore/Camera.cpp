@@ -4,6 +4,10 @@
 
 using namespace glm;
 
+float Camera::speed_move_default = 0.03f;
+float Camera::speed_rotate_default = 0.2f;
+float Camera::speed_move_fast = 0.9f;
+
 Camera::Camera(float width_, float height_, float fov_):
     width(width_),
     height(height_),

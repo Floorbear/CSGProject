@@ -12,6 +12,10 @@ class GUI;
 class Camera
 {
 public:
+	static float speed_move_default;
+	static float speed_rotate_default;
+	static float speed_move_fast;
+
 	Camera(float width_, float height_, float fov = 45.f);
 	~Camera();
 

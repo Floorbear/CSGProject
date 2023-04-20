@@ -11,21 +11,21 @@
 
 // ===== Shortcut ===== //
 
-Shortcut::Shortcut(const char* name_, bool ctrl_, bool alt_, bool shift_, ImGuiKey discrete_key_, std::function<void()> callback_) :
+Shortcut::Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, ImGuiKey discrete_key_, std::function<void()> callback_) :
     name(name_),
     ctrl(ctrl_),
-    alt(alt_),
     shift(shift_),
+    alt(alt_),
     discrete_key(discrete_key_),
     callback(callback_){
     type = Type::Discrete;
 }
 
-Shortcut::Shortcut(const char* name_, int glfw_continuous_key_, std::function<void()> callback_) :
+Shortcut::Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, int glfw_continuous_key_, std::function<void()> callback_) :
     name(name_),
-    ctrl(false), // 가능하게 할까? 일단은 막아놓음.
-    alt(false),
-    shift(false),
+    ctrl(ctrl_),
+    shift(shift_),
+    alt(alt_),
     continuous_key(glfw_continuous_key_),
     callback(callback_){
     type = Type::Continuous;
@@ -33,13 +33,16 @@ Shortcut::Shortcut(const char* name_, int glfw_continuous_key_, std::function<vo
 
 void Shortcut::check_execute(GLFWwindow* glfw_window){
     if (type == Type::Continuous){
-        if (glfwGetKey(glfw_window, continuous_key) == GLFW_PRESS){
+        if (ctrl == ImGui::GetIO().KeyCtrl &&
+            shift == ImGui::GetIO().KeyShift &&
+            alt == ImGui::GetIO().KeyAlt &&
+            glfwGetKey(glfw_window, continuous_key) == GLFW_PRESS){
             callback();
         }
     } else if (type == Type::Discrete){
         if (ctrl == ImGui::GetIO().KeyCtrl &&
-            alt == ImGui::GetIO().KeyAlt &&
             shift == ImGui::GetIO().KeyShift &&
+            alt == ImGui::GetIO().KeyAlt &&
             ImGui::IsKeyPressed(ImGui::GetKeyIndex(discrete_key))){
             callback();
         }
@@ -75,7 +78,7 @@ int WorkSpace::id_counter = 1; // 1부터 시작
 WorkSpace::WorkSpace(GUI* parent_) : WorkSpace(parent_, std::string("test")){
 }
 
-WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(title_){
+WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(title_), actions(WorkSpace_Actions(this)){
     id = id_counter++;
     gui_initialized = false;
     gui_hierarchy = true;
@@ -84,49 +87,12 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     gui_csgtree = false;
     //TODO : 여기서 도킹 설정?
 
+    // TODO : 렌더러로 이동
     mainCamera = new Camera(parent->window_size.x, parent->window_size.y);
     mainCamera->set_parent(parent_);
     cameras.push_back(mainCamera);
 
-    float speed = 0.01f;
-    float rotateSpeed = 0.1f;
-
-    parent->shortcuts.push_back(Shortcut("D", GLFW_KEY_D, [=]() {
-        vec3 Dir = mainCamera->get_transform()->get_rightDir() * speed;
-        mainCamera->get_transform()->add_localPosition(Dir);
-        }));
-    parent->shortcuts.push_back(Shortcut("A", GLFW_KEY_A, [=]() {
-        vec3 Dir = mainCamera->get_transform()->get_rightDir() * -speed;
-    mainCamera->get_transform()->add_localPosition(Dir);
-        }));
-    parent->shortcuts.push_back(Shortcut("Q", GLFW_KEY_Q,[=]() {
-        mainCamera->get_transform()->add_localPosition({ 0.f,speed,0 });
-        }));
-    parent->shortcuts.push_back(Shortcut("E", GLFW_KEY_E, [=]() {
-        mainCamera->get_transform()->add_localPosition({ 0.f,-speed,0 });
-        }));
-    parent->shortcuts.push_back(Shortcut("W", GLFW_KEY_W, [=]() {
-        vec3 Dir = mainCamera->get_transform()->get_frontDir() * speed;
-    mainCamera->get_transform()->add_localPosition(Dir);
-        }));
-    parent->shortcuts.push_back(Shortcut("S", GLFW_KEY_S, [=]() {
-        vec3 Dir = mainCamera->get_transform()->get_frontDir() * -speed;
-    mainCamera->get_transform()->add_localPosition(Dir);
-        }));
-    parent->shortcuts.push_back(Shortcut("Z", GLFW_KEY_Z, [=]() {
-        mainCamera->get_transform()->add_localRotation({-rotateSpeed,0.f,0.f });//내려보이기
-        }));
-    parent->shortcuts.push_back(Shortcut("X", GLFW_KEY_X, [=]() {
-        mainCamera->get_transform()->add_localRotation({ rotateSpeed,0.f,0.f });//올려보기
-        }));
-    parent->shortcuts.push_back(Shortcut("C", GLFW_KEY_C, [=]() {
-        mainCamera->get_transform()->add_localRotation({ 0.f,-rotateSpeed,0.f });
-        }));
-    parent->shortcuts.push_back(Shortcut("V", GLFW_KEY_V, [=]() {
-        mainCamera->get_transform()->add_localRotation({0.f,rotateSpeed,0.f });
-        }));
-
-    renderer.viewport_size = vec2(512,512);//parent->window_size; // TODO : view창 만들면서 view창 크기로 지정
+    renderer.viewport_size = vec2(512, 512);//parent->window_size; // TODO : view창 만들면서 view창 크기로 지정
     renderer.set_parent(parent);
     renderer.init();
 }
@@ -145,9 +111,7 @@ WorkSpace::~WorkSpace(){
         delete model;
     }
 
-
-    for (Camera* camera : cameras)
-    {
+    for (Camera* camera : cameras){ // TODO : renderer로 이동
         delete camera;
     }
 }
@@ -172,25 +136,26 @@ void WorkSpace::render(){
 
     {// TODO : 여러 view에서 models를 참조해서 그려야함. (렌더러 개수만큼 수행)
         // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
-        GLuint f_tex = init_fbo(view_w,view_h);
- 
-        glViewport(0, 0, 512,512);
+        GLuint f_tex = init_fbo(view_w, view_h);
+
+        // TODO : 이부분 렌더러로 이동
+        glViewport(0, 0, 512, 512);
         ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        for (Camera* camera : cameras)
-        {
+        for (Camera* camera : cameras){
             camera->calculate_view();
         }
+        // 여기까지
         renderer.render(models);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         ImGui::Begin(Utils::format("View##%1%", id).c_str(), 0, window_flags);
         view_w = ImGui::GetWindowSize().x;
         view_h = ImGui::GetWindowSize().y;
-        renderer.viewport_size.x=view_w;
-        renderer.viewport_size.y=view_h;
-        ImVec2 sss = ImVec2(ImGui::GetWindowPos().x+ImGui::GetWindowSize().x, ImGui::GetWindowPos().y+ImGui::GetWindowSize().y);
+        renderer.viewport_size.x = view_w;
+        renderer.viewport_size.y = view_h;
+        ImVec2 sss = ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y);
         ImGui::GetWindowDrawList()->
             AddImage((void*)f_tex, ImGui::GetWindowPos(), sss, ImVec2(0, 0), ImVec2(1, 1));
         render_popup_menu();
@@ -231,58 +196,14 @@ void WorkSpace::render(){
     }
 }
 
-void WorkSpace::render_popup_menu(){
-    if (ImGui::GetIO().MouseClicked[1]){
-        ImGui::OpenPopup("View_Popup_Edit");
-    }
-    if (ImGui::BeginPopup("View_Popup_Edit")){
-        if (ImGui::MenuItem("Cut", "CTRL+X")){}
-        if (ImGui::MenuItem("Copy", "CTRL+C")){}
-        if (ImGui::MenuItem("Paste", "CTRL+V")){}
-        if (ImGui::MenuItem("Delete", "Del")){}
-        ImGui::Separator();
-        if (ImGui::BeginMenu("Select")){
-            if (ImGui::MenuItem("Select Parent")){}
-            if (ImGui::MenuItem("Reverse Selection")){}
-            if (ImGui::MenuItem("Filter Selection")){}
-            // TODO : 옵션 추가
-            ImGui::EndMenu();
-        }
-        ImGui::Separator();
-        if (ImGui::BeginMenu("Add Shape")){
-            if (ImGui::MenuItem("Cube")){}
-            if (ImGui::MenuItem("Sphere")){}
-            if (ImGui::MenuItem("Cylinder")){}
-            if (ImGui::MenuItem("Cone")){}
-            if (ImGui::MenuItem("Pyramid")){}
-            if (ImGui::MenuItem("Torus")){}
-            // TODO : 여러가지 추가
-            ImGui::EndMenu();
-        }
-        if (ImGui::MenuItem("Load Model")){}
-        ImGui::Separator();
-        if (ImGui::MenuItem("Union Selected Objects")){}
-        if (ImGui::MenuItem("Intersect Selected Objects")){}
-        if (ImGui::MenuItem("Difference Selected Objects")){
-            // TODO : selection에 순서가 있어야함
-        }
-        ImGui::Separator();
-        if (ImGui::MenuItem("Set To Selection Group")){
-            // csg연산 한거 나눠서 선택 안되게
-        }
-        ImGui::EndPopup();
-    }
-}
-
 WorkSpace* WorkSpace::create_new(GUI* parent_){
     return new WorkSpace(parent_, "test"); // TEST
 }
 
-GLuint WorkSpace::init_fbo(int w_, int _h)
-{
+GLuint WorkSpace::init_fbo(int w_, int _h){ // TODO : renderer로 이동
     static unsigned int fbo = 0;
     static GLuint f_tex;
-    if (fbo == 0) {
+    if (fbo == 0){
         glGenFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         //GLuint  f_tex = CreateTexture(512, 512, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -318,7 +239,7 @@ GLuint WorkSpace::init_fbo(int w_, int _h)
 
 // ===== Engine GUI ===== //
 
-GUI::GUI(){
+GUI::GUI() : actions(GUI_Actions(this)){
     frame_count = 0;
     glfw_window = NULL;
     active_workspace = NULL;
@@ -347,15 +268,14 @@ void GUI::render(){
 
 void GUI::update(){
     if (active_workspace != NULL){
-        // active_workspace->update(); TODO : ?
         active_workspace->transaction_manager.execute_all();
     }
 }
 
 void GUI::process_input(){
-    if (glfwGetKey(glfw_window, GLFW_KEY_ESCAPE) == GLFW_PRESS){ // 있어야 하나?
-        glfwSetWindowShouldClose(glfw_window, true);
-    }
+    //if (glfwGetKey(glfw_window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
+    //    glfwSetWindowShouldClose(glfw_window, true);
+    //}
 
     for (Shortcut shortcut : shortcuts){
         shortcut.check_execute(glfw_window);
@@ -406,31 +326,6 @@ void GUI::init_gui(){
 
     ImGui_ImplGlfw_InitForOpenGL(glfw_window, true);
     ImGui_ImplOpenGL3_Init();
-}
-
-int tcnt; // TEST
-void GUI::init_shortcut(){
-    shortcuts.push_back(Shortcut("saveee", GLFW_KEY_W, [](){
-        printf("www\n");
-    }));
-    shortcuts.push_back(Shortcut("save", true, false, false, ImGuiKey_S, [](){
-        printf("save");
-    }));
-    shortcuts.push_back(Shortcut("paste", true, false, false, ImGuiKey_V, [this](){
-        int ttcnt = tcnt;
-        active_workspace->transaction_manager.add(Utils::format("paste %1%", ttcnt), [=](){
-            printf("paste %d do\n", ttcnt);
-        }, [=](){
-            printf("paste %d undo\n", ttcnt);
-        });
-        tcnt++;
-    }));
-    shortcuts.push_back(Shortcut("undo", true, false, false, ImGuiKey_Z, [this](){
-        active_workspace->transaction_manager.undo();
-    }));
-    shortcuts.push_back(Shortcut("redo", true, false, false, ImGuiKey_Y, [this](){
-        active_workspace->transaction_manager.redo();
-    }));
 }
 
 void GUI::render_begin(){
@@ -492,7 +387,7 @@ void GUI::render_gui(){
             if (ImGui::BeginTabItem((workspace->title + "##" + std::to_string(workspace->id)).c_str(), &is_opened, ImGuiTabItemFlags_None)){
 
                 active_workspace = workspace;
-                
+
                 ImGuiID dockspace_id = ImGui::GetID(Utils::format("WorkSpace_DockSpace_%1%", workspace->id).c_str());
                 if (!workspace->gui_initialized){
                     // TODO : 이거 여깄어도 될까? workspace생성할때 TaskManager통해 한번만 수행하는걸로 변경?
@@ -567,6 +462,8 @@ void GUI::render_end(){
 }
 
 
+// ===== 기능 ===== //
+
 void GUI::render_menubar(){
     if (ImGui::BeginMenuBar()){
         if (ImGui::BeginMenu("File")){
@@ -604,43 +501,15 @@ void GUI::render_menubar(){
                 active_workspace->transaction_manager.redo();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Cut", "CTRL+X")){}
-            if (ImGui::MenuItem("Copy", "CTRL+C")){}
-            if (ImGui::MenuItem("Paste", "CTRL+V")){
-            }
-            if (ImGui::MenuItem("Delete", "Del")){}
-            ImGui::Separator();
-            if (ImGui::BeginMenu("Select")){
-                if (ImGui::MenuItem("Select Parent")){}
-                if (ImGui::MenuItem("Reverse Selection")){}
-                if (ImGui::MenuItem("Filter Selection")){}
-                // TODO : 옵션 추가
-                ImGui::EndMenu();
-            }
-            ImGui::Separator();
-            if (ImGui::BeginMenu("Add Shape")){
-                if (ImGui::MenuItem("Cube")){}
-                if (ImGui::MenuItem("Sphere")){}
-                if (ImGui::MenuItem("Cylinder")){}
-                if (ImGui::MenuItem("Cone")){}
-                if (ImGui::MenuItem("Pyramid")){}
-                if (ImGui::MenuItem("Torus")){}
-                // TODO : 여러가지 추가
-                ImGui::EndMenu();
-            }
-            if (ImGui::MenuItem("Load Model")){}
-            ImGui::Separator();
             if (ImGui::MenuItem("Union Selected Objects")){}
             if (ImGui::MenuItem("Intersect Selected Objects")){}
             if (ImGui::MenuItem("Difference Selected Objects")){
                 // TODO : selection에 순서가 있어야함
             }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Set To Selection Group")){
-                // csg연산 한거 나눠서 선택 안되게
-            }
+            // ? : 굳이 편집메뉴가 중복으로 있을까 해서 우클릭메뉴 중복 내용은 제거함.
             ImGui::EndMenu();
         }
+
         if (ImGui::BeginMenu("View")){
             if (ImGui::MenuItem("Add View Window")){}
             if (ImGui::MenuItem("Hierarchy", NULL, &active_workspace->gui_hierarchy)){}
@@ -651,15 +520,143 @@ void GUI::render_menubar(){
             ImGui::EndMenu();
         }
 
-        /*if (ImGui::BeginMenu("Options")){
-        if (ImGui::MenuItem("Flag: NoSplit", "", (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0)){ dockspace_flags ^= ImGuiDockNodeFlags_NoSplit; }
-        if (ImGui::MenuItem("Flag: NoResize", "", (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0)){ dockspace_flags ^= ImGuiDockNodeFlags_NoResize; }
-        if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0)){ dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode; }
-        if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0)){ dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar; }
+        /*if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0)){ dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar; }
         if (ImGui::MenuItem("Flag: PassthruCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0, true)){ dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode; }
-        ImGui::Separator();
-        ImGui::EndMenu();
-        }*/
+        */
         ImGui::EndMenuBar();
+    }
+}
+
+void WorkSpace::render_popup_menu(){
+    if (ImGui::GetIO().MouseClicked[1]){
+        ImGui::OpenPopup("View_Popup_Edit");
+    }
+    if (ImGui::BeginPopup("View_Popup_Edit")){
+
+        if (ImGui::MenuItem("Cut", "CTRL+X")){}
+        if (ImGui::MenuItem("Copy", "CTRL+C")){}
+        if (ImGui::MenuItem("Paste", "CTRL+V")){}
+        if (ImGui::MenuItem("Delete", "Del")){} // TODO : 선택이 있는경우 제한
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("Select")){
+            if (ImGui::MenuItem("Select Parent")){}
+            if (ImGui::MenuItem("Reverse Selection")){}
+            if (ImGui::MenuItem("Filter Selection")){}
+            // TODO : 옵션 추가
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
+        // 우클릭도 선택가능.
+        // TODO : if 선택된 모델이 있는경우 클릭하면 add child model
+        // TODO : if 선택된 메쉬가 있는경우 add mesh_union, add mesh intersention, add mesh difference(제한적으로 활성화)
+        if (ImGui::BeginMenu("Add Model")){
+            if (ImGui::MenuItem("Cube")){
+                transaction_manager.add("add cube",
+                                        [this](){ actions.add_cube_new(); },
+                                        [this](){ /*actions.delete_model();*/ });
+            }
+            if (ImGui::MenuItem("Sphere")){}
+            if (ImGui::MenuItem("Cylinder")){}
+            if (ImGui::MenuItem("Cone")){}
+            if (ImGui::MenuItem("Tetrahedron")){}
+            if (ImGui::MenuItem("Pyramid")){}
+            if (ImGui::MenuItem("Torus")){}
+            ImGui::EndMenu();
+        }
+        if (ImGui::MenuItem("Load Model")){}
+        ImGui::Separator();
+        if (ImGui::MenuItem("Set To Selection Group")){
+            // csg연산 한거 나눠서 선택 안되게
+        }
+        ImGui::EndPopup();
+    }
+}
+
+int tcnt; // TEST
+void GUI::init_shortcut(){
+
+    // ===== 편집 기능 ===== //
+    {
+        shortcuts.push_back(Shortcut("save", true, false, false, ImGuiKey_S, [](){
+            printf("save");
+        }));
+        shortcuts.push_back(Shortcut("paste", true, false, false, ImGuiKey_V, [this](){
+            int ttcnt = tcnt;
+            active_workspace->transaction_manager.add(Utils::format("paste %1%", ttcnt), [=](){
+                printf("paste %d do\n", ttcnt);
+            }, [=](){
+                printf("paste %d undo\n", ttcnt);
+            });
+            tcnt++;
+        }));
+        shortcuts.push_back(Shortcut("undo", true, false, false, ImGuiKey_Z, [this](){
+            active_workspace->transaction_manager.undo();
+        }));
+        shortcuts.push_back(Shortcut("redo", true, false, false, ImGuiKey_Y, [this](){
+            active_workspace->transaction_manager.redo();
+        }));
+    }
+
+    // ===== 카메라 ===== //
+    {
+        shortcuts.push_back(Shortcut("camera move right", false, false, false, GLFW_KEY_D, [=](){
+            vec3 Dir = active_workspace->mainCamera->get_transform()->get_rightDir() * Camera::speed_move_default;
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+        }));
+        shortcuts.push_back(Shortcut("camera move left", false, false, false, GLFW_KEY_A, [=](){
+            vec3 Dir = active_workspace->mainCamera->get_transform()->get_rightDir() * -Camera::speed_move_default;
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+        }));
+        shortcuts.push_back(Shortcut("camera move up", false, false, false, GLFW_KEY_Q, [=](){
+            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,Camera::speed_move_default, 0});
+        }));
+        shortcuts.push_back(Shortcut("camera move down", false, false, false, GLFW_KEY_E, [=](){
+            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,-Camera::speed_move_default, 0});
+        }));
+        shortcuts.push_back(Shortcut("camera move forward", false, false, false, GLFW_KEY_W, [=](){
+            vec3 Dir = active_workspace->mainCamera->get_transform()->get_frontDir() * Camera::speed_move_default;
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+        }));
+        shortcuts.push_back(Shortcut("camera move back", false, false, false, GLFW_KEY_S, [=](){
+            vec3 Dir = active_workspace->mainCamera->get_transform()->get_frontDir() * -Camera::speed_move_default;
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+        }));
+
+        shortcuts.push_back(Shortcut("camera move fast right", true, false, false, GLFW_KEY_D, [=](){
+            vec3 Dir = active_workspace->mainCamera->get_transform()->get_rightDir() * Camera::speed_move_fast;
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+        }));
+        shortcuts.push_back(Shortcut("camera move fast left", true, false, false, GLFW_KEY_A, [=](){
+            vec3 Dir = active_workspace->mainCamera->get_transform()->get_rightDir() * -Camera::speed_move_fast;
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+        }));
+        shortcuts.push_back(Shortcut("camera move fast up", true, false, false, GLFW_KEY_Q, [=](){
+            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,Camera::speed_move_fast, 0});
+        }));
+        shortcuts.push_back(Shortcut("camera move fast down", true, false, false, GLFW_KEY_E, [=](){
+            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,-Camera::speed_move_fast, 0});
+        }));
+        shortcuts.push_back(Shortcut("camera move fast forward", true, false, false, GLFW_KEY_W, [=](){
+            vec3 Dir = active_workspace->mainCamera->get_transform()->get_frontDir() * Camera::speed_move_fast;
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+        }));
+        shortcuts.push_back(Shortcut("camera move fast back", true, false, false, GLFW_KEY_S, [=](){
+            vec3 Dir = active_workspace->mainCamera->get_transform()->get_frontDir() * -Camera::speed_move_fast;
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+        }));
+
+        shortcuts.push_back(Shortcut("camera rotate up", false, false, false, GLFW_KEY_UP, [=](){
+            active_workspace->mainCamera->get_transform()->add_localRotation({Camera::speed_rotate_default, 0.0f, 0.0f});
+        }));
+        shortcuts.push_back(Shortcut("camera rotate down", false, false, false, GLFW_KEY_DOWN, [=](){
+            active_workspace->mainCamera->get_transform()->add_localRotation({-Camera::speed_rotate_default, 0.0f, 0.0f});
+        }));
+        shortcuts.push_back(Shortcut("camera rotate left", false, false, false, GLFW_KEY_LEFT, [=](){
+            active_workspace->mainCamera->get_transform()->add_localRotation({0.0f, -Camera::speed_rotate_default, 0.0f});
+        }));
+        shortcuts.push_back(Shortcut("camera rotate right", false, false, false, GLFW_KEY_RIGHT, [=](){
+            active_workspace->mainCamera->get_transform()->add_localRotation({0.0f, Camera::speed_rotate_default, 0.0f});
+        }));
     }
 }
