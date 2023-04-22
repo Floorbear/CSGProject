@@ -192,8 +192,8 @@ void Mesh::render(){
         // Linking Vertex Attribute
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-        //glEnableVertexAttribArray(1); //Vertex Color Data
-        //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1); //Vertex normal Data
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::normal)));
     }
 
     //transform.AddLocalRotation(glm::vec3(0.05f, 0.f, 0.f)); 

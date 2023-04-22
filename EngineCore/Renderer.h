@@ -57,7 +57,10 @@ public:
 
 
     //===== Material =====
+    static vec3 lightPos;
     vec3 objectColor = { 1.0f,1.0f,0.0f };
+    float ambient = 0.1f;
+
     Shader* get_shader();
 
 };

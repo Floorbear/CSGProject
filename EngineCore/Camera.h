@@ -49,6 +49,8 @@ private:
 	float width = 0.f;
 	float height = 0.f;
 	float fov = 45.f;
+	float near = 0.1f;
+	float far = 100.f;
 
 
 	glm::mat4 view;

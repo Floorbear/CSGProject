@@ -29,7 +29,7 @@ void Camera::calculate_view()
 
     mat4 newProjection = mat4(1.0f);
     float fov = 45.f;
-    projection = glm::perspective(glm::radians(fov), width/ height, 0.1f, 100.f);
+    projection = glm::perspective(glm::radians(fov), width/ height, near, far);
 
     vec3 cameraPos = -transform.get_worldPosition();
     cameraPos.z = -cameraPos.z;

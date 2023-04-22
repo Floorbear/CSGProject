@@ -51,6 +51,7 @@ void CSGNode::render(){
 
 
 // ===== Model ===== //
+vec3 Model::lightPos = vec3(30, -100, -50);
 
 Model::Model(std::string name_) : name(name_){
     csgmesh = nullptr;
@@ -84,7 +85,11 @@ Shader* Model::get_shader(){
 }
 
 void Model::render(Renderer* renderer){
+    lightPos.x = 50 * sin(Utils::time_acc());
+    lightPos.z = 50*sin(Utils::time_acc());
     get_shader()->set_vec3("objectColor", objectColor);
+    get_shader()->set_vec3("lightPos", lightPos);
+    get_shader()->set_float("ambient", ambient);
     csgmesh->render();
 }
 

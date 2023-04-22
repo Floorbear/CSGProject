@@ -60,6 +60,12 @@ void Shader::Use()
 	glUseProgram(shaderProgram);
 }
 
+void Shader::set_float(std::string_view uniform_, float value_)
+{
+	GLuint uniformLocation = glGetUniformLocation(shaderProgram, uniform_.data());
+	glUniform1f(uniformLocation, value_);
+}
+
 void Shader::set_mat4(std::string_view uniform_, const glm::mat4& value_)
 {
 	GLuint uniformLocation = glGetUniformLocation(shaderProgram, uniform_.data());

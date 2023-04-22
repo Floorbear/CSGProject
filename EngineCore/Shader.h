@@ -14,6 +14,7 @@ public:
 		return shaderProgram;
 	}
 
+	void set_float(std::string_view uniform_, float value_);
 	void set_mat4(std::string_view uniform_, const glm::mat4& value_);
 	void set_vec3(std::string_view uniform_, const glm::vec3& value_);
 
