@@ -368,3 +368,4 @@ FodyWeavers.xsd
 !Thirdparty/boost/**
 !Thirdparty/CGAL/**
 !Thirdparty/**
+imgui.ini

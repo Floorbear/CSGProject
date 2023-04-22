@@ -30,6 +30,7 @@ Core* Core::get(){
 void Core::start(){
     gui.init();
     while (!glfwWindowShouldClose(gui.glfw_window)){
+        Utils::time_update();
         task_manager.execute_all();
         gui.process_input();
         gui.update();

@@ -602,61 +602,61 @@ void GUI::init_shortcut(){
     {
         shortcuts.push_back(Shortcut("camera move right", false, false, false, GLFW_KEY_D, [=](){
             vec3 Dir = active_workspace->mainCamera->get_transform()->get_rightDir() * Camera::speed_move_default;
-            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move left", false, false, false, GLFW_KEY_A, [=](){
             vec3 Dir = active_workspace->mainCamera->get_transform()->get_rightDir() * -Camera::speed_move_default;
-            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move up", false, false, false, GLFW_KEY_Q, [=](){
-            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,Camera::speed_move_default, 0});
+            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,Camera::speed_move_default * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move down", false, false, false, GLFW_KEY_E, [=](){
-            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,-Camera::speed_move_default, 0});
+            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,-Camera::speed_move_default * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move forward", false, false, false, GLFW_KEY_W, [=](){
             vec3 Dir = active_workspace->mainCamera->get_transform()->get_frontDir() * Camera::speed_move_default;
-            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move back", false, false, false, GLFW_KEY_S, [=](){
             vec3 Dir = active_workspace->mainCamera->get_transform()->get_frontDir() * -Camera::speed_move_default;
-            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir * Utils::time_delta());
         }));
 
         shortcuts.push_back(Shortcut("camera move fast right", true, false, false, GLFW_KEY_D, [=](){
             vec3 Dir = active_workspace->mainCamera->get_transform()->get_rightDir() * Camera::speed_move_fast;
-            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move fast left", true, false, false, GLFW_KEY_A, [=](){
             vec3 Dir = active_workspace->mainCamera->get_transform()->get_rightDir() * -Camera::speed_move_fast;
-            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move fast up", true, false, false, GLFW_KEY_Q, [=](){
-            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,Camera::speed_move_fast, 0});
+            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,Camera::speed_move_fast * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move fast down", true, false, false, GLFW_KEY_E, [=](){
-            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,-Camera::speed_move_fast, 0});
+            active_workspace->mainCamera->get_transform()->add_localPosition({0.f,-Camera::speed_move_fast * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move fast forward", true, false, false, GLFW_KEY_W, [=](){
             vec3 Dir = active_workspace->mainCamera->get_transform()->get_frontDir() * Camera::speed_move_fast;
-            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move fast back", true, false, false, GLFW_KEY_S, [=](){
             vec3 Dir = active_workspace->mainCamera->get_transform()->get_frontDir() * -Camera::speed_move_fast;
-            active_workspace->mainCamera->get_transform()->add_localPosition(Dir);
+            active_workspace->mainCamera->get_transform()->add_localPosition(Dir * Utils::time_delta());
         }));
 
         shortcuts.push_back(Shortcut("camera rotate up", false, false, false, GLFW_KEY_UP, [=](){
-            active_workspace->mainCamera->get_transform()->add_localRotation({Camera::speed_rotate_default, 0.0f, 0.0f});
+            active_workspace->mainCamera->get_transform()->add_localRotation({Camera::speed_rotate_default * Utils::time_delta(), 0.0f, 0.0f});
         }));
         shortcuts.push_back(Shortcut("camera rotate down", false, false, false, GLFW_KEY_DOWN, [=](){
-            active_workspace->mainCamera->get_transform()->add_localRotation({-Camera::speed_rotate_default, 0.0f, 0.0f});
+            active_workspace->mainCamera->get_transform()->add_localRotation({-Camera::speed_rotate_default * Utils::time_delta(), 0.0f, 0.0f});
         }));
         shortcuts.push_back(Shortcut("camera rotate left", false, false, false, GLFW_KEY_LEFT, [=](){
-            active_workspace->mainCamera->get_transform()->add_localRotation({0.0f, -Camera::speed_rotate_default, 0.0f});
+            active_workspace->mainCamera->get_transform()->add_localRotation({0.0f, -Camera::speed_rotate_default * Utils::time_delta(), 0.0f});
         }));
         shortcuts.push_back(Shortcut("camera rotate right", false, false, false, GLFW_KEY_RIGHT, [=](){
-            active_workspace->mainCamera->get_transform()->add_localRotation({0.0f, Camera::speed_rotate_default, 0.0f});
+            active_workspace->mainCamera->get_transform()->add_localRotation({0.0f, Camera::speed_rotate_default * Utils::time_delta(), 0.0f});
         }));
     }
 }
