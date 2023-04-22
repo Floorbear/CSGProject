@@ -53,8 +53,13 @@ public:
     void translate(vec3 delta); // 자식들까지 이동
     // TODO : transform 조정 기능들을 그대로 복사? : 이것은 Model자신의 transform이 존재하지않고 대표 메쉬의 것을 대신 사용하기 때문
 
-    Shader* get_shader();
     void render(class Renderer* renderer);
+
+
+    //===== Material =====
+    vec3 objectColor = { 1.0f,1.0f,0.0f };
+    Shader* get_shader();
+
 };
 
 class Camera;

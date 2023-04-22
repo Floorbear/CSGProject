@@ -84,6 +84,7 @@ Shader* Model::get_shader(){
 }
 
 void Model::render(Renderer* renderer){
+    get_shader()->set_vec3("objectColor", objectColor);
     csgmesh->render();
 }
 
@@ -124,23 +125,18 @@ void Renderer::render(const std::list<Model*>& models){
         //CSGMesh* newMesh = 
         Transform* newMesh = model->test_get_main_transform();//->FindMesh("Cube1");
         newMesh->set_localPostition(vec3(0,0, 2));
-        newMesh->set_localScale(vec3(0.5f, 0.5f, 0.5f));
+        newMesh->set_localScale(vec3(1.5f, 1.0f, 0.5f));
     }
 
     for (Model* model : models){
         model->get_shader()->Use();
 
+        //좌표 정보 전달
         {
-            unsigned int shaderProgram = model->get_shader()->get_shaderProgram();
-            int worldLocation = glGetUniformLocation(shaderProgram, "world");
-            int viewLocation = glGetUniformLocation(shaderProgram, "view");
-            int projectionLocation = glGetUniformLocation(shaderProgram, "projection");
-
-            glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(*(model->get_transform().get_transformMat())));
-            glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(camera->get_view()));
-            glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(camera->get_projection()));
+            model->get_shader()->set_mat4("world", *model->get_transform().get_transformMat());
+            model->get_shader()->set_mat4("view", camera->get_view());
+            model->get_shader()->set_mat4("projection", camera->get_projection());
         }
-
         model->render(this);
     }
 }

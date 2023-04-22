@@ -1,6 +1,8 @@
 #version 330 core
 out vec4 FragColor;
 
+uniform vec3 objectColor;
+
 float near = 0.1; 
 float far  = 10;//100.0; 
 // https://heinleinsgame.tistory.com/24
@@ -14,5 +16,5 @@ float LinearizeDepth(float depth)
 void main()
 {             
     float depth = LinearizeDepth(gl_FragCoord.z) / far; // 보여주기 위해 far로 나눕니다.
-    FragColor = vec4(vec3(depth), 1.0);
+    FragColor = vec4(objectColor*vec3(depth), 1.0);
 }
