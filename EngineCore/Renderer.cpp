@@ -56,6 +56,7 @@ vec3 Model::lightPos = vec3(30, -100, -50);
 Model::Model(std::string name_) : name(name_){
     csgmesh = nullptr;
     shader = new Shader();
+    //components.add( TODO
 }
 
 Model::~Model(){
@@ -71,14 +72,11 @@ void Model::set_new(const Mesh& mesh){
     csgmesh = new CSGNode(mesh);
 }
 
-Transform Model::get_transform(){
-    return *(csgmesh->get_transform());
-}
-
-
-Transform* Model::test_get_main_transform(){ // TEST
+Transform* Model::get_transform(){ // TODO : 수정!!
+    // return component
     return csgmesh->get_transform();
 }
+
 
 Shader* Model::get_shader(){
     return shader;
@@ -121,16 +119,16 @@ void Renderer::render(const std::list<Model*>& models){
         newModel = new Model("MyModel");
         newModel->set_new(Mesh::Cube);
         parent->active_workspace->models.push_back(newModel);
-        camera->get_transform()->set_localPostition(vec3(0.0f, 0.0f, -5.0f));
+        camera->get_transform()->set_position(vec3(0.0f, 0.0f, -5.0f));
     }
 
 
     Model* model = parent->active_workspace->find_model("MyModel");
     if(model!=NULL){
         //CSGMesh* newMesh = 
-        Transform* newMesh = model->test_get_main_transform();//->FindMesh("Cube1");
-        newMesh->set_localPostition(vec3(0,0, 2));
-        newMesh->set_localScale(vec3(1.5f, 1.0f, 0.5f));
+        /*Transform* newMesh = model->test_get_main_transform();//->FindMesh("Cube1");
+        newMesh->set_position(vec3(0,0, 2));
+        newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));*/
     }
 
     for (Model* model : models){
@@ -138,7 +136,7 @@ void Renderer::render(const std::list<Model*>& models){
 
         //좌표 정보 전달
         {
-            model->get_shader()->set_mat4("world", *model->get_transform().get_transformMat());
+            model->get_shader()->set_mat4("world", *model->get_transform()->get_matrix());
             model->get_shader()->set_mat4("view", camera->get_view());
             model->get_shader()->set_mat4("projection", camera->get_projection());
         }

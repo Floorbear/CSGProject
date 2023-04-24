@@ -14,4 +14,3 @@ public:
 class Component{
     std::list<Parameter*> params;
 };
-
