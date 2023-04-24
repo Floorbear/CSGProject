@@ -119,7 +119,11 @@ void Renderer::render(const std::list<Model*>& models){
     static Model* newModel = NULL;
     if (newModel == NULL){
         newModel = new Model("MyModel");
-        newModel->set_new(Mesh::Cube);
+
+        //newModel->set_new(Mesh::Cube);
+        newModel->set_new(Mesh::compute_intersection(Mesh::Cube,Mesh::Cube2));
+        //newModel->set_new(Mesh::Sphere);
+
         parent->active_workspace->models.push_back(newModel);
         camera->get_transform()->set_localPostition(vec3(0.0f, 0.0f, -5.0f));
     }
