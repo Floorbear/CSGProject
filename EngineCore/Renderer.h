@@ -18,8 +18,8 @@ class CSGNode{
 public:
     enum class Type{
         Operand, // children 제한 : 0개
-        Union, 
-        Intersection, 
+        Union,
+        Intersection,
         Difference // children 제한 : 2개
     };
 
@@ -35,8 +35,14 @@ public:
 };
 
 class Model{
+    std::list<Component> components;
     CSGNode* csgmesh; // root node
     Shader* shader;
+
+    class ModelTransform : Transform{ // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
+        Model* parent; // 값 타입으로 전달할땐 슬라이싱 되어도 무관, Transform*으로 전달할땐 접근 못해도 무관
+        ModelTransform();
+    };
 
 public:
     std::string name;
@@ -45,14 +51,12 @@ public:
     ~Model();
     void set_new(const Mesh& mesh);
 
-    Transform get_transform();
-    //Transform get_world_position();
-    Transform* test_get_main_transform(); // TEST
-    void set_transform(Transform transform);
-    void set_position(Transform transform);
-    void translate(vec3 delta); // 자식들까지 이동
-    // TODO : transform 조정 기능들을 그대로 복사? : 이것은 Model자신의 transform이 존재하지않고 대표 메쉬의 것을 대신 사용하기 때문
 
+    // TODO : getcomponent
+
+    Transform* get_transform();
+    //Transform get_world_position();
+    
     void render(class Renderer* renderer);
 
 

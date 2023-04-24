@@ -34,9 +34,9 @@ Mesh Mesh::Square = Mesh({Vertex(-0.5f, -0.5f, 0.0f), // left down
 
 
 
-Mesh Mesh::Cube = Mesh::cgal_mesh_to_mesh( Mesh::mesh_to_cgal_mesh( Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Cube) ) );
-Mesh Mesh::Cube2 = Mesh::cgal_mesh_to_mesh(Mesh::mesh_to_cgal_mesh(Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Cube2)));
-Mesh Mesh::Sphere = Mesh::cgal_mesh_to_mesh(Mesh::mesh_to_cgal_mesh(Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Sphere)));
+Mesh Mesh::Cube = Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Cube);
+Mesh Mesh::Cube2 = Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Cube2);
+Mesh Mesh::Sphere = Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Sphere);
 
 void Mesh::buffers_bind() const{
     glBindVertexArray(VAO);
@@ -246,17 +246,7 @@ cgal_Mesh Mesh::mesh_to_cgal_mesh(Mesh m)
         vd.push_back(cg_Mesh.add_vertex(K::Point_3(m.vertices[i].position.x, m.vertices[i].position.y, m.vertices[i].position.z)));        
     }
 
-    std::cout << "----------------------" << "\n";
-    for (cgal_Mesh::Vertex_index vi : cg_Mesh.vertices())
-    {
-        //uint32_t index = vd; //via size_t
-        float v_x = (float)(cg_Mesh).point(vi).x();
-        float v_y = (float)(cg_Mesh).point(vi).y();
-        float v_z = (float)(cg_Mesh).point(vi).z();
-
-        std::cout << v_x << "      " <<  v_y << "      " << v_z << "\n";
-    }
-    std::cout << "----------------------" << "\n";
+   
 
     int j = 0;
     for (int i = 0; i < fd_size; i++)
@@ -277,6 +267,7 @@ Mesh Mesh::compute_intersection(Mesh m1, Mesh m2)
     cgal_Mesh m1_m2_intersection;
     cgal_Mesh cg_m1 = mesh_to_cgal_mesh(m1);
     cgal_Mesh cg_m2 = mesh_to_cgal_mesh(m2);
+
     check = CGAL::Polygon_mesh_processing::does_self_intersect(cg_m1);
     if (check == true) std::cout << "true" << "\n";
     else std::cout << "false" << "\n";
@@ -285,10 +276,46 @@ Mesh Mesh::compute_intersection(Mesh m1, Mesh m2)
     else std::cout << "false" << "\n";
 
 
+
+    std::cout << "---------hihi-------------" << "\n";
+    for (cgal_Mesh::Vertex_index vi : cg_m1.vertices())
+    {
+        //uint32_t index = vd; //via size_t
+        float v_x = (float)(cg_m1).point(vi).x();
+        float v_y = (float)(cg_m1).point(vi).y();
+        float v_z = (float)(cg_m1).point(vi).z();
+
+        std::cout << v_x << "      " << v_y << "      " << v_z << "\n";
+    }
+    std::cout << "----------hihi------------" << "\n";
+
+    std::cout << "---------hihi2-------------" << "\n";
+    for (cgal_Mesh::Vertex_index vi : cg_m2.vertices())
+    {
+        //uint32_t index = vd; //via size_t
+        float v_x = (float)(cg_m2).point(vi).x();
+        float v_y = (float)(cg_m2).point(vi).y();
+        float v_z = (float)(cg_m2).point(vi).z();
+
+        std::cout << v_x << "      " << v_y << "      " << v_z << "\n";
+    }
+    std::cout << "----------hihi2------------" << "\n";
+
     std::cout << "---------------------test1------------------" << "\n";
     CGAL::Polygon_mesh_processing::corefine_and_compute_difference(cg_m1, cg_m2, m1_m2_intersection);
     std::cout << "---------------------test1------------------" << "\n";
 
-    return Mesh::cgal_mesh_to_mesh(Mesh::mesh_to_cgal_mesh(Mesh::cgal_mesh_to_mesh(m1_m2_intersection)));;
+    std::cout << "---------hihi3-------------" << "\n";
+    for (cgal_Mesh::Vertex_index vi : m1_m2_intersection.vertices())
+    {
+        //uint32_t index = vd; //via size_t
+        float v_x = (float)(m1_m2_intersection).point(vi).x();
+        float v_y = (float)(m1_m2_intersection).point(vi).y();
+        float v_z = (float)(m1_m2_intersection).point(vi).z();
+
+        std::cout << v_x << "      " << v_y << "      " << v_z << "\n";
+    }
+    std::cout << "----------hihi3------------" << "\n";
+    return Mesh::cgal_mesh_to_mesh(m1_m2_intersection);
 }
 
