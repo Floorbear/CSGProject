@@ -21,6 +21,18 @@ Transform::Transform(vec4& _Vec4)
 Transform::~Transform(){
 }
 
+vec3 Transform::get_position(){
+	return position;
+}
+
+vec3 Transform::get_rotation(){
+	return rotation;
+}
+
+vec3 Transform::get_scale(){
+	return scale3d;
+}
+
 void Transform::set_position(const vec3& value)
 {
 	position = value;
@@ -39,8 +51,12 @@ void Transform::set_scale(const vec3& value)
 	calculate_matrix();
 }
 
-void Transform::translate(const vec3& value){
-	position = position + vec3(vec4(value, 1.0) * matrix);
+void Transform::translate(const vec3& value){ // rotation 적용된 상태
+	glm::vec3 forward_dir = Utils::get_vecFromPitchYaw(worldRotation.x, worldRotation.y);
+	glm::vec3 up_dir = glm::vec3(0, 1, 0);
+	add_position(get_right_dir() * value.x);
+	add_position(get_up_dir() * value.y);
+	add_position(get_forward_dir() * value.z);
 	calculate_matrix();
 }
 
@@ -65,7 +81,7 @@ void Transform::calculate_matrix()
 {
 	matrix = glm::mat4(1.0f);
 
-	/*if (parent != nullptr) 이러면 안됨. 한번에 한 행렬만 적용되는게 아니기때문!
+	/*if (parent != nullptr)
 	{
 		//transform
 		{
@@ -96,12 +112,16 @@ mat4* Transform::get_matrix(){
 
 // https://stackoverflow.com/questions/31733811/local-variables-before-return-statements-does-it-matter
 vec3 Transform::get_forward_dir(){ // TODO : local을 이용해서 구해야하는거 아님????????
-	return glm::normalize(Utils::get_vecFromPitchYaw(worldRotation.x, worldRotation.y));
+	return glm::normalize(Utils::get_vecFromPitchYaw(rotation.x, rotation.y));
 }
 
 vec3 Transform::get_right_dir(){
-	glm::vec3 forward_dir = Utils::get_vecFromPitchYaw(worldRotation.x, worldRotation.y);
+	glm::vec3 forward_dir = Utils::get_vecFromPitchYaw(rotation.x, rotation.y);
 	glm::vec3 up_dir = glm::vec3(0, 1, 0);
 
 	return glm::normalize(-cross(forward_dir, up_dir));
+}
+
+vec3 Transform::get_up_dir(){
+	return normalize(cross(get_right_dir(), get_forward_dir()));
 }

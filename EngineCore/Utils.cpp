@@ -4,8 +4,6 @@
 
 #include <GLFW/glfw3.h>
 
-const float Utils::Epsilon = 0.0001f; // TODO : 지수표현으로 바꾸세요
-
 float Utils::last_frameTime = 0.0f;
 float Utils::deltaTime = 0.0f;
 

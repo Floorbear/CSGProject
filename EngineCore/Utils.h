@@ -1,20 +1,18 @@
 #pragma once
 
-#include <string>
-#include <list>
 #include <glm/glm.hpp>
 
+#include <string>
+#include <list>
 
 class Utils{
     static double time_prev_frame; //...
 public:
-    const static float Epsilon;
 
     static std::string format(const char* format_str, int num);
     static std::string format(const char* format_str, const std::list<int> nums);
 
-   
-    //====== Time ======
+    // ====== Time ====== //
     //static double time(); // 시계 (절대)
     static float time_acc(); // 프로그램 시작부터 누적
     static float time_delta(); // 프레임 사이 간격

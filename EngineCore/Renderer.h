@@ -2,6 +2,7 @@
 
 #include "Mesh.h"
 #include "Shader.h"
+#include "Utils.h"
 
 #include <glm/glm.hpp>
 
@@ -14,7 +15,24 @@ class CSGNode{
     std::list<CSGNode*> children;
     Mesh result;
 
-    Transform transform;
+    class CSGNodeTransform : Transform{ // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
+        CSGNode* parent; // 값 타입으로 전달할땐 슬라이싱 되어도 무관, Transform*으로 전달할땐 접근 못해도 무관
+
+    public:
+        CSGNodeTransform(CSGNode* parent_);
+
+        void set_position(const vec3& value);
+        void set_rotation(const vec3& value);
+        void set_scale(const vec3& value);
+
+        void translate(const vec3& value);
+        void rotate(const vec3& value);
+        void scale(const vec3& value);
+        void add_position(const vec3& value);
+    };
+
+    CSGNodeTransform transform;
+
 public:
     enum class Type{
         Operand, // children 제한 : 0개
@@ -32,17 +50,13 @@ public:
     CSGNode* main_child();
     Transform* get_transform(); // TODO : child에서 자기 트랜스폼 조작하게하면 포인터 반환 필요없음?
     void render();
+
 };
 
 class Model{
-    std::list<Component> components;
-    CSGNode* csgmesh; // root node
+    std::list<Component*> components;
+    CSGNode* csgmesh = nullptr; // root node
     Shader* shader;
-
-    class ModelTransform : Transform{ // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
-        Model* parent; // 값 타입으로 전달할땐 슬라이싱 되어도 무관, Transform*으로 전달할땐 접근 못해도 무관
-        ModelTransform();
-    };
 
 public:
     std::string name;
@@ -57,6 +71,7 @@ public:
     Transform* get_transform();
     //Transform get_world_position();
     
+    bool is_renderable();
     void render(class Renderer* renderer);
 
 

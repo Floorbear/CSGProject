@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "Core.h"
 #include "Utils.h"
+#include "Camera.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -8,14 +9,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "EngineCore/Camera.h"
+
 // ===== CSGMesh ===== // TODO : CSGNode?
 
-CSGNode::CSGNode(const Mesh& mesh) : result(mesh){
+CSGNode::CSGNode(const Mesh& mesh) : result(mesh), transform(CSGNodeTransform(this)){
     type = Type::Operand;
 }
 
-CSGNode::CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2){
+CSGNode::CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2) : transform(CSGNodeTransform(this)){
     assert(type != Type::Operand);
     type = type_;
     children.push_back(new CSGNode(mesh1));
@@ -37,7 +38,7 @@ CSGNode* CSGNode::main_child(){
 
 Transform* CSGNode::get_transform(){
     if (type == Type::Operand){
-        return &transform;
+        return (Transform*)&transform;
     }
     if (!children.empty()){
         return main_child()->get_transform();
@@ -49,14 +50,56 @@ void CSGNode::render(){
     result.render();
 }
 
+CSGNode::CSGNodeTransform::CSGNodeTransform(CSGNode* parent_) : Transform(), parent(parent_){
+}
+
+void CSGNode::CSGNodeTransform::set_position(const vec3& value){
+    vec3 delta = value - parent->transform.get_position();
+    parent->transform.set_position(value);
+    for(CSGNode* node : parent->children){
+        node->transform.add_position(delta);
+    }
+}
+
+void CSGNode::CSGNodeTransform::set_rotation(const vec3& value){
+    vec3 delta = value - parent->transform.get_rotation();
+    parent->transform.set_rotation(value);
+    for(CSGNode* node : parent->children){
+        node->transform.rotate(delta);
+    }
+}
+
+void CSGNode::CSGNodeTransform::set_scale(const vec3& value){
+    vec3 ratio = value / parent->transform.get_scale();
+    parent->transform.set_scale(value);
+    for(CSGNode* node : parent->children){
+        node->transform.scale(ratio);
+    }
+}
+
+void CSGNode::CSGNodeTransform::translate(const vec3& value){
+}
+
+void CSGNode::CSGNodeTransform::rotate(const vec3& value){
+}
+
+void CSGNode::CSGNodeTransform::scale(const vec3& value){
+}
+
+void CSGNode::CSGNodeTransform::add_position(const vec3& value){
+    parent->transform.add_position(value);
+    for(CSGNode* node : parent->children){
+        node->transform.add_position(value);
+    }
+}
+
 
 // ===== Model ===== //
+
 vec3 Model::lightPos = vec3(30, -100, -50);
 
 Model::Model(std::string name_) : name(name_){
-    csgmesh = nullptr;
     shader = new Shader();
-    //components.add( TODO
 }
 
 Model::~Model(){
@@ -70,16 +113,27 @@ Model::~Model(){
 
 void Model::set_new(const Mesh& mesh){
     csgmesh = new CSGNode(mesh);
+    // TODO : 기존 transform 제거
+    components.push_back(csgmesh->get_transform());
+    // TODO : material 추가
 }
 
-Transform* Model::get_transform(){ // TODO : 수정!!
-    // return component
+Transform* Model::get_transform(){
+    if(csgmesh == nullptr){
+        return nullptr;
+    }
     return csgmesh->get_transform();
 }
 
-
 Shader* Model::get_shader(){
+    if(csgmesh == nullptr){
+        return nullptr;
+    }
     return shader;
+}
+
+bool Model::is_renderable(){
+    return csgmesh != nullptr;
 }
 
 void Model::render(Renderer* renderer){

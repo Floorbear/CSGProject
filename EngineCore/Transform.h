@@ -8,7 +8,7 @@
 
 using namespace glm;
 
-class Transform : Component{
+class Transform : public Component{
 	mat4 matrix;
 
 	vec3 position;
@@ -20,14 +20,18 @@ public:
 	Transform(vec4& _Vec4);
 	~Transform();
 
-	void set_position(const vec3& _Position);
-	void set_rotation(const vec3& _Rotation);
-	void set_scale(const vec3& _Scale);
+	vec3 get_position();
+	vec3 get_rotation();
+	vec3 get_scale();
+
+	void set_position(const vec3& value);
+	void set_rotation(const vec3& value);
+	void set_scale(const vec3& value);
 
 	void translate(const vec3& value);
 	void rotate(const vec3& value);
 	void scale(const vec3& value);
-	void add_position(const vec3& _Position);
+	void add_position(const vec3& value);
 
 	inline vec3 get_worldPosition()
 	{
@@ -44,6 +48,7 @@ public:
 
 	vec3 get_forward_dir();
 	vec3 get_right_dir();
+	vec3 get_up_dir();
 
 private:
 	glm::vec4 vector;

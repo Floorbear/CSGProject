@@ -519,10 +519,6 @@ void GUI::render_menubar(){
             if (ImGui::MenuItem("CSG Tree View", "CTRL+G", &active_workspace->gui_csgtree)){}
             ImGui::EndMenu();
         }
-
-        /*if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0)){ dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar; }
-        if (ImGui::MenuItem("Flag: PassthruCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0, true)){ dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode; }
-        */
         ImGui::EndMenuBar();
     }
 }
