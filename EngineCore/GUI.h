@@ -69,7 +69,7 @@ public:
 
     void render();
 
-    static WorkSpace* create_new(GUI* parent_);
+    static WorkSpace* create_new(GUI* parent_, const char* filename);
 
     GLuint init_fbo(int w_, int _h);
 
@@ -81,8 +81,6 @@ public:
     }
 
     Camera* mainCamera;
-private:
-    std::list<Camera*> cameras;
 };
 
 class GUI{
@@ -98,6 +96,8 @@ class GUI{
     void render_menubar();
 
 public:
+    static int parameter_count; // 인스펙터의 파라미터들이 id가 중복되는것을 막기 위해서
+
     GLFWwindow* glfw_window;
     vec2 window_size;
 

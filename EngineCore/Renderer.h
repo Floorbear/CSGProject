@@ -12,6 +12,7 @@ using namespace glm;
 class GUI;
 
 class CSGNode{
+    CSGNode* parent = nullptr;
     std::list<CSGNode*> children;
     Mesh result;
 
@@ -41,19 +42,25 @@ public:
         Difference // children 제한 : 2개
     };
 
-    Type type; // private?
+    Type type; // private? get / set
 
     CSGNode(const Mesh& mesh);
     CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2);
     ~CSGNode();
 
+    CSGNode* get_parent();
+    std::list<CSGNode*> get_children();
+
     CSGNode* main_child();
-    Transform* get_transform(); // TODO : child에서 자기 트랜스폼 조작하게하면 포인터 반환 필요없음?
+    Transform* get_transform();
     void render();
 
 };
 
 class Model{
+    Model* parent = nullptr;
+    std::list<Model*> children;
+
     std::list<Component*> components;
     CSGNode* csgmesh = nullptr; // root node
     Shader* shader;
@@ -65,7 +72,11 @@ public:
     ~Model();
     void set_new(const Mesh& mesh);
 
+    Model* get_parent();
+    std::list<Model*> get_children();
+    CSGNode* get_mesh();
 
+    std::list<Component*> get_components();
     // TODO : getcomponent
 
     Transform* get_transform();

@@ -90,7 +90,6 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     // TODO : 렌더러로 이동
     mainCamera = new Camera(parent->window_size.x, parent->window_size.y);
     mainCamera->set_parent(parent_);
-    cameras.push_back(mainCamera);
 
     renderer.viewport_size = vec2(512, 512);//parent->window_size; // TODO : view창 만들면서 view창 크기로 지정
     renderer.set_parent(parent);
@@ -110,10 +109,7 @@ WorkSpace::~WorkSpace(){
     for (Model* model : models){
         delete model;
     }
-
-    for (Camera* camera : cameras){ // TODO : renderer로 이동
-        delete camera;
-    }
+    delete mainCamera; // TODO : renderer로 이동
 }
 
 Model* WorkSpace::find_model(std::string_view name){
@@ -143,9 +139,8 @@ void WorkSpace::render(){
         ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        for (Camera* camera : cameras){
-            camera->calculate_view();
-        }
+        mainCamera->calculate_view();
+
         // 여기까지
         renderer.render(models);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -156,6 +151,7 @@ void WorkSpace::render(){
         renderer.viewport_size.x = view_w;
         renderer.viewport_size.y = view_h;
         ImVec2 sss = ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y);
+        #pragma warning(disable: 4312)
         ImGui::GetWindowDrawList()->
             AddImage((void*)f_tex, ImGui::GetWindowPos(), sss, ImVec2(0, 0), ImVec2(1, 1));
         render_popup_menu();
@@ -164,28 +160,39 @@ void WorkSpace::render(){
 
     if (gui_hierarchy){
         ImGui::Begin(Utils::format("Hierarchy##%1%", id).c_str(), 0, window_flags);
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("Cube")){// TODO : 오브젝트 트리 적용
-            if (ImGui::TreeNode((void*)(intptr_t)0, "Sphere %d", 0)){
-                ImGui::TreePop();
-            }
-            if (ImGui::TreeNode((void*)(intptr_t)0, "Sphere %d", 1)){
-                if (ImGui::TreeNode((void*)(intptr_t)0, "Cube %d", 2)){
-                    ImGui::TreePop();
-                }
-                if (ImGui::TreeNode((void*)(intptr_t)0, "Cube %d", 3)){
-                    ImGui::TreePop();
+        std::function<void(CSGNode*)> draw_mesh_tree = [&](CSGNode* node){
+            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+            if(ImGui::TreeNode((void*)(intptr_t)0, std::string("<mesh>").c_str())){ // TODO : 메쉬는 어떻게 표시할것인가?
+                for(CSGNode* child : node->get_children()){
+                    draw_mesh_tree(child);
                 }
                 ImGui::TreePop();
             }
-            ImGui::TreePop();
+        };
+        std::function<void(Model*)> draw_model_tree = [&](Model* model){
+            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+            if(ImGui::TreeNode((void*)(intptr_t)0, model->name.c_str())){
+                draw_mesh_tree(model->get_mesh());
+                for(Model* child : model->get_children()){
+                    draw_model_tree(child);
+                }
+                ImGui::TreePop();
+            }
+        };
+        for(Model* model : models){
+            draw_model_tree(model);
         }
         ImGui::End();
     }
 
     if (gui_inspector){
         ImGui::Begin(Utils::format("Inspector##%1%", id).c_str(), 0, window_flags);
-        ImGui::Text(Utils::format("Text%1%", id).c_str());
+        Model* selected_model_ = models.back();// TODO : 멤버의 selected model로 변경
+        if(selected_model_!=nullptr){
+            for (Component* component : selected_model_->get_components()){
+                component->render();
+            }
+        }
         ImGui::End();
     }
 
@@ -196,8 +203,8 @@ void WorkSpace::render(){
     }
 }
 
-WorkSpace* WorkSpace::create_new(GUI* parent_){
-    return new WorkSpace(parent_, "test"); // TEST
+WorkSpace* WorkSpace::create_new(GUI* parent_, const char* filename){
+    return new WorkSpace(parent_, filename);
 }
 
 GLuint WorkSpace::init_fbo(int w_, int _h){ // TODO : renderer로 이동
@@ -239,6 +246,8 @@ GLuint WorkSpace::init_fbo(int w_, int _h){ // TODO : renderer로 이동
 
 // ===== Engine GUI ===== //
 
+int GUI::parameter_count = 0;
+
 GUI::GUI() : actions(GUI_Actions(this)){
     frame_count = 0;
     glfw_window = NULL;
@@ -273,10 +282,6 @@ void GUI::update(){
 }
 
 void GUI::process_input(){
-    //if (glfwGetKey(glfw_window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
-    //    glfwSetWindowShouldClose(glfw_window, true);
-    //}
-
     for (Shortcut shortcut : shortcuts){
         shortcut.check_execute(glfw_window);
     }
@@ -358,12 +363,6 @@ void GUI::render_gui(){
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-    // fullscreen 아닐때 - 나중에 편집
-    //dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-    //if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode){
-    //	window_flags |= ImGuiWindowFlags_NoBackground;
-    //}
-
     ImGui::Begin("MainWindow", 0, window_flags);
     ImGui::PopStyleVar();
     ImGui::PopStyleVar(2);
@@ -379,10 +378,25 @@ void GUI::render_gui(){
 
     if (ImGui::BeginTabBar("WorkSpaces", tab_bar_flags)){
         if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip)){
-            workspaces.push_back(WorkSpace::create_new(this));
+            if (ImGui::GetIO().MouseClicked[1]){
+                ImGui::OpenPopup("WorkSpace_AddTab_Popup");
+            }
+            if (ImGui::BeginPopup("WorkSpace_AddTab_Popup")){
+                static int count = 0;
+                std::string default_filename = Utils::format("NewFile%1%", count);
+                static char filename_buf[128];
+                strcpy_s(filename_buf, default_filename.c_str());
+                ImGui::InputTextWithHint("WorkSpace_AddTab_Filename", default_filename.c_str(), filename_buf, IM_ARRAYSIZE(filename_buf), ImGuiInputTextFlags_CharsNoBlank);
+                if (ImGui::Button("Create")){
+                    workspaces.push_back(WorkSpace::create_new(this, filename_buf));
+                    ++count;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
         }
 
-        for (WorkSpace* workspace : workspaces){
+        for (WorkSpace* workspace : workspaces){ // TODO : 탭 우클릭하면 제목수정 팝업창
             bool is_opened = true;
             if (ImGui::BeginTabItem((workspace->title + "##" + std::to_string(workspace->id)).c_str(), &is_opened, ImGuiTabItemFlags_None)){
 
@@ -417,7 +431,7 @@ void GUI::render_gui(){
             }
             if (!is_opened){
                 Core::get()->task_manager.add([this, workspace](){
-                    active_workspace = nullptr; // 참조를 막아둔다
+                    active_workspace = nullptr;
                     workspaces.remove_if([=](WorkSpace* workspace_){
                         return workspace_->id == workspace->id;
                     });
@@ -565,6 +579,8 @@ void WorkSpace::render_popup_menu(){
         if (ImGui::MenuItem("Set To Selection Group")){
             // csg연산 한거 나눠서 선택 안되게
         }
+
+        // TODO : 메쉬 정제(csg가능하게) 연산들 - cgal 라이브러리 내에 다양한 알고리즘들 제공
         ImGui::EndPopup();
     }
 }

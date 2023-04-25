@@ -17,7 +17,7 @@ class Transform : public Component{
 
 public:
 	Transform();
-	Transform(vec4& _Vec4);
+	Transform(const vec4& _Vec4);
 	~Transform();
 
 	vec3 get_position();

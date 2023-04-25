@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#pragma warning(disable : 4717)
 
 // ===== CSGMesh ===== // TODO : CSGNode?
 
@@ -27,6 +28,14 @@ CSGNode::~CSGNode(){
     for (CSGNode* child : children){
         delete child;
     }
+}
+
+CSGNode* CSGNode::get_parent(){
+    return parent;
+}
+
+std::list<CSGNode*> CSGNode::get_children(){
+    return children;
 }
 
 CSGNode* CSGNode::main_child(){
@@ -118,6 +127,22 @@ void Model::set_new(const Mesh& mesh){
     // TODO : material 추가
 }
 
+Model* Model::get_parent(){
+    return parent;
+}
+
+std::list<Model*> Model::get_children(){
+    return children;
+}
+
+CSGNode* Model::get_mesh(){
+    return csgmesh;
+}
+
+std::list<Component*> Model::get_components(){
+    return components;
+}
+
 Transform* Model::get_transform(){
     if(csgmesh == nullptr){
         return nullptr;
@@ -184,12 +209,12 @@ void Renderer::render(const std::list<Model*>& models){
     Model* model = parent->active_workspace->find_model("MyModel");
     if(model!=NULL){
         //CSGMesh* newMesh = 
-        /*Transform* newMesh = model->test_get_main_transform();//->FindMesh("Cube1");
+        /*Transform* newMesh = model->get_transform();
         newMesh->set_position(vec3(0,0, 2));
         newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));*/
     }
-
     for (Model* model : models){
+        
         model->get_shader()->Use();
 
         //좌표 정보 전달

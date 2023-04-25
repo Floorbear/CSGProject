@@ -93,8 +93,8 @@ void Mesh::render(){
 
         buffers_bind();
 
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), indices.data(), GL_STATIC_DRAW);
 
         // Linking Vertex Attribute
         glEnableVertexAttribArray(0);
@@ -119,6 +119,7 @@ void Mesh::render(){
     glDrawElements(GL_TRIANGLES, (int)indices.size(), GL_UNSIGNED_INT, 0);
     //glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
 }
+
 cgal_Mesh Mesh ::create_cgal_cube(float size)
 {
     cgal_Mesh cgal_Cube;
@@ -154,15 +155,16 @@ cgal_Mesh Mesh::create_cgal_sphere(int radius, int stackCount, int sectorCount)
 {
     cgal_Mesh m;
     float x, y, z, xy;
-    float nx, ny, nz, lengthInv = 1.0f / radius;
-    float sectorStep = 2 * M_PI / sectorCount;
-    float stackStep = M_PI / stackCount;
+    float lengthInv = 1.0f / radius;
+    //float nx, ny, nz, lengthInv = 1.0f / radius;
+    float sectorStep = 2 * (float)M_PI / sectorCount;
+    float stackStep = (float)M_PI / stackCount;
     float sectorAngle, stackAngle;
 
     std::vector<vertex_descriptor> vd;
     for (int i = 0; i <= stackCount; ++i)
     {
-        stackAngle = M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
+        stackAngle = (float)M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
         xy = radius * cosf(stackAngle);             // r * cos(u)
         z = radius * sinf(stackAngle);              // r * sin(u)
 
@@ -264,7 +266,6 @@ cgal_Mesh Mesh::mesh_to_cgal_mesh(Mesh m)
 Mesh Mesh::compute_intersection(Mesh m1, Mesh m2)
 {
     bool check;
-    cgal_Mesh m1_m2_intersection;
     cgal_Mesh cg_m1 = mesh_to_cgal_mesh(m1);
     cgal_Mesh cg_m2 = mesh_to_cgal_mesh(m2);
 
@@ -302,8 +303,19 @@ Mesh Mesh::compute_intersection(Mesh m1, Mesh m2)
     std::cout << "----------hihi2------------" << "\n";
 
     std::cout << "---------------------test1------------------" << "\n";
-    CGAL::Polygon_mesh_processing::corefine_and_compute_difference(cg_m1, cg_m2, m1_m2_intersection);
+    cgal_Mesh m1_m2_intersection;
+    bool valid_difference =CGAL::Polygon_mesh_processing::corefine_and_compute_difference(cg_m1, cg_m2, m1_m2_intersection);
+    // ㅠㅠㅠㅠ corefine은 잘되는데 보니까 intersection 메쉬는 비어있네요
+    // 렌더링이 잘못되거나 translate 함수를 잘못만들어서 그런게 아니었어요 헬프미...
     std::cout << "---------------------test1------------------" << "\n";
+    if (valid_difference)
+    {
+        std::cout << "Difference was successfully computed\n";
+    }
+    else
+    {
+        std::cout << "Difference could not be computed\n";
+    }
 
     std::cout << "---------hihi3-------------" << "\n";
     for (cgal_Mesh::Vertex_index vi : m1_m2_intersection.vertices())
@@ -319,3 +331,5 @@ Mesh Mesh::compute_intersection(Mesh m1, Mesh m2)
     return Mesh::cgal_mesh_to_mesh(m1_m2_intersection);
 }
 
+// https://doc.cgal.org/latest/Polygon_mesh_processing/index.html
+// https://doc.cgal.org/5.0/Polygon_mesh_processing/group__pmp__namedparameters.html
