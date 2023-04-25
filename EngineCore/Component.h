@@ -8,9 +8,8 @@
 using namespace glm;
 
 class Parameter{
-    std::string label;
-
 protected:
+    std::string label;
     std::function<void()> render_action;
     Parameter(std::string label_);
 

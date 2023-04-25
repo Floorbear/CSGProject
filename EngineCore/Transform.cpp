@@ -15,7 +15,16 @@ Transform::Transform(const vec4& _Vec4) : Component("Transform"){
     }, [this](vec3 value){
         set_position(value);
     }));
-    //TODO : 다른 파라미터
+    parameters.push_back(new Vec3Parameter("rotation", "x", "y", "z", [this](){
+        return get_rotation();
+    }, [this](vec3 value){
+        set_rotation(value);
+    }));
+    parameters.push_back(new Vec3Parameter("scale", "x", "y", "z", [this](){
+        return get_scale();
+    }, [this](vec3 value){
+        set_scale(value);
+    }));
 }
 
 Transform::~Transform(){

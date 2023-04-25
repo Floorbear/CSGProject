@@ -24,14 +24,14 @@ public:
 	vec3 get_rotation();
 	vec3 get_scale();
 
-	void set_position(const vec3& value);
-	void set_rotation(const vec3& value);
-	void set_scale(const vec3& value);
+	virtual void set_position(const vec3& value);
+	virtual void set_rotation(const vec3& value);
+	virtual void set_scale(const vec3& value);
 
-	void translate(const vec3& value);
-	void rotate(const vec3& value);
-	void scale(const vec3& value);
-	void add_position(const vec3& value);
+	virtual void translate(const vec3& value);
+	virtual void rotate(const vec3& value);
+	virtual void scale(const vec3& value);
+	virtual void add_position(const vec3& value);
 
 	inline vec3 get_worldPosition()
 	{

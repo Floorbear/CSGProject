@@ -46,6 +46,9 @@
     <Filter Include="GUI">
       <UniqueIdentifier>{cd5541f7-758a-446f-9a91-5c37572df499}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component">
+      <UniqueIdentifier>{dafd8954-67da-4322-a4a6-8cbeb7f689c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core.h" />
@@ -44382,9 +44385,6 @@
       <Filter>ThirdParty\glm</Filter>
     </ClInclude>
     <ClInclude Include="Utils.h" />
-    <ClInclude Include="Transform.h">
-      <Filter>Base</Filter>
-    </ClInclude>
     <ClInclude Include="FileSystem.h">
       <Filter>Base</Filter>
     </ClInclude>
@@ -44402,6 +44402,10 @@
     <ClInclude Include="GUI.h">
       <Filter>GUI</Filter>
     </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44442,9 +44446,6 @@
       <Filter>ThirdParty\glm</Filter>
     </ClCompile>
     <ClCompile Include="Utils.cpp" />
-    <ClCompile Include="Transform.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
     <ClCompile Include="FileSystem.cpp">
       <Filter>Base</Filter>
     </ClCompile>
@@ -44462,6 +44463,10 @@
     <ClCompile Include="GUI_Actions.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.lib">

@@ -61,32 +61,34 @@ void CSGNode::render(){
 
 CSGNode::CSGNodeTransform::CSGNodeTransform(CSGNode* parent_) : Transform(), parent(parent_){
 }
+// TODO : gui 조작을 위한 특정시점 값 저장 후 차이값 적용 기능 추가
 
 void CSGNode::CSGNodeTransform::set_position(const vec3& value){
-    vec3 delta = value - parent->transform.get_position();
-    parent->transform.set_position(value);
+    vec3 delta = value - get_position();
+    Transform::set_position(value);
     for(CSGNode* node : parent->children){
         node->transform.add_position(delta);
     }
 }
 
 void CSGNode::CSGNodeTransform::set_rotation(const vec3& value){
-    vec3 delta = value - parent->transform.get_rotation();
-    parent->transform.set_rotation(value);
+    vec3 delta = value - get_rotation();
+    Transform::set_rotation(value);
     for(CSGNode* node : parent->children){
         node->transform.rotate(delta);
     }
 }
 
 void CSGNode::CSGNodeTransform::set_scale(const vec3& value){
-    vec3 ratio = value / parent->transform.get_scale();
-    parent->transform.set_scale(value);
+    vec3 ratio = value / get_scale();
+    Transform::set_scale(value);
     for(CSGNode* node : parent->children){
         node->transform.scale(ratio);
     }
 }
 
 void CSGNode::CSGNodeTransform::translate(const vec3& value){
+    
 }
 
 void CSGNode::CSGNodeTransform::rotate(const vec3& value){
@@ -176,7 +178,7 @@ void Model::render(Renderer* renderer){
 Renderer::Renderer(){
     parent = NULL;
     viewport_size = vec2(100, 100); // default
-    camera = nullptr;
+    main_camera = nullptr;
 }
 
 void Renderer::set_parent(GUI* parent_){
@@ -188,9 +190,8 @@ void Renderer::init(){
 
 void Renderer::render(const std::list<Model*>& models){
 
-    if (camera == nullptr) //디폴트 카메라 = mainCamera
-    {
-        camera = parent->active_workspace->get_mainCamera();
+    if (main_camera == nullptr){
+        main_camera = parent->active_workspace->get_mainCamera();
     }
 
     static Model* newModel = NULL;
@@ -202,7 +203,7 @@ void Renderer::render(const std::list<Model*>& models){
         //newModel->set_new(Mesh::Sphere);
 
         parent->active_workspace->models.push_back(newModel);
-        camera->get_transform()->set_position(vec3(0.0f, 0.0f, -5.0f));
+        main_camera->get_transform()->set_position(vec3(0.0f, 0.0f, -5.0f));
     }
 
 
@@ -220,8 +221,8 @@ void Renderer::render(const std::list<Model*>& models){
         //좌표 정보 전달
         {
             model->get_shader()->set_mat4("world", *model->get_transform()->get_matrix());
-            model->get_shader()->set_mat4("view", camera->get_view());
-            model->get_shader()->set_mat4("projection", camera->get_projection());
+            model->get_shader()->set_mat4("view", main_camera->get_view());
+            model->get_shader()->set_mat4("projection", main_camera->get_projection());
         }
         model->render(this);
     }

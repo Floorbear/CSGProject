@@ -24,8 +24,11 @@ Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::stri
     render_action = [this, parameter_count](){
         std::string n = "##" + std::to_string(parameter_count);
         temp = get();
+        ImGui::Text(label.c_str());
         ImGui::InputFloat((label_x + n).c_str(), &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+        ImGui::SameLine();
         ImGui::InputFloat((label_y + n).c_str(), &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+        ImGui::SameLine();
         ImGui::InputFloat((label_z + n).c_str(), &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
         if(is_edited){
             if (set != nullptr){

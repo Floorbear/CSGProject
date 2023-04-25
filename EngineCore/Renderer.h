@@ -22,14 +22,14 @@ class CSGNode{
     public:
         CSGNodeTransform(CSGNode* parent_);
 
-        void set_position(const vec3& value);
-        void set_rotation(const vec3& value);
-        void set_scale(const vec3& value);
+        void set_position(const vec3& value) override;
+        void set_rotation(const vec3& value) override;
+        void set_scale(const vec3& value) override;
 
-        void translate(const vec3& value);
-        void rotate(const vec3& value);
-        void scale(const vec3& value);
-        void add_position(const vec3& value);
+        void translate(const vec3& value) override;
+        void rotate(const vec3& value) override;
+        void scale(const vec3& value) override;
+        void add_position(const vec3& value) override;
     };
 
     CSGNodeTransform transform;
@@ -63,7 +63,7 @@ class Model{
 
     std::list<Component*> components;
     CSGNode* csgmesh = nullptr; // root node
-    Shader* shader;
+    Shader* shader = nullptr;
 
 public:
     std::string name;
@@ -101,7 +101,7 @@ class Renderer{
 
 public:
     vec2 viewport_size;
-    // Camera main_camera;
+     Camera* main_camera;
 
     Renderer();
     void set_parent(GUI* parent_);
@@ -119,7 +119,5 @@ public:
     float yDegree = 0.f;
 
     Transform cameraTransfrom;
-
-    Camera* camera;
 };
 

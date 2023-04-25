@@ -32,6 +32,8 @@ Shortcut::Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, int gl
 }
 
 void Shortcut::check_execute(GLFWwindow* glfw_window){
+    // TODO : input filter 추가 : 만약 imgui inputtext 계열이 포커스 상태이면 그냥 return
+
     if (type == Type::Continuous){
         if (ctrl == ImGui::GetIO().KeyCtrl &&
             shift == ImGui::GetIO().KeyShift &&
@@ -186,7 +188,7 @@ void WorkSpace::render(){
     }
 
     if (gui_inspector){
-        ImGui::Begin(Utils::format("Inspector##%1%", id).c_str(), 0, window_flags);
+        ImGui::Begin(Utils::format("Inspector##%1%", id).c_str(), 0, window_flags); // TODO : 내부 위젯 resize 정책 수정 : 일정값 이하는 스크롤바, 그 이상은 늘리기 (flag사용?)
         Model* selected_model_ = models.back();// TODO : 멤버의 selected model로 변경
         if(selected_model_!=nullptr){
             for (Component* component : selected_model_->get_components()){
