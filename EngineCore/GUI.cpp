@@ -32,21 +32,22 @@ Shortcut::Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, int gl
 }
 
 void Shortcut::check_execute(GLFWwindow* glfw_window){
-    // TODO : input filter 추가 : 만약 imgui inputtext 계열이 포커스 상태이면 그냥 return
-    //ImGui::GetActiveID();
-    if(ImGui::GetInputTextState(ImGui::GetActiveID()) != nullptr){
-    printf("%d", ImGui::GetInputTextState(ImGui::GetActiveID())->ID);
-    }
- 
+    bool is_input_text_active = ImGui::GetInputTextState(ImGui::GetActiveID()) != nullptr;
+    is_input_text_active = is_input_text_active && !(true == ImGui::GetIO().KeyCtrl &&
+                                                   false == ImGui::GetIO().KeyShift &&
+                                                   false == ImGui::GetIO().KeyAlt &&
+                                                   ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_S))); // 저장 키는 소중하므로 저장 키만 살려두자...
     if (type == Type::Continuous){
-        if (ctrl == ImGui::GetIO().KeyCtrl &&
+        if (!is_input_text_active &&
+            ctrl == ImGui::GetIO().KeyCtrl &&
             shift == ImGui::GetIO().KeyShift &&
             alt == ImGui::GetIO().KeyAlt &&
             glfwGetKey(glfw_window, continuous_key) == GLFW_PRESS){
             callback();
         }
     } else if (type == Type::Discrete){
-        if (ctrl == ImGui::GetIO().KeyCtrl &&
+        if (!is_input_text_active &&
+            ctrl == ImGui::GetIO().KeyCtrl &&
             shift == ImGui::GetIO().KeyShift &&
             alt == ImGui::GetIO().KeyAlt &&
             ImGui::IsKeyPressed(ImGui::GetKeyIndex(discrete_key))){
