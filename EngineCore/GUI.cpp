@@ -33,7 +33,11 @@ Shortcut::Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, int gl
 
 void Shortcut::check_execute(GLFWwindow* glfw_window){
     // TODO : input filter 추가 : 만약 imgui inputtext 계열이 포커스 상태이면 그냥 return
-
+    //ImGui::GetActiveID();
+    if(ImGui::GetInputTextState(ImGui::GetActiveID()) != nullptr){
+    printf("%d", ImGui::GetInputTextState(ImGui::GetActiveID())->ID);
+    }
+ 
     if (type == Type::Continuous){
         if (ctrl == ImGui::GetIO().KeyCtrl &&
             shift == ImGui::GetIO().KeyShift &&
@@ -247,6 +251,8 @@ GLuint WorkSpace::init_fbo(int w_, int _h){ // TODO : renderer로 이동
 
 
 // ===== Engine GUI ===== //
+
+int GUI::parameter_count = 0;
 
 GUI::GUI() : actions(GUI_Actions(this)){
     frame_count = 0;

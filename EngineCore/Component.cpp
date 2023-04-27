@@ -15,12 +15,13 @@ void Parameter::render(){
 
 Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::string label_y_, std::string label_z_, std::function<vec3()> get_, std::function<void(vec3)> set_) :
     Parameter(label_), label_x(label_x_), label_y(label_y_), label_z(label_z_), get(get_), set(set_){
+    int parameter_count = GUI::parameter_count++;
     static ImGuiInputTextCallback callback = [](ImGuiInputTextCallbackData* data){// TODO : Completion에는 transaction 등록
         Vec3Parameter* parent = (Vec3Parameter*)data->UserData;
         parent->is_edited = true;
         return 0;
     };
-    render_action = [this](){
+    render_action = [this, parameter_count](){
         temp = get();
         ImGui::Text(label.c_str());
         if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingStretchSame)){
@@ -29,17 +30,17 @@ Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::stri
             ImGui::Text("x");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat("##", &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+            ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count).c_str(), &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("y");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat("##", &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+            ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count + 1).c_str(), &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
             ImGui::TableSetColumnIndex(2);
             ImGui::Text("z");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat("##", &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+            ImGui::InputFloat(Utils::format("InputFloat%1%", parameter_count + 2).c_str(), &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
             ImGui::EndTable();
         }
         if (is_edited){

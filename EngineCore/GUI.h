@@ -96,6 +96,8 @@ class GUI{
     void render_menubar();
 
 public:
+    static int parameter_count;
+
     GLFWwindow* glfw_window;
     vec2 window_size;
 
