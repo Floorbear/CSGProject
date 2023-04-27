@@ -203,7 +203,8 @@ void Renderer::render(const std::list<Model*>& models){
         //newModel->set_new(Mesh::Sphere);
 
         parent->active_workspace->models.push_back(newModel);
-        main_camera->get_transform()->set_position(vec3(0.0f, 0.0f, -5.0f));
+        main_camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
+        main_camera->get_transform()->set_rotation({ 0,-90,0 });
     }
 
 

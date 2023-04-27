@@ -38,10 +38,10 @@ void Utils::time_update()
 
 glm::vec3 Utils::get_vecFromPitchYaw(float pitch_, float yaw_)
 {
-    glm::vec3 newVec = glm::vec3();
-    newVec.z = cos(glm::radians(pitch_)) * cos(glm::radians(yaw_));
+    glm::vec3 newVec;
+    newVec.x = cos(glm::radians(pitch_)) * cos(glm::radians(yaw_));
     newVec.y = sin(glm::radians(pitch_));
-    newVec.x = cos(glm::radians(pitch_)) * sin(glm::radians(yaw_));
+    newVec.z = cos(glm::radians(pitch_)) * sin(glm::radians(yaw_));
 
     return newVec;
 }

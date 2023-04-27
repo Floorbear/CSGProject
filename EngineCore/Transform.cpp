@@ -58,8 +58,6 @@ void Transform::set_scale(const vec3& value){
 }
 
 void Transform::translate(const vec3& value){ // rotation 적용된 상태
-    glm::vec3 forward_dir = Utils::get_vecFromPitchYaw(worldRotation.x, worldRotation.y);
-    glm::vec3 up_dir = glm::vec3(0, 1, 0);
     add_position(get_right_dir() * value.x);
     add_position(get_up_dir() * value.y);
     add_position(get_forward_dir() * value.z);
@@ -124,7 +122,7 @@ vec3 Transform::get_right_dir(){
     glm::vec3 forward_dir = Utils::get_vecFromPitchYaw(rotation.x, rotation.y);
     glm::vec3 up_dir = glm::vec3(0, 1, 0);
 
-    return glm::normalize(-cross(forward_dir, up_dir));
+    return glm::normalize(cross(forward_dir, up_dir));
 }
 
 vec3 Transform::get_up_dir(){
