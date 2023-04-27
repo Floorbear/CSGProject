@@ -96,8 +96,6 @@ class GUI{
     void render_menubar();
 
 public:
-    static int parameter_count; // 인스펙터의 파라미터들이 id가 중복되는것을 막기 위해서
-
     GLFWwindow* glfw_window;
     vec2 window_size;
 

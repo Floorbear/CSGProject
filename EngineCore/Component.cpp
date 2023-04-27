@@ -15,22 +15,34 @@ void Parameter::render(){
 
 Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::string label_y_, std::string label_z_, std::function<vec3()> get_, std::function<void(vec3)> set_) :
     Parameter(label_), label_x(label_x_), label_y(label_y_), label_z(label_z_), get(get_), set(set_){
-    int parameter_count = GUI::parameter_count++;
     static ImGuiInputTextCallback callback = [](ImGuiInputTextCallbackData* data){// TODO : Completion에는 transaction 등록
         Vec3Parameter* parent = (Vec3Parameter*)data->UserData;
         parent->is_edited = true;
         return 0;
     };
-    render_action = [this, parameter_count](){
-        std::string n = "##" + std::to_string(parameter_count);
+    render_action = [this](){
         temp = get();
         ImGui::Text(label.c_str());
-        ImGui::InputFloat((label_x + n).c_str(), &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
-        ImGui::SameLine();
-        ImGui::InputFloat((label_y + n).c_str(), &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
-        ImGui::SameLine();
-        ImGui::InputFloat((label_z + n).c_str(), &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
-        if(is_edited){
+        if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingStretchSame)){
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("x");
+            ImGui::SameLine(0, 3);
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            ImGui::InputFloat("##", &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("y");
+            ImGui::SameLine(0, 3);
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            ImGui::InputFloat("##", &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Text("z");
+            ImGui::SameLine(0, 3);
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            ImGui::InputFloat("##", &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+            ImGui::EndTable();
+        }
+        if (is_edited){
             if (set != nullptr){
                 set(temp);
             }

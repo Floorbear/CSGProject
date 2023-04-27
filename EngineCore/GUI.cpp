@@ -163,7 +163,7 @@ void WorkSpace::render(){
     if (gui_hierarchy){
         ImGui::Begin(Utils::format("Hierarchy##%1%", id).c_str(), 0, window_flags);
         std::function<void(CSGNode*)> draw_mesh_tree = [&](CSGNode* node){
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+            ImGui::SetNextItemOpen(true, ImGuiCond_Once); // TODO : 삭제
             if(ImGui::TreeNode((void*)(intptr_t)0, std::string("<mesh>").c_str())){ // TODO : 메쉬는 어떻게 표시할것인가?
                 for(CSGNode* child : node->get_children()){
                     draw_mesh_tree(child);
@@ -247,8 +247,6 @@ GLuint WorkSpace::init_fbo(int w_, int _h){ // TODO : renderer로 이동
 
 
 // ===== Engine GUI ===== //
-
-int GUI::parameter_count = 0;
 
 GUI::GUI() : actions(GUI_Actions(this)){
     frame_count = 0;
