@@ -151,7 +151,7 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     if (Pixel.objectID == 5)
     {
-        printf("%오브젝트 감지 \n", Pixel.objectID);
+        //printf("%오브젝트 감지 \n", Pixel.objectID);
     }
 
 
