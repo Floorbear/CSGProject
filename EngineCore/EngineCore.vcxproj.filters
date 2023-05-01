@@ -44388,14 +44388,12 @@
     <ClInclude Include="FileSystem.h">
       <Filter>Base</Filter>
     </ClInclude>
-    <ClInclude Include="Task.h" />
     <ClInclude Include="Renderer.h">
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Component.h" />
     <ClInclude Include="GUI_Actions.h">
       <Filter>GUI</Filter>
     </ClInclude>
@@ -44405,7 +44403,6 @@
     <ClInclude Include="Transform.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h" />
     <ClInclude Include="Model.h">
       <Filter>Object</Filter>
     </ClInclude>
@@ -44416,6 +44413,15 @@
       <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="WorkSpace.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Task.h">
       <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44458,14 +44464,12 @@
     <ClCompile Include="FileSystem.cpp">
       <Filter>Base</Filter>
     </ClCompile>
-    <ClCompile Include="Task.cpp" />
     <ClCompile Include="Renderer.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Component.cpp" />
     <ClCompile Include="GUI.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
@@ -44475,7 +44479,6 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Component</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Model.cpp">
       <Filter>Object</Filter>
     </ClCompile>
@@ -44486,6 +44489,15 @@
       <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="WorkSpace.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Task.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
   </ItemGroup>
