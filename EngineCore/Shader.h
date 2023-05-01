@@ -7,7 +7,7 @@ public:
 	Shader();
 	~Shader();
 
-	void Use();
+	void use();
 
 	inline unsigned int get_shaderProgram()
 	{

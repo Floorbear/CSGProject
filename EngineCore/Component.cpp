@@ -1,7 +1,17 @@
 #include "Component.h"
 #include "GUI.h"
 
-#include <Imgui/imgui.h>
+ImGuiInputTextCallback Parameter::edit_callback = [](ImGuiInputTextCallbackData* data){
+    Parameter* parent = (Parameter*)data->UserData;
+    parent->is_edited = true;
+    return 0;
+};
+
+/*ImGuiInputTextCallback completion_callback = [](ImGuiInputTextCallbackData* data){// TODO : transaction 등록
+    Parameter* parent = (Parameter*)data->UserData;
+    parent->is_edited = true;
+    return 0;
+};*/
 
 Parameter::Parameter(std::string label_) : label(label_){
 }
@@ -13,15 +23,25 @@ void Parameter::render(){
     render_action();
 }
 
+FloatParameter::FloatParameter(std::string label_, std::function<float()> get_, std::function<void(float)> set_) :
+    Parameter(label_), get(get_), set(set_){
+    int parameter_count = GUI::parameter_count++;
+    render_action = [this, parameter_count](){ // TODO : completion 액션 추가
+        temp = get();
+        ImGui::Text(label.c_str());
+        ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count).c_str(), &temp, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
+        if (is_edited){ // TODO : 리팩토링
+            if (set != nullptr){
+                set(temp);
+            }
+        }
+    };
+}
+
 Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::string label_y_, std::string label_z_, std::function<vec3()> get_, std::function<void(vec3)> set_) :
     Parameter(label_), label_x(label_x_), label_y(label_y_), label_z(label_z_), get(get_), set(set_){
-    int parameter_count = GUI::parameter_count++;
-    static ImGuiInputTextCallback callback = [](ImGuiInputTextCallbackData* data){// TODO : Completion에는 transaction 등록
-        Vec3Parameter* parent = (Vec3Parameter*)data->UserData;
-        parent->is_edited = true;
-        return 0;
-    };
-    render_action = [this, parameter_count](){
+    int parameter_count = GUI::parameter_count++; // TODO : parameter id로 리팩토링
+    render_action = [this, parameter_count](){ // TODO : completion 액션 추가
         temp = get();
         ImGui::Text(label.c_str());
         if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingStretchSame)){
@@ -30,22 +50,43 @@ Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::stri
             ImGui::Text("x");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count).c_str(), &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+            ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count).c_str(), &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("y");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count + 1).c_str(), &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+            ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count + 1).c_str(), &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
             ImGui::TableSetColumnIndex(2);
             ImGui::Text("z");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat(Utils::format("InputFloat%1%", parameter_count + 2).c_str(), &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, callback, (void*)this);
+            ImGui::InputFloat(Utils::format("InputFloat%1%", parameter_count + 2).c_str(), &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
             ImGui::EndTable();
         }
-        if (is_edited){
+        if (is_edited){ // TODO : 리팩토링
             if (set != nullptr){
                 set(temp);
+            }
+        }
+    };
+}
+
+ColorParameter::ColorParameter(std::string label_, std::function<vec4()> get_, std::function<void(vec4)> set_) :
+    Parameter(label_), get(get_), set(set_){
+    int parameter_count = GUI::parameter_count++;
+    render_action = [this, parameter_count](){ // TODO : completion 액션 추가
+        vec4 temp_vec = get();
+        temp[0] = temp_vec.x;
+        temp[1] = temp_vec.y;
+        temp[2] = temp_vec.z;
+        temp[3] = temp_vec.w;
+        ImGui::Text(label.c_str());
+        // ImGuiColorEditFlags_PickerHueWheel
+        ImGui::ColorEdit4(Utils::format("ColorEdit##%1%", parameter_count).c_str(), temp, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_NoOptions);
+        is_edited = true;
+        if (is_edited){
+            if (set != nullptr){
+                set(vec4(temp[0], temp[1], temp[2], temp[3]));
             }
         }
     };

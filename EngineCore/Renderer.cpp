@@ -2,6 +2,7 @@
 #include "Core.h"
 #include "Utils.h"
 #include "Camera.h"
+#include "Material.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -21,7 +22,7 @@ CSGNode::CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2) : transform(C
     assert(type != Type::Operand);
     type = type_;
     children.push_back(new CSGNode(mesh1));
-    children.push_back(new CSGNode(mesh1));
+    children.push_back(new CSGNode(mesh2));
 }
 
 CSGNode::~CSGNode(){
@@ -107,26 +108,21 @@ void CSGNode::CSGNodeTransform::add_position(const vec3& value){
 
 // ===== Model ===== //
 
-vec3 Model::lightPos = vec3(30, -100, -50);
-
 Model::Model(std::string name_) : name(name_){
-    shader = new Shader();
 }
 
 Model::~Model(){
     if (csgmesh != nullptr){
         delete csgmesh;
     }
-    if (shader != nullptr){
-        delete shader;
-    }
+    delete material;
 }
 
 void Model::set_new(const Mesh& mesh){
     csgmesh = new CSGNode(mesh);
     // TODO : 기존 transform 제거
     components.push_back(csgmesh->get_transform());
-    // TODO : material 추가
+    components.push_back(material = new Material());
 }
 
 Model* Model::get_parent(){
@@ -137,7 +133,7 @@ std::list<Model*> Model::get_children(){
     return children;
 }
 
-CSGNode* Model::get_mesh(){
+CSGNode* Model::get_csg_mesh(){
     return csgmesh;
 }
 
@@ -152,11 +148,8 @@ Transform* Model::get_transform(){
     return csgmesh->get_transform();
 }
 
-Shader* Model::get_shader(){
-    if(csgmesh == nullptr){
-        return nullptr;
-    }
-    return shader;
+Material* Model::get_material(){
+    return material;
 }
 
 bool Model::is_renderable(){
@@ -164,16 +157,13 @@ bool Model::is_renderable(){
 }
 
 void Model::render(Renderer* renderer){
-    lightPos.x = 50 * sin(Utils::time_acc());
-    lightPos.z = 50*sin(Utils::time_acc());
-    get_shader()->set_vec3("objectColor", objectColor);
-    get_shader()->set_vec3("lightPos", lightPos);
-    get_shader()->set_float("ambient", ambient);
     csgmesh->render();
 }
 
 
 // ===== Renderer ===== //
+
+vec3 Renderer::lightPos = vec3(30, -100, -50);
 
 Renderer::Renderer(int viewport_width, int viewport_height){
     parent = nullptr;
@@ -228,7 +218,7 @@ void Renderer::set_bind_fbo(int texture_width, int texture_height){ // TODO : �
 
 void Renderer::render(const std::list<Model*>& models){
     glViewport(0, 0, texture_size.x, texture_size.y);
-    set_bind_fbo(texture_size.x, texture_size.y);
+    set_bind_fbo((int)texture_size.x, (int)texture_size.y);
 
     ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
@@ -258,15 +248,10 @@ void Renderer::render(const std::list<Model*>& models){
         newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));*/
     }
     for (Model* model : models){
-        
-        model->get_shader()->Use();
 
-        //좌표 정보 전달
-        {
-            model->get_shader()->set_mat4("world", *model->get_transform()->get_matrix());
-            model->get_shader()->set_mat4("view", camera->get_view());
-            model->get_shader()->set_mat4("projection", camera->get_projection());
-        }
+        lightPos.x = 50 * sin(Utils::time_acc());
+        lightPos.z = 50*sin(Utils::time_acc());
+        model->get_material()->apply(model->get_transform(), camera, lightPos);
         model->render(this);
     }
 }
@@ -276,5 +261,5 @@ void Renderer::dispose(){
 
 void Renderer::resize(int width, int height){
     viewport_size = vec2(width, height);
-    camera->resize(width, height);
+    camera->resize((float)width, (float)height);
 }

@@ -44405,7 +44405,9 @@
     <ClInclude Include="Transform.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h" />
+    <ClInclude Include="Material.h">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44466,7 +44468,9 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Component</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="Material.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.lib">

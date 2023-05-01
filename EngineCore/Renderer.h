@@ -57,13 +57,14 @@ public:
 
 };
 
+class Material;
 class Model{
     Model* parent = nullptr;
     std::list<Model*> children;
 
     std::list<Component*> components;
     CSGNode* csgmesh = nullptr; // root node
-    Shader* shader = nullptr;
+    Material* material = nullptr;
 
 public:
     std::string name;
@@ -74,25 +75,18 @@ public:
 
     Model* get_parent();
     std::list<Model*> get_children();
-    CSGNode* get_mesh();
+    CSGNode* get_csg_mesh();
 
     std::list<Component*> get_components();
-    // TODO : getcomponent
+    // TODO : add_component();
+    // TODO : get_component(type);
 
-    Transform* get_transform();
+    Transform* get_transform(); // 필수적인 컴포넌트들 get
+    Material* get_material();
     //Transform get_world_position();
     
     bool is_renderable();
     void render(class Renderer* renderer);
-
-
-    //===== Material =====
-    static vec3 lightPos;
-    vec3 objectColor = { 1.0f,1.0f,0.0f };
-    float ambient = 0.1f;
-
-    Shader* get_shader();
-
 };
 
 class Camera;
@@ -128,5 +122,8 @@ public:
     float yDegree = 0.f;
 
     Transform cameraTransfrom;
+
+    //===== Material ===== 
+    static vec3 lightPos; // TODO : 라이트 컴포넌트 만들때 정리하기
 };
 

@@ -4,7 +4,7 @@ Transform::Transform() : Transform(vec4(0.f, 0.f, 0.f, 1.f)){ // ??
 }
 
 Transform::Transform(const vec4& _Vec4) : Component("Transform"){
-    vector = _Vec4;
+    vector = _Vec4; // ??
     matrix = glm::mat4(1.0f);
 
     position = vec3(0.f, 0.f, 0.f);

@@ -154,7 +154,7 @@ void WorkSpace::render_hierarchy(){
     std::function<void(Model*)> draw_model_tree = [&](Model* model){
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode((void*)(intptr_t)0, model->name.c_str())){
-            draw_mesh_tree(model->get_mesh());
+            draw_mesh_tree(model->get_csg_mesh());
             for (Model* child : model->get_children()){
                 draw_model_tree(child);
             }

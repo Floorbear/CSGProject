@@ -55,7 +55,7 @@ Shader::~Shader()
 {
 }
 
-void Shader::Use()
+void Shader::use()
 {
 	glUseProgram(shaderProgram);
 }
