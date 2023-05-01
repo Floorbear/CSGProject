@@ -14959,6 +14959,7 @@
     <ClInclude Include="Task.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="WorkSpace.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Thirdparty\glad\glad.c" />
@@ -14986,6 +14987,7 @@
     <ClCompile Include="Task.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Utils.cpp" />
+    <ClCompile Include="WorkSpace.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.pdb">

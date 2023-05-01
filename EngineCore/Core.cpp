@@ -1,5 +1,5 @@
 #include "Core.h"
-
+#include "Utils.h"
 #include <GLFW/glfw3.h>
 
 #pragma comment(lib,"opengl32.lib")

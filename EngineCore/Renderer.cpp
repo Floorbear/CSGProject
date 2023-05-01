@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "Material.h"
 #include "Model.h"
+#include "WorkSpace.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

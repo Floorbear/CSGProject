@@ -1,7 +1,7 @@
 #include "GUI_Actions.h"
-#include "GUI.h"
 #include "Utils.h"
 #include "Model.h"
+#include "WorkSpace.h"
 
 WorkSpace_Actions::WorkSpace_Actions(WorkSpace* parent_) : parent(parent_){
 }

@@ -44415,6 +44415,9 @@
     <ClInclude Include="CSGNode.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="WorkSpace.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44481,6 +44484,9 @@
     </ClCompile>
     <ClCompile Include="CSGNode.cpp">
       <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="WorkSpace.cpp">
+      <Filter>GUI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
