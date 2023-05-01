@@ -11,6 +11,7 @@
 using namespace glm;
 class GUI;
 
+
 class CSGNode{
     CSGNode* parent = nullptr;
     std::list<CSGNode*> children;
@@ -89,6 +90,8 @@ public:
     void render(class Renderer* renderer);
 };
 
+
+
 class Camera;
 class Renderer{
     GUI* parent;
@@ -108,7 +111,7 @@ public:
     void set_parent(GUI* parent_);
 
     void init();
-    void render(const std::list<Model*>& models);
+    void render(const std::list<Model*>& models, RenderSpace space_ = RenderSpace::Screen);
     void dispose();
 
     void resize(int viewport_width, int viewport_height);

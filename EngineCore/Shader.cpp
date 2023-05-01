@@ -1,19 +1,28 @@
 #include "Shader.h"
 #include "FileSystem.h"
 
-Shader::Shader()
+ std::map<std::string, std::string> Shader::compileData;
+
+Shader::Shader(std::string vertexShader_, std::string fragmentShader_)
 {
 	//Can make instance
 	//-------------------- Init VertexShader ----------------------------------
 	{
+		static bool isCompileVertexShader = false;
 		vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		EnginePath NewPath = FileSystem::GetProjectPath();
-		NewPath.Move("EngineResource");
-		NewPath.Move("Shader");
-		NewPath.Move("DefaultVertexShader.glsl");
-		std::string ShaderTEXT = NewPath.ReadFile();
-		const char* shaderSource = ShaderTEXT.c_str();
-
+		auto iter = compileData.find(vertexShader_);
+		if(iter == compileData.end())
+		{
+			EnginePath NewPath = FileSystem::GetProjectPath();
+			NewPath.Move("EngineResource");
+			NewPath.Move("Shader");
+			NewPath.Move(vertexShader_);
+			std::string ShaderTEXT = NewPath.ReadFile();
+			compileData.insert(std::make_pair(vertexShader_, ShaderTEXT));
+			//shaderSource = ShaderTEXT.c_str();
+			isCompileVertexShader = true;
+		}
+		const char* shaderSource = compileData[vertexShader_].c_str();
 		glShaderSource(vertexShader, 1, &shaderSource, NULL);
 		glCompileShader(vertexShader);
 
@@ -23,15 +32,19 @@ Shader::Shader()
 	}
 	//-------------------- Init FragmentShader ----------------------------------
 	{
+		static bool isCompileFragmentShader = false;
 		fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-		EnginePath NewPath = FileSystem::GetProjectPath();
-		NewPath.Move("EngineResource");
-		NewPath.Move("Shader");
-		NewPath.Move("DefaultFragmentShader.glsl");
-		std::string ShaderTEXT = NewPath.ReadFile();
-		const char* shaderSource = ShaderTEXT.c_str();
-
+		static const char* shaderSource = nullptr;
+		if (!isCompileFragmentShader)
+		{
+			EnginePath NewPath = FileSystem::GetProjectPath();
+			NewPath.Move("EngineResource");
+			NewPath.Move("Shader");
+			NewPath.Move(fragmentShader_);
+			static std::string ShaderTEXT = NewPath.ReadFile();
+			shaderSource = ShaderTEXT.c_str();
+			isCompileFragmentShader = true;
+		}
 		glShaderSource(fragmentShader, 1, &shaderSource, NULL);
 		glCompileShader(fragmentShader);
 		int success = 0;
