@@ -76,6 +76,8 @@ void Renderer::set_bind_fbo(int texture_width, int texture_height){ // TODO : �
 void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     glViewport(0, 0, texture_size.x, texture_size.y);
 
+
+
     //픽킹텍스처
     static int pickingTest = 0;
     static unsigned int fbo = 0;
@@ -148,8 +150,8 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     if (newModel == NULL){
         newModel = new Model("MyModel");
 
-        //newModel->set_new(Mesh::Cube);
-        newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
+        newModel->set_new(Mesh::Cube);
+        //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
         //newModel->set_new(Mesh::Sphere);
 
         parent->active_workspace->models.push_back(newModel);
@@ -161,14 +163,14 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     Model* model = parent->active_workspace->find_model("MyModel");
     if(model!=NULL){
         //CSGMesh* newMesh = 
-        /*Transform* newMesh = model->get_transform();
+        Transform* newMesh = model->get_transform();
         newMesh->set_position(vec3(0,0, 2));
-        newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));*/
+        newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
     }
-    for (Model* model : models){
+    lightPos.x = 50 * sin(Utils::time_acc());
+    lightPos.z = 50 * sin(Utils::time_acc());
 
-        lightPos.x = 50 * sin(Utils::time_acc());
-        lightPos.z = 50*sin(Utils::time_acc());
+    for (Model* model : models){
         model->get_material()->apply(model->get_transform(), camera, lightPos);
         model->render(this);
     }

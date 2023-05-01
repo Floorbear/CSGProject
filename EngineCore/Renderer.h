@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Mesh.h"
-#include "Shader.h"
+#include "Material.h"
 #include "Utils.h"
 
 #include <glm/glm.hpp>
@@ -10,13 +10,6 @@
 
 using namespace glm;
 class GUI;
-
-enum class RenderSpace
-{
-    Selection,
-    Screen
-};
-
 class Model;
 class Camera;
 class Renderer{
@@ -25,11 +18,11 @@ class Renderer{
     vec2 texture_size;
     vec2 viewport_size;
 
-    GLuint fbo = 0;
+    unsigned int fbo = 0;
     void set_bind_fbo(int texture_width, int texture_height);
 
 public:
-    GLuint frame_texture = 0;
+    unsigned int frame_texture = 0;
     Camera* camera;
 
     Renderer(int viewport_width, int viewport_height);

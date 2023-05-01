@@ -193,7 +193,9 @@ void WorkSpace::render_logs() {
 }
 
 void WorkSpace::render() {
+    
     for (Renderer* renderer : renderers) {
+
         renderer->render(models);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
