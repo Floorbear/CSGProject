@@ -49,6 +49,9 @@
     <Filter Include="Component">
       <UniqueIdentifier>{dafd8954-67da-4322-a4a6-8cbeb7f689c8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object">
+      <UniqueIdentifier>{090173f2-2781-4e0a-82e8-aa1770c2754b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core.h" />
@@ -43535,9 +43538,6 @@
     <ClInclude Include="Shader.h">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="..\Thirdparty\glm\common.hpp">
       <Filter>ThirdParty\glm</Filter>
     </ClInclude>
@@ -44405,8 +44405,15 @@
     <ClInclude Include="Transform.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Component</Filter>
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="Model.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="CSGNode.h">
+      <Filter>Object</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -44441,9 +44448,6 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="..\Thirdparty\glm\detail\glm.cpp">
       <Filter>ThirdParty\glm</Filter>
     </ClCompile>
@@ -44468,8 +44472,15 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Component</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Component</Filter>
+    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="Model.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="CSGNode.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

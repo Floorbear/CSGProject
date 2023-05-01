@@ -2,6 +2,8 @@
 #include "Core.h"
 #include "Utils.h"
 #include "Camera.h"
+#include "Model.h"
+#include "CSGNode.h"
 
 #include "Imgui/imgui_internal.h"
 

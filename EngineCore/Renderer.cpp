@@ -3,10 +3,7 @@
 #include "Utils.h"
 #include "Camera.h"
 #include "Material.h"
-
-
-
-
+#include "Model.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -16,153 +13,8 @@
 
 #pragma warning(disable : 4717)
 
-// ===== CSGMesh ===== // TODO : CSGNode?
-
-CSGNode::CSGNode(const Mesh& mesh) : result(mesh), transform(CSGNodeTransform(this)){
-    type = Type::Operand;
-}
-
-CSGNode::CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2) : transform(CSGNodeTransform(this)){
-    assert(type != Type::Operand);
-    type = type_;
-    children.push_back(new CSGNode(mesh1));
-    children.push_back(new CSGNode(mesh2));
-}
-
-CSGNode::~CSGNode(){
-    for (CSGNode* child : children){
-        delete child;
-    }
-}
-
-CSGNode* CSGNode::get_parent(){
-    return parent;
-}
-
-std::list<CSGNode*> CSGNode::get_children(){
-    return children;
-}
-
-CSGNode* CSGNode::main_child(){
-    if(children.empty()){
-        return nullptr;
-    }
-    return children.front();
-}
-
-Transform* CSGNode::get_transform(){
-    if (type == Type::Operand){
-        return (Transform*)&transform;
-    }
-    if (!children.empty()){
-        return main_child()->get_transform();
-    }
-    return NULL;
-}
-
-void CSGNode::render(){
-    result.render();
-}
-
-CSGNode::CSGNodeTransform::CSGNodeTransform(CSGNode* parent_) : Transform(), parent(parent_){
-}
-// TODO : gui 조작을 위한 특정시점 값 저장 후 차이값 적용 기능 추가
-
-void CSGNode::CSGNodeTransform::set_position(const vec3& value){
-    vec3 delta = value - get_position();
-    Transform::set_position(value);
-    for(CSGNode* node : parent->children){
-        node->transform.add_position(delta);
-    }
-}
-
-void CSGNode::CSGNodeTransform::set_rotation(const vec3& value){
-    vec3 delta = value - get_rotation();
-    Transform::set_rotation(value);
-    for(CSGNode* node : parent->children){
-        node->transform.rotate(delta);
-    }
-}
-
-void CSGNode::CSGNodeTransform::set_scale(const vec3& value){
-    vec3 ratio = value / get_scale();
-    Transform::set_scale(value);
-    for(CSGNode* node : parent->children){
-        node->transform.scale(ratio);
-    }
-}
-
-void CSGNode::CSGNodeTransform::translate(const vec3& value){
-    
-}
-
-void CSGNode::CSGNodeTransform::rotate(const vec3& value){
-}
-
-void CSGNode::CSGNodeTransform::scale(const vec3& value){
-}
-
-void CSGNode::CSGNodeTransform::add_position(const vec3& value){
-    parent->transform.add_position(value);
-    for(CSGNode* node : parent->children){
-        node->transform.add_position(value);
-    }
-}
 
 
-// ===== Model ===== //
-
-Model::Model(std::string name_) : name(name_){
-}
-
-Model::~Model(){
-    if (csgmesh != nullptr){
-        delete csgmesh;
-    }
-    delete material;
-}
-
-void Model::set_new(const Mesh& mesh){
-    csgmesh = new CSGNode(mesh);
-    // TODO : 기존 transform 제거
-    components.push_back(csgmesh->get_transform());
-    components.push_back(material = new Material());
-}
-
-Model* Model::get_parent(){
-    return parent;
-}
-
-std::list<Model*> Model::get_children(){
-    return children;
-}
-
-CSGNode* Model::get_csg_mesh(){
-    return csgmesh;
-}
-
-std::list<Component*> Model::get_components(){
-    return components;
-}
-
-Transform* Model::get_transform(){
-    if(csgmesh == nullptr){
-        return nullptr;
-    }
-    return csgmesh->get_transform();
-}
-
-Material* Model::get_material(){
-    return material;
-}
-
-bool Model::is_renderable(){
-    return csgmesh != nullptr;
-}
-
-void Model::render(Renderer* renderer){
-    csgmesh->render();
-}
 
 
 // ===== Renderer ===== //
@@ -220,8 +72,69 @@ void Renderer::set_bind_fbo(int texture_width, int texture_height){ // TODO : �
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 }
 
-void Renderer::render(const std::list<Model*>& models){
+void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     glViewport(0, 0, texture_size.x, texture_size.y);
+
+    //픽킹텍스처
+    static int pickingTest = 0;
+    static unsigned int fbo = 0;
+    static unsigned int texture = 0;
+    static unsigned int depthTexture = 0;
+    //===== init ======
+    if (pickingTest == 0)
+    {
+        pickingTest = 1;
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32UI, (int)texture_size.x, (int)texture_size.y, 0, GL_RGB_INTEGER, GL_UNSIGNED_INT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+        glGenTextures(1, &depthTexture);
+        glBindTexture(GL_TEXTURE_2D, depthTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, (int)texture_size.x, (int)texture_size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+
+        auto Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        assert(Status == GL_FRAMEBUFFER_COMPLETE); //버퍼가 정상적으로 생성됬는지 체크
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    //===== if Pressed ======
+    {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+        //WorldTrans& worldTransform = pMesh->GetWorldTransform();
+        //Matrix4f View = m_pGameCamera->GetMatrix();
+        //Matrix4f Projection = m_pGameCamera->GetProjectionMat();
+
+        //for (uint i = 0; i < (int)ARRAY_SIZE_IN_ELEMENTS(m_worldPos); i++) {
+        //    worldTransform.SetPosition(m_worldPos[i]);
+        //    // Background is zero, the real objects start at 1
+        //    m_pickingEffect.SetObjectIndex(i + 1);
+        //    Matrix4f World = worldTransform.GetMatrix();
+        //    Matrix4f WVP = Projection * View * World;
+        //    m_pickingEffect.SetWVP(WVP);
+        //    pMesh->Render(&m_pickingEffect);
+        //}
+
+        //m_pickingTexture.DisableWriting();
+
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+    }
+
+
+
     set_bind_fbo((int)texture_size.x, (int)texture_size.y);
 
     ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
