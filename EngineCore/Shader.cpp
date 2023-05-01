@@ -34,17 +34,18 @@ Shader::Shader(std::string vertexShader_, std::string fragmentShader_)
 	{
 		static bool isCompileFragmentShader = false;
 		fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-		static const char* shaderSource = nullptr;
-		if (!isCompileFragmentShader)
+		auto iter = compileData.find(fragmentShader_);
+		if (iter == compileData.end())
 		{
 			EnginePath NewPath = FileSystem::GetProjectPath();
 			NewPath.Move("EngineResource");
 			NewPath.Move("Shader");
 			NewPath.Move(fragmentShader_);
-			static std::string ShaderTEXT = NewPath.ReadFile();
-			shaderSource = ShaderTEXT.c_str();
+			std::string ShaderTEXT = NewPath.ReadFile();
+			compileData.insert(std::make_pair(fragmentShader_, ShaderTEXT));
 			isCompileFragmentShader = true;
 		}
+		const char* shaderSource = compileData[fragmentShader_].c_str();
 		glShaderSource(fragmentShader, 1, &shaderSource, NULL);
 		glCompileShader(fragmentShader);
 		int success = 0;
@@ -89,6 +90,12 @@ void Shader::set_vec3(std::string_view uniform_, const glm::vec3& value_)
 {
 	GLuint uniformLocation = glGetUniformLocation(shaderProgram, uniform_.data());
 	glUniform3fv(uniformLocation, 1, &value_[0]);
+}
+
+void Shader::set_uint(std::string_view uniform_, unsigned int _int)
+{
+	GLuint uniformLocation = glGetUniformLocation(shaderProgram, uniform_.data());
+	glUniform1ui(uniformLocation, _int);
 }
 
 

@@ -47,5 +47,13 @@ public:
 
     //===== Material ===== 
     static vec3 lightPos; // TODO : 라이트 컴포넌트 만들때 정리하기
+
+    //===== Selection ====== // TODO : 클래스 분리
+    struct PixelInfo {
+        uint objectID = 0;
+        uint secondID = 0;
+        uint primID = 0;
+    };
+
 };
 

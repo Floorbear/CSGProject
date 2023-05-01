@@ -45032,6 +45032,9 @@
     <None Include="..\Thirdparty\glm\gtx\wrap.inl">
       <Filter>ThirdParty\glm</Filter>
     </None>
+    <None Include="..\EngineResource\Shader\SelectionFragmentShader.glsl">
+      <Filter>Rendering</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Thirdparty\glm\CMakeLists.txt">

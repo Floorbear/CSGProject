@@ -115,6 +115,7 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        
 
         //WorldTrans& worldTransform = pMesh->GetWorldTransform();
         //Matrix4f View = m_pGameCamera->GetMatrix();
@@ -129,14 +130,32 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
         //    m_pickingEffect.SetWVP(WVP);
         //    pMesh->Render(&m_pickingEffect);
         //}
-
-        //m_pickingTexture.DisableWriting();
+        for (Model* model : models) {
+            model->get_material()->apply(model->get_transform(), camera, lightPos,RenderSpace::Selection);
+            model->render(this);
+        }
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
     }
 
+    // ===== Read Pixel ======
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
 
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+    PixelInfo Pixel;
+    glReadPixels(256, 256, 1, 1, GL_RGB_INTEGER, GL_UNSIGNED_INT, &Pixel);
+
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    if (Pixel.objectID == 5)
+    {
+        printf("%오브젝트 감지 \n", Pixel.objectID);
+    }
+
+
+    //===================================================
 
     set_bind_fbo((int)texture_size.x, (int)texture_size.y);
 
@@ -145,6 +164,7 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     camera->calculate_view();
+
 
     static Model* newModel = NULL;
     if (newModel == NULL){
@@ -167,6 +187,7 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
         newMesh->set_position(vec3(0,0, 2));
         newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
     }
+
     lightPos.x = 50 * sin(Utils::time_acc());
     lightPos.z = 50 * sin(Utils::time_acc());
 

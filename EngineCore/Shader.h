@@ -17,6 +17,7 @@ public:
 	void set_float(std::string_view uniform_, float value_);
 	void set_mat4(std::string_view uniform_, const glm::mat4& value_);
 	void set_vec3(std::string_view uniform_, const glm::vec3& value_);
+	void set_uint(std::string_view uniform_, unsigned int _uint);
 
 private:
 	unsigned int vertexShader = 0;

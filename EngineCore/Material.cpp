@@ -4,7 +4,7 @@
 
 Material::Material() : Component("Material"){
     screenShader = new Shader();
-    selectionShader = new Shader();
+    selectionShader = new Shader("DefaultVertexShader.glsl","SelectionFragmentShader.glsl");
 
     parameters.push_back(new ColorParameter("color", [this](){
         return color;
@@ -38,6 +38,8 @@ void Material::apply(Transform* model_transform, Camera* camera, vec3 light_posi
         selectionShader->set_mat4("world", *model_transform->get_matrix());
         selectionShader->set_mat4("view", camera->get_view());
         selectionShader->set_mat4("projection", camera->get_projection());
+        
+        selectionShader->set_uint("objectID", 5);
         break;
     }
 
