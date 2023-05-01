@@ -8,7 +8,6 @@
 #include <list>
 #include "EngineCore/Transform.h"
 
-class GUI;
 class Camera
 {
 public:
@@ -19,13 +18,10 @@ public:
 	Camera(float width_, float height_, float fov = 45.f);
 	~Camera();
 
+	void resize(float viewport_width, float viewport_height);
+
 public:
 	void calculate_view();
-	inline void set_parent(GUI* parent_)
-	{
-		assert(parent_ != nullptr);
-		parent = parent_;
-	}
 
 	inline glm::mat4 get_view()
 	{
@@ -43,7 +39,6 @@ public:
 	}
 
 private:
-	GUI* parent;
 	Transform transform;
 
 	float width = 0.f;

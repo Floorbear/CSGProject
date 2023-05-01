@@ -31,7 +31,7 @@ float Utils::time_delta()
 
 void Utils::time_update()
 {
-    float current_frameTime = glfwGetTime();
+    float current_frameTime = (float)glfwGetTime();
     deltaTime = current_frameTime - last_frameTime;
     last_frameTime = current_frameTime;
 }

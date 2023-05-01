@@ -43,18 +43,23 @@ class WorkSpace{
     GUI* parent; // WorkSpace는 GUI에 종속
     WorkSpace_Actions actions;
 
+    void render_view(Renderer* renderer);
+    void render_hierarchy();
+    void render_inspector();
+    void render_logs();
     void render_popup_menu();
 
 public:
     int id;
     std::string title;
 
-    bool gui_initialized;
-    bool gui_hierarchy;
-    bool gui_inspector;
-    bool gui_logs;
-    bool gui_csgtree;
-    Renderer renderer; // view 담당. TODO : 여러개 가능하게
+    bool gui_initialized = false;
+    bool gui_hierarchy = true;
+    bool gui_inspector = true;
+    bool gui_logs = true;
+    bool gui_csgtree = false;
+    std::list<Renderer*> renderers;
+    Renderer* renderer_focused = nullptr;
 
     TransactionTaskManager transaction_manager;
 
@@ -65,22 +70,13 @@ public:
     WorkSpace(GUI* parent_, std::string title_);
     ~WorkSpace();
 
+    Camera* get_main_camera();
     Model* find_model(std::string_view name);
 
     void render();
 
     static WorkSpace* create_new(GUI* parent_, const char* filename);
-
-    GLuint init_fbo(int w_, int _h);
-
-    //===== Camera =====
-public:
-    inline Camera* get_mainCamera() //TODO : 다른 카메라(카메라1, 카메라2) 반환 함수도 만들수도있음
-    {
-        return mainCamera;
-    }
-
-    Camera* mainCamera;
+    void add_view_new();
 };
 
 class GUI{

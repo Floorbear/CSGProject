@@ -87,20 +87,11 @@ WorkSpace::WorkSpace(GUI* parent_) : WorkSpace(parent_, std::string("test")){
 
 WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(title_), actions(WorkSpace_Actions(this)){
     id = id_counter++;
-    gui_initialized = false;
-    gui_hierarchy = true;
-    gui_inspector = true;
-    gui_logs = true;
-    gui_csgtree = false;
     //TODO : 여기서 도킹 설정?
 
-    // TODO : 렌더러로 이동
-    mainCamera = new Camera(parent->window_size.x, parent->window_size.y);
-    mainCamera->set_parent(parent_);
-
-    renderer.viewport_size = vec2(512, 512);//parent->window_size; // TODO : view창 만들면서 view창 크기로 지정
-    renderer.set_parent(parent);
-    renderer.init();
+    renderers.push_back(renderer_focused = new Renderer(512, 512));
+    renderer_focused->set_parent(parent);
+    renderer_focused->init();
 }
 
 WorkSpace::~WorkSpace(){
@@ -113,10 +104,17 @@ WorkSpace::~WorkSpace(){
     // (windows에서 제거,, windowsbyid에서 제거. frame end에서 실행)
     //}
 
+    for (Renderer* renderer : renderers){
+        delete renderer;
+    }
     for (Model* model : models){
         delete model;
     }
-    delete mainCamera; // TODO : renderer로 이동
+}
+
+Camera* WorkSpace::get_main_camera(){
+    assert(renderer_focused != nullptr);
+    return renderer_focused->camera;
 }
 
 Model* WorkSpace::find_model(std::string_view name){
@@ -128,126 +126,167 @@ Model* WorkSpace::find_model(std::string_view name){
     return nullptr;
 }
 
-void WorkSpace::render(){
-    static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
-    #ifdef NO_BACKGROUND
-    window_flags |= ImGuiWindowFlags_NoBackground;
-    #endif
+void WorkSpace::render_view(Renderer* renderer){
+    // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
+    ImGui::Begin(Utils::format("View##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
+    renderer->resize((int)ImGui::GetWindowSize().x, (int)ImGui::GetWindowSize().y);
 
-    static float view_w = 512;
-    static float view_h = 512;
+    ImVec2 p_min = ImGui::GetWindowPos();
+    ImVec2 p_max = ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y);
 
-    {// TODO : 여러 view에서 models를 참조해서 그려야함. (렌더러 개수만큼 수행)
-        // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
-        GLuint f_tex = init_fbo((int)view_w, (int)view_h);
+    #pragma warning(disable: 4312)
+    ImGui::GetWindowDrawList()->AddImage((void*)renderer->frame_texture, p_min, p_max, ImVec2(0, 0), ImVec2(1, 1));
+    ImGui::End();
 
-        // TODO : 이부분 렌더러로 이동
-        glViewport(0, 0, 512, 512);
-        ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        mainCamera->calculate_view();
+}
 
-        // 여기까지
-        renderer.render(models);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+void WorkSpace::render_hierarchy(){
+    ImGui::Begin(Utils::format("Hierarchy##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
+    std::function<void(CSGNode*)> draw_mesh_tree = [&](CSGNode* node){
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once); // TODO : 삭제
+        if (ImGui::TreeNode((void*)(intptr_t)0, std::string("<mesh>").c_str())){ // TODO : 메쉬는 어떻게 표시할것인가?
+            for (CSGNode* child : node->get_children()){
+                draw_mesh_tree(child);
+            }
+            ImGui::TreePop();
+        }
+    };
+    std::function<void(Model*)> draw_model_tree = [&](Model* model){
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode((void*)(intptr_t)0, model->name.c_str())){
+            draw_mesh_tree(model->get_mesh());
+            for (Model* child : model->get_children()){
+                draw_model_tree(child);
+            }
+            ImGui::TreePop();
+        }
+    };
+    // TODO : 하이어라키 선택
+    /*static ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+    static bool align_label_with_current_x_position = false;
+    static bool test_drag_and_drop = false;
+    ImGui::CheckboxFlags("ImGuiTreeNodeFlags_OpenOnArrow",       &base_flags, ImGuiTreeNodeFlags_OpenOnArrow);
+    ImGui::CheckboxFlags("ImGuiTreeNodeFlags_OpenOnDoubleClick", &base_flags, ImGuiTreeNodeFlags_OpenOnDoubleClick);
+    ImGui::CheckboxFlags("ImGuiTreeNodeFlags_SpanAvailWidth",    &base_flags, ImGuiTreeNodeFlags_SpanAvailWidth); ImGui::SameLine(); HelpMarker("Extend hit area to all available width instead of allowing more items to be laid out after the node.");
+    ImGui::CheckboxFlags("ImGuiTreeNodeFlags_SpanFullWidth",     &base_flags, ImGuiTreeNodeFlags_SpanFullWidth);
+    ImGui::Checkbox("Align label with current X position", &align_label_with_current_x_position);
+    ImGui::Checkbox("Test tree node as drag source", &test_drag_and_drop);
+    ImGui::Text("Hello!");
+    if (align_label_with_current_x_position)
+    ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
 
-        ImGui::Begin(Utils::format("View##%1%", id).c_str(), 0, window_flags);
-        view_w = ImGui::GetWindowSize().x;
-        view_h = ImGui::GetWindowSize().y;
-        renderer.viewport_size.x = view_w;
-        renderer.viewport_size.y = view_h;
-        ImVec2 sss = ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y);
-        #pragma warning(disable: 4312)
-        ImGui::GetWindowDrawList()->
-            AddImage((void*)f_tex, ImGui::GetWindowPos(), sss, ImVec2(0, 0), ImVec2(1, 1));
-        render_popup_menu();
+    // 'selection_mask' is dumb representation of what may be user-side selection state.
+    //  You may retain selection state inside or outside your objects in whatever format you see fit.
+    // 'node_clicked' is temporary storage of what node we have clicked to process selection at the end
+    /// of the loop. May be a pointer to your own node type, etc.
+    static int selection_mask = (1 << 2);
+    int node_clicked = -1;
+    for (int i = 0; i < 6; i++)
+    {
+    // Disable the default "open on single-click behavior" + set Selected flag according to our selection.
+    // To alter selection we use IsItemClicked() && !IsItemToggledOpen(), so clicking on an arrow doesn't alter selection.
+    ImGuiTreeNodeFlags node_flags = base_flags;
+    const bool is_selected = (selection_mask & (1 << i)) != 0;
+    if (is_selected)
+    node_flags |= ImGuiTreeNodeFlags_Selected;
+    if (i < 3)
+    {
+    // Items 0..2 are Tree Node
+    bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, "Selectable Node %d", i);
+    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+    node_clicked = i;
+    if (test_drag_and_drop && ImGui::BeginDragDropSource())
+    {
+    ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
+    ImGui::Text("This is a drag and drop source");
+    ImGui::EndDragDropSource();
+    }
+    if (node_open)
+    {
+    ImGui::BulletText("Blah blah\nBlah Blah");
+    ImGui::TreePop();
+    }
+    }
+    else
+    {
+    // Items 3..5 are Tree Leaves
+    // The only reason we use TreeNode at all is to allow selection of the leaf. Otherwise we can
+    // use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().
+    node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet
+    ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, "Selectable Leaf %d", i);
+    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+    node_clicked = i;
+    if (test_drag_and_drop && ImGui::BeginDragDropSource())
+    {
+    ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
+    ImGui::Text("This is a drag and drop source");
+    ImGui::EndDragDropSource();
+    }
+    }
+    }
+    if (node_clicked != -1)
+    {
+    // Update selection state
+    // (process outside of tree loop to avoid visual inconsistencies during the clicking frame)
+    if (ImGui::GetIO().KeyCtrl)
+    selection_mask ^= (1 << node_clicked);          // CTRL+click to toggle
+    else //if (!(selection_mask & (1 << node_clicked))) // Depending on selection behavior you want, may want to preserve selection when clicking on item that is part of the selection
+    selection_mask = (1 << node_clicked);           // Click to single-select
+    }
+    if (align_label_with_current_x_position)
+    ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing());
+    ImGui::TreePop();
+    }
+    ImGui::TreePop();*/
+    for (Model* model : models){
+        draw_model_tree(model);
+    }
+    ImGui::End();
+}
+
+void WorkSpace::render_inspector(){
+    ImGui::Begin(Utils::format("Inspector##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
+    Model* selected_model_ = models.back();// TODO : 멤버의 selected model로 변경
+    if (selected_model_ != nullptr){
+        for (Component* component : selected_model_->get_components()){
+            component->render();
+        }
+    }
+    ImGui::End();
+}
+
+void WorkSpace::render_logs(){
+    if (gui_logs){
+        ImGui::Begin(Utils::format("Logs##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
+        ImGui::Text(Utils::format("Text%1%", id).c_str()); // TODO
         ImGui::End();
     }
+}
+
+void WorkSpace::render(){
+    for (Renderer* renderer : renderers){
+        renderer->render(models);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    for (Renderer* renderer : renderers){
+        render_view(renderer);
+    }
+    render_popup_menu();
 
     if (gui_hierarchy){
-        ImGui::Begin(Utils::format("Hierarchy##%1%", id).c_str(), 0, window_flags);
-        std::function<void(CSGNode*)> draw_mesh_tree = [&](CSGNode* node){
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once); // TODO : 삭제
-            if(ImGui::TreeNode((void*)(intptr_t)0, std::string("<mesh>").c_str())){ // TODO : 메쉬는 어떻게 표시할것인가?
-                for(CSGNode* child : node->get_children()){
-                    draw_mesh_tree(child);
-                }
-                ImGui::TreePop();
-            }
-        };
-        std::function<void(Model*)> draw_model_tree = [&](Model* model){
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-            if(ImGui::TreeNode((void*)(intptr_t)0, model->name.c_str())){
-                draw_mesh_tree(model->get_mesh());
-                for(Model* child : model->get_children()){
-                    draw_model_tree(child);
-                }
-                ImGui::TreePop();
-            }
-        };
-        for(Model* model : models){
-            draw_model_tree(model);
-        }
-        ImGui::End();
+        render_hierarchy();
     }
-
     if (gui_inspector){
-        ImGui::Begin(Utils::format("Inspector##%1%", id).c_str(), 0, window_flags); // TODO : 내부 위젯 resize 정책 수정 : 일정값 이하는 스크롤바, 그 이상은 늘리기 (flag사용?)
-        Model* selected_model_ = models.back();// TODO : 멤버의 selected model로 변경
-        if(selected_model_!=nullptr){
-            for (Component* component : selected_model_->get_components()){
-                component->render();
-            }
-        }
-        ImGui::End();
+        render_inspector();
     }
-
     if (gui_logs){
-        ImGui::Begin(Utils::format("Logs##%1%", id).c_str(), 0, window_flags);
-        ImGui::Text(Utils::format("Text%1%", id).c_str());
-        ImGui::End();
+        render_logs();
     }
 }
 
 WorkSpace* WorkSpace::create_new(GUI* parent_, const char* filename){
     return new WorkSpace(parent_, filename);
-}
-
-GLuint WorkSpace::init_fbo(int w_, int _h){ // TODO : renderer로 이동
-    static unsigned int fbo = 0;
-    static GLuint f_tex;
-    if (fbo == 0){
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        //GLuint  f_tex = CreateTexture(512, 512, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
-        glGenTextures(1, &f_tex);
-        glBindTexture(GL_TEXTURE_2D, f_tex);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w_, _h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-        glBindTexture(GL_TEXTURE_2D, 0); // 
-
-        glBindTexture(GL_TEXTURE_2D, f_tex);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, f_tex, 0);
-
-        GLuint depthrenderbuffer;
-        glGenRenderbuffers(1, &depthrenderbuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, w_, _h);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    return f_tex;
 }
 
 
@@ -276,7 +315,6 @@ void GUI::render(){
     if (!(ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable)){
         return;
     }
-
     render_begin();
     render_gui();
     render_end();
@@ -422,7 +460,7 @@ void GUI::render_gui(){
                         ImGuiID dock_id_left = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.20f, NULL, &dock_main_id);
                         ImGuiID dock_id_right = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.20f, NULL, &dock_main_id);
 
-                        ImGui::DockBuilderDockWindow(Utils::format("View##%1%", workspace->id).c_str(), dock_main_id);
+                        ImGui::DockBuilderDockWindow(Utils::format("View##%1%", workspace->id).c_str(), dock_main_id);// TODO : 여러 view 도킹
                         ImGui::DockBuilderDockWindow(Utils::format("Hierarchy##%1%", workspace->id).c_str(), dock_id_left);
                         ImGui::DockBuilderDockWindow(Utils::format("Inspector##%1%", workspace->id).c_str(), dock_id_right);
                         ImGui::DockBuilderDockWindow(Utils::format("Logs##%1%", workspace->id).c_str(), dock_id_bottom);
@@ -620,64 +658,64 @@ void GUI::init_shortcut(){
     // ===== 카메라 ===== //
     {
         shortcuts.push_back(Shortcut("camera move right", false, false, false, GLFW_KEY_D, [this](){
-            active_workspace->mainCamera->get_transform()->
+            active_workspace->get_main_camera()->get_transform()->
                 translate(vec3(1, 0, 0) * Camera::speed_move_default * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move left", false, false, false, GLFW_KEY_A, [this](){
-            active_workspace->mainCamera->get_transform()->
+            active_workspace->get_main_camera()->get_transform()->
                 translate(vec3(-1, 0, 0) * Camera::speed_move_default * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move up", false, false, false, GLFW_KEY_Q, [this](){
-            active_workspace->mainCamera->get_transform()->
+            active_workspace->get_main_camera()->get_transform()->
                 add_position({0.f,Camera::speed_move_default * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move down", false, false, false, GLFW_KEY_E, [this](){
-            active_workspace->mainCamera->get_transform()->
+            active_workspace->get_main_camera()->get_transform()->
                 add_position({0.f,-Camera::speed_move_default * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move forward", false, false, false, GLFW_KEY_W, [this](){
-            active_workspace->mainCamera->get_transform()->
+            active_workspace->get_main_camera()->get_transform()->
                 translate(vec3(0, 0, 1) * Camera::speed_move_default * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move back", false, false, false, GLFW_KEY_S, [this](){
-            active_workspace->mainCamera->get_transform()->
+            active_workspace->get_main_camera()->get_transform()->
                 translate(vec3(0, 0, -1) * Camera::speed_move_default * Utils::time_delta());
         }));
 
         shortcuts.push_back(Shortcut("camera move fast right", true, false, false, GLFW_KEY_D, [this](){
-            vec3 Dir = active_workspace->mainCamera->get_transform()->get_right_dir() * Camera::speed_move_fast;
-            active_workspace->mainCamera->get_transform()->add_position(Dir * Utils::time_delta());
+            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_right_dir() * Camera::speed_move_fast;
+            active_workspace->get_main_camera()->get_transform()->add_position(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move fast left", true, false, false, GLFW_KEY_A, [this](){
-            vec3 Dir = active_workspace->mainCamera->get_transform()->get_right_dir() * -Camera::speed_move_fast;
-            active_workspace->mainCamera->get_transform()->add_position(Dir * Utils::time_delta());
+            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_right_dir() * -Camera::speed_move_fast;
+            active_workspace->get_main_camera()->get_transform()->add_position(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move fast up", true, false, false, GLFW_KEY_Q, [this](){
-            active_workspace->mainCamera->get_transform()->add_position({0.f,Camera::speed_move_fast * Utils::time_delta(), 0});
+            active_workspace->get_main_camera()->get_transform()->add_position({0.f,Camera::speed_move_fast * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move fast down", true, false, false, GLFW_KEY_E, [this](){
-            active_workspace->mainCamera->get_transform()->add_position({0.f,-Camera::speed_move_fast * Utils::time_delta(), 0});
+            active_workspace->get_main_camera()->get_transform()->add_position({0.f,-Camera::speed_move_fast * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move fast forward", true, false, false, GLFW_KEY_W, [this](){
-            vec3 Dir = active_workspace->mainCamera->get_transform()->get_forward_dir() * Camera::speed_move_fast;
-            active_workspace->mainCamera->get_transform()->add_position(Dir * Utils::time_delta());
+            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_forward_dir() * Camera::speed_move_fast;
+            active_workspace->get_main_camera()->get_transform()->add_position(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move fast back", true, false, false, GLFW_KEY_S, [this](){
-            vec3 Dir = active_workspace->mainCamera->get_transform()->get_forward_dir() * -Camera::speed_move_fast;
-            active_workspace->mainCamera->get_transform()->add_position(Dir * Utils::time_delta());
+            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_forward_dir() * -Camera::speed_move_fast;
+            active_workspace->get_main_camera()->get_transform()->add_position(Dir * Utils::time_delta());
         }));
 
         shortcuts.push_back(Shortcut("camera rotate up", false, false, false, GLFW_KEY_UP, [this](){
-            active_workspace->mainCamera->get_transform()->rotate({Camera::speed_rotate_default * Utils::time_delta(), 0.0f, 0.0f});
+            active_workspace->get_main_camera()->get_transform()->rotate({Camera::speed_rotate_default * Utils::time_delta(), 0.0f, 0.0f});
         }));
         shortcuts.push_back(Shortcut("camera rotate down", false, false, false, GLFW_KEY_DOWN, [this](){
-            active_workspace->mainCamera->get_transform()->rotate({-Camera::speed_rotate_default * Utils::time_delta(), 0.0f, 0.0f});
+            active_workspace->get_main_camera()->get_transform()->rotate({-Camera::speed_rotate_default * Utils::time_delta(), 0.0f, 0.0f});
         }));
         shortcuts.push_back(Shortcut("camera rotate left", false, false, false, GLFW_KEY_LEFT, [this](){
-            active_workspace->mainCamera->get_transform()->rotate({0.0f, -Camera::speed_rotate_default * Utils::time_delta(), 0.0f});
+            active_workspace->get_main_camera()->get_transform()->rotate({0.0f, -Camera::speed_rotate_default * Utils::time_delta(), 0.0f});
         }));
         shortcuts.push_back(Shortcut("camera rotate right", false, false, false, GLFW_KEY_RIGHT, [this](){
-            active_workspace->mainCamera->get_transform()->rotate({0.0f, Camera::speed_rotate_default * Utils::time_delta(), 0.0f});
+            active_workspace->get_main_camera()->get_transform()->rotate({0.0f, Camera::speed_rotate_default * Utils::time_delta(), 0.0f});
         }));
     }
 }

@@ -175,10 +175,17 @@ void Model::render(Renderer* renderer){
 
 // ===== Renderer ===== //
 
-Renderer::Renderer(){
-    parent = NULL;
-    viewport_size = vec2(100, 100); // default
-    main_camera = nullptr;
+Renderer::Renderer(int viewport_width, int viewport_height){
+    parent = nullptr;
+    camera = nullptr;
+
+    texture_size = vec2(512, 512); // default
+    viewport_size = vec2(viewport_width, viewport_height);
+    camera = new Camera(viewport_width, viewport_height);
+}
+
+Renderer::~Renderer(){
+    delete camera;
 }
 
 void Renderer::set_parent(GUI* parent_){
@@ -188,11 +195,46 @@ void Renderer::set_parent(GUI* parent_){
 void Renderer::init(){
 }
 
-void Renderer::render(const std::list<Model*>& models){
+void Renderer::set_bind_fbo(int texture_width, int texture_height){ // TODO : 리팩토링
+    if (fbo == 0){ // 지연 초기화
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        //GLuint  f_tex = CreateTexture(512, 512, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+        glGenTextures(1, &frame_texture);
+        glBindTexture(GL_TEXTURE_2D, frame_texture);
 
-    if (main_camera == nullptr){
-        main_camera = parent->active_workspace->get_mainCamera();
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width, texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        glBindTexture(GL_TEXTURE_2D, frame_texture);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frame_texture, 0);
+
+        GLuint depthrenderbuffer;
+        glGenRenderbuffers(1, &depthrenderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, texture_width, texture_height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     }
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+}
+
+void Renderer::render(const std::list<Model*>& models){
+    glViewport(0, 0, texture_size.x, texture_size.y);
+    set_bind_fbo(texture_size.x, texture_size.y);
+
+    ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
+    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    camera->calculate_view();
 
     static Model* newModel = NULL;
     if (newModel == NULL){
@@ -203,8 +245,8 @@ void Renderer::render(const std::list<Model*>& models){
         //newModel->set_new(Mesh::Sphere);
 
         parent->active_workspace->models.push_back(newModel);
-        main_camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
-        main_camera->get_transform()->set_rotation({ 0,-90,0 });
+        camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
+        camera->get_transform()->set_rotation({ 0,-90,0 });
     }
 
 
@@ -222,12 +264,17 @@ void Renderer::render(const std::list<Model*>& models){
         //좌표 정보 전달
         {
             model->get_shader()->set_mat4("world", *model->get_transform()->get_matrix());
-            model->get_shader()->set_mat4("view", main_camera->get_view());
-            model->get_shader()->set_mat4("projection", main_camera->get_projection());
+            model->get_shader()->set_mat4("view", camera->get_view());
+            model->get_shader()->set_mat4("projection", camera->get_projection());
         }
         model->render(this);
     }
 }
 
 void Renderer::dispose(){
+}
+
+void Renderer::resize(int width, int height){
+    viewport_size = vec2(width, height);
+    camera->resize(width, height);
 }

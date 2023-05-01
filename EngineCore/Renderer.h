@@ -99,16 +99,25 @@ class Camera;
 class Renderer{
     GUI* parent;
 
-public:
+    vec2 texture_size;
     vec2 viewport_size;
-     Camera* main_camera;
 
-    Renderer();
+    GLuint fbo = 0;
+    void set_bind_fbo(int texture_width, int texture_height);
+
+public:
+    GLuint frame_texture = 0;
+    Camera* camera;
+
+    Renderer(int viewport_width, int viewport_height);
+    ~Renderer();
     void set_parent(GUI* parent_);
 
     void init();
     void render(const std::list<Model*>& models);
     void dispose();
+
+    void resize(int viewport_width, int viewport_height);
 
     //===== Camera ======
     float xPos = 0.f;

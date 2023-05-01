@@ -11,8 +11,7 @@ float Camera::speed_move_fast = 6.0f;
 Camera::Camera(float width_, float height_, float fov_):
     width(width_),
     height(height_),
-    fov(fov_),
-    parent(nullptr)
+    fov(fov_)
 {
     view = mat4(1.0f);
     projection = mat4(1.0f);
@@ -53,4 +52,10 @@ void Camera::calculate_view()
     //view = rotate(view, radians(180.f), vec3(0, 0, 1));
 
     //save
+}
+
+
+void Camera::resize(float viewport_width, float viewport_height){
+    width = viewport_width;
+    height = viewport_height;
 }
