@@ -14,12 +14,6 @@
 
 #pragma warning(disable : 4717)
 
-
-
-
-
-// ===== Renderer ===== //
-
 vec3 Renderer::lightPos = vec3(30, -100, -50);
 
 Renderer::Renderer(int viewport_width, int viewport_height){
@@ -188,8 +182,8 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
         newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
     }
 
-    lightPos.x = 50 * sin(Utils::time_acc());
-    lightPos.z = 50 * sin(Utils::time_acc());
+    //lightPos.x = 50 * sin(Utils::time_acc());
+    //lightPos.z = 50 * sin(Utils::time_acc());
 
     for (Model* model : models){
         model->get_material()->apply(model->get_transform(), camera, lightPos);

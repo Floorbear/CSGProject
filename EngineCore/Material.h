@@ -3,12 +3,12 @@
 
 #include <glm/glm.hpp>
 
-enum class RenderSpace
-{
+using namespace glm;
+
+enum class RenderSpace{
     Selection,
     Screen
 };
-
 
 class Shader;
 class Camera;

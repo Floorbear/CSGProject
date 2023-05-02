@@ -238,8 +238,8 @@ Mesh Mesh::cgal_mesh_to_mesh(cgal_Mesh cg_Mesh)
 cgal_Mesh Mesh::mesh_to_cgal_mesh(Mesh m)
 {
     cgal_Mesh cg_Mesh;
-    int vd_size = m.vertices.size();
-    int fd_size = m.indices.size() / 3;
+    int vd_size = (int)m.vertices.size();
+    int fd_size = (int)m.indices.size() / 3;
     std::vector<vertex_descriptor> vd;
     std::vector<face_descriptor> fd;
   

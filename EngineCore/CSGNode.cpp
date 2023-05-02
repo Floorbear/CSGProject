@@ -1,6 +1,5 @@
 #include "CSGNode.h"
-
-// ===== CSGMesh ===== // TODO : CSGNode?
+#include "Utils.h"
 
 CSGNode::CSGNode(const Mesh& mesh) : result(mesh), transform(CSGNodeTransform(this)) {
     type = Type::Operand;

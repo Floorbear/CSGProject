@@ -1,6 +1,7 @@
 #include "Component.h"
 #include "GUI.h"
 #include "Utils.h"
+
 ImGuiInputTextCallback Parameter::edit_callback = [](ImGuiInputTextCallbackData* data){
     Parameter* parent = (Parameter*)data->UserData;
     parent->is_edited = true;

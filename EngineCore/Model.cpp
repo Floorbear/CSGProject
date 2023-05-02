@@ -1,7 +1,7 @@
 #include "Model.h"
 #include "CSGNode.h"
 #include "Material.h"
-// ===== Model ===== //
+#include "Utils.h"
 
 Model::Model(std::string name_) : name(name_) {
 }

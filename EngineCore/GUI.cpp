@@ -6,10 +6,6 @@
 #include "WorkSpace.h"
 #include "Core.h"
 
-
-
-#define NO_BACKGROUND
-
 // ===== Shortcut ===== //
 
 Shortcut::Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, ImGuiKey discrete_key_, std::function<void()> callback_) :

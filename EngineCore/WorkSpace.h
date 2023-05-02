@@ -7,10 +7,6 @@
 #include <Imgui/imgui_impl_glfw.h>
 #include <Imgui/imgui_impl_opengl3.h>
 
-
-
-#include <iostream>
-
 class Model;
 class Renderer;
 class Camera;

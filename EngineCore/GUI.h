@@ -8,9 +8,10 @@
 #include <Imgui/imgui_impl_glfw.h>
 #include <Imgui/imgui_impl_opengl3.h>
 
-#include <glm/glm.hpp>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
-#include <iostream>
+#include <glm/glm.hpp>
 
 using namespace glm;
 
@@ -33,7 +34,6 @@ public:
     void check_execute(GLFWwindow* glfw_window);
     std::string to_string();
 };
-
 
 
 class WorkSpace;
