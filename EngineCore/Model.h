@@ -25,6 +25,7 @@ public:
 
     Model* get_parent();
     std::list<Model*> get_children();
+    bool is_leaf_node();
     CSGNode* get_csg_mesh();
 
     std::list<Component*> get_components();

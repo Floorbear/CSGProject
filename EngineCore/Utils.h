@@ -8,7 +8,12 @@
 
 class Utils{
     static double time_prev_frame; //...
+
 public:
+    template<class _container, class _Ty> inline
+        static bool contains(_container _C, const _Ty& _Val){
+        return std::find(_C.begin(), _C.end(), _Val) != _C.end();
+    }
 
     static std::string format(const char* format_str, int num);
     static std::string format(const char* format_str, const std::list<int> nums);

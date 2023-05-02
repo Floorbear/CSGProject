@@ -26,6 +26,10 @@ std::list<CSGNode*> CSGNode::get_children() {
     return children;
 }
 
+bool CSGNode::is_leaf_node(){
+    return children.empty(); // <=> type == Operand
+}
+
 CSGNode* CSGNode::main_child() {
     if (children.empty()) {
         return nullptr;

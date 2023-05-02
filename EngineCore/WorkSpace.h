@@ -7,6 +7,7 @@
 #include <Imgui/imgui_impl_glfw.h>
 #include <Imgui/imgui_impl_opengl3.h>
 
+class CSGNode;
 class Model;
 class Renderer;
 class Camera;
@@ -23,6 +24,10 @@ class WorkSpace {
     void render_popup_menu();
 
 public:
+    enum class SelectionMode{
+        Model_Selection, Mesh_Selection
+    };
+
     int id;
     std::string title;
 
@@ -37,7 +42,10 @@ public:
     TransactionTaskManager transaction_manager;
 
     std::list<Model*> models;
-    //std::list<Mesh*> selected_meshes;
+
+    SelectionMode selection_mode = SelectionMode::Model_Selection;
+    std::list<Model*> selected_models;
+    std::list<CSGNode*> selected_meshes;
 
     WorkSpace(GUI* parent_);
     WorkSpace(GUI* parent_, std::string title_);

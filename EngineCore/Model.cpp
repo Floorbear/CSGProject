@@ -28,6 +28,10 @@ std::list<Model*> Model::get_children() {
     return children;
 }
 
+bool Model::is_leaf_node(){
+    return children.empty();
+}
+
 CSGNode* Model::get_csg_mesh() {
     return csgmesh;
 }

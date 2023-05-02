@@ -46,9 +46,9 @@ public:
 
     CSGNode* get_parent();
     std::list<CSGNode*> get_children();
+    bool is_leaf_node();
 
     CSGNode* main_child();
     Transform* get_transform();
     void render();
-
 };
