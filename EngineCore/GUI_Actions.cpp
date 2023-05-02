@@ -14,8 +14,7 @@ void WorkSpace_Actions::add_cube_new(){
 
     // TEST
     Transform* newMesh = model->get_transform();
-    newMesh->set_position(vec3(-count * 2.5, 0, 0)); // TODO : 메쉬가 생성되는 위치는 마우스 위치
-    printf("%f\n", newMesh->get_worldPosition().x);
+    newMesh->set_position(vec3(-count * 2.5, 0, 0)); // TODO : I believe it places objects in the center of the active viewport
     ++count;
 
 }

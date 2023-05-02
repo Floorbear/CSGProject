@@ -1,12 +1,11 @@
 #include "Camera.h"
-
 #include "Utils.h"
 
 using namespace glm;
 
-float Camera::speed_move_default = 3.f;
-float Camera::speed_rotate_default = 35.f;
-float Camera::speed_move_fast = 6.0f;
+float Camera::speed_move_default = 5.f;
+float Camera::speed_rotate_default = 55.f;
+float Camera::speed_move_fast = 10.0f;
 
 Camera::Camera(float width_, float height_, float fov_):
     width(width_),

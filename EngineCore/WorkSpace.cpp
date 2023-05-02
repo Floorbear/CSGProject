@@ -72,8 +72,6 @@ void WorkSpace::render_hierarchy(){
     Model* model_clicked = nullptr;
 
     static std::function<void(CSGNode*)> draw_mesh_tree = [&](CSGNode* node){
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once); // TODO : 삭제
-
         ImGuiTreeNodeFlags node_flags = base_flags;
         if (Utils::contains(selected_meshes, node)){
             node_flags |= ImGuiTreeNodeFlags_Selected;
@@ -100,8 +98,6 @@ void WorkSpace::render_hierarchy(){
     };
 
     static std::function<void(Model*)> draw_model_tree = [&](Model* model){
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-
         ImGuiTreeNodeFlags node_flags = base_flags;
         if (Utils::contains(selected_models, model)){
             node_flags |= ImGuiTreeNodeFlags_Selected;
@@ -129,39 +125,48 @@ void WorkSpace::render_hierarchy(){
         draw_model_tree(model);
     }
 
-    if (mesh_clicked != nullptr){
-        if (ImGui::GetIO().KeyCtrl){ // toggle
+    if (ImGui::IsMouseClicked(0) && ImGui::IsWindowHovered(ImGuiHoveredFlags_None)
+        && mesh_clicked == nullptr && model_clicked == nullptr){ // 빈칸 선택
+        selected_meshes.clear();
+        selected_models.clear();
+
+    } else if (mesh_clicked != nullptr){ // 메쉬 선택
+        if (ImGui::GetIO().KeyCtrl){
             if (Utils::contains(selected_meshes, mesh_clicked)){
                 selected_meshes.remove(mesh_clicked);
             } else{
                 selected_meshes.push_back(mesh_clicked);
             }
-        } else{ // single select
+        } else{
             selected_meshes.clear();
             selected_meshes.push_back(mesh_clicked);
         }
-    }
 
-    if (model_clicked != nullptr){
-        if (ImGui::GetIO().KeyCtrl){ // toggle
+    } else if (model_clicked != nullptr){ // 모델 선택
+        if (ImGui::GetIO().KeyCtrl){
             if (Utils::contains(selected_models, model_clicked)){
                 selected_models.remove(model_clicked);
             } else{
                 selected_models.push_back(model_clicked);
             }
-        } else{ // single select
+        } else{
             selected_models.clear();
             selected_models.push_back(model_clicked);
         }
     }
+
     ImGui::End();
 }
 
 void WorkSpace::render_inspector(){
     ImGui::Begin(Utils::format("Inspector##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
-    Model* selected_model_ = models.back();// TODO : 멤버의 selected model로 변경
-    if (selected_model_ != nullptr){
-        for (Component* component : selected_model_->get_components()){
+
+    if (selected_models.empty()){ // 모델과 메쉬가 모두 컴포넌트를 가진 오브젝트니까 이부분에서 추상화를 시켜도 좋을텐데 일단 보류...
+        if (!selected_meshes.empty()){
+            selected_meshes.front()->get_transform()->render();
+        }
+    } else{
+        for (Component* component : selected_models.front()->get_components()){
             component->render();
         }
     }
@@ -177,7 +182,6 @@ void WorkSpace::render_logs(){
 }
 
 void WorkSpace::render(){
-
     for (Renderer* renderer : renderers){
 
         renderer->render(models);
@@ -200,12 +204,24 @@ void WorkSpace::render(){
     }
 }
 
+void WorkSpace::process_input(){
+}
+
+void WorkSpace::on_mouse_press(vec2 position){
+}
+
+void WorkSpace::on_mouse_moved(vec2 position, vec2 position_prev){
+}
+
+void WorkSpace::on_mouse_released(vec2 position){
+}
+
 WorkSpace* WorkSpace::create_new(GUI* parent_, const char* filename){
     return new WorkSpace(parent_, filename);
 }
 
 void WorkSpace::render_popup_menu(){
-    if (ImGui::GetIO().MouseClicked[1]){
+    if (ImGui::GetIO().MouseReleased[1]){
         ImGui::OpenPopup("View_Popup_Edit");
     }
     if (ImGui::BeginPopup("View_Popup_Edit")){

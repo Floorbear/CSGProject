@@ -7,6 +7,10 @@
 #include <Imgui/imgui_impl_glfw.h>
 #include <Imgui/imgui_impl_opengl3.h>
 
+#include <glm/glm.hpp>
+
+using namespace glm;
+
 class CSGNode;
 class Model;
 class Renderer;
@@ -36,6 +40,7 @@ public:
     bool gui_inspector = true;
     bool gui_logs = true;
     bool gui_csgtree = false;
+
     std::list<Renderer*> renderers;
     Renderer* renderer_focused = nullptr;
 
@@ -55,7 +60,13 @@ public:
     Model* find_model(std::string_view name);
 
     void render();
+    void process_input();
+
+    void on_mouse_press(vec2 position);
+    void on_mouse_moved(vec2 position, vec2 position_prev);
+    void on_mouse_released(vec2 position);
 
     static WorkSpace* create_new(GUI* parent_, const char* filename);
+
     void add_view_new();
 };

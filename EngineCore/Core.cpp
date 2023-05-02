@@ -16,6 +16,7 @@ Core::Core(){
 }
 
 void Core::dispose(){
+    //Texture::dispose();
     gui.dispose();
     glfwTerminate();
     for (auto i : Texture::all_textures)

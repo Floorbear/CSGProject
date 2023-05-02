@@ -34,8 +34,12 @@ public:
 
     Transform* get_transform(); // 필수적인 컴포넌트들 get
     Material* get_material();
-    //Transform get_world_position();
 
     bool is_renderable();
-    void render(class Renderer* renderer);
+    void render();
+    void render_leaf_meshes();
+
+    //Transform get_world_position();
+
+    int get_selection_id(); // TODO
 };

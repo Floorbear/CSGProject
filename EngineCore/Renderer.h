@@ -13,6 +13,13 @@ class GUI;
 class Model;
 class Camera;
 class Renderer{
+public:
+    enum class RenderSpace{
+        Selection,
+        Screen
+    };
+
+private:
     GUI* parent;
 
     vec2 texture_size;
@@ -34,6 +41,8 @@ public:
     void dispose();
 
     void resize(int viewport_width, int viewport_height);
+
+    vec2 get_mouse_position();
 
     //===== Camera ======
     float xPos = 0.f;

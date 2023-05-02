@@ -4,7 +4,7 @@
 
 Material::Material() : Component("Material"){
     screenShader = new Shader();
-    selectionShader = new Shader("DefaultVertexShader.glsl","SelectionFragmentShader.glsl");
+    selectionShader = new Shader("DefaultVertexShader.glsl", "SelectionFragmentShader.glsl");
 
     parameters.push_back(new ColorParameter("color", [this](){
         return color;
@@ -22,40 +22,45 @@ Material::~Material(){
     if (screenShader != nullptr){
         delete screenShader;
     }
-
-    if (selectionShader != nullptr) {
+    if (selectionShader != nullptr){
         delete selectionShader;
     }
 }
 
-void Material::apply(Transform* model_transform, Camera* camera, vec3 light_position, RenderSpace _space){
-    switch (_space)
-    {
-    case RenderSpace::Selection:
-    {
-        selectionShader->use();
 
-        selectionShader->set_mat4("world", *model_transform->get_matrix());
-        selectionShader->set_mat4("view", camera->get_view());
-        selectionShader->set_mat4("projection", camera->get_projection());
-        
-        selectionShader->set_uint("objectID", 5);
-        break;
-    }
+void Material::set_uniform_transform(Transform* model_transform){
+    uniform_model_transform = model_transform;
+}
 
-    case RenderSpace::Screen:
-    {
-        screenShader->use();
+void Material::set_uniform_camera(Camera* camera){
+    uniform_camera = camera;
+}
 
-        screenShader->set_mat4("world", *model_transform->get_matrix());
-        screenShader->set_mat4("view", camera->get_view());
-        screenShader->set_mat4("projection", camera->get_projection());
+void Material::set_uniform_lights(vec3 lights){
+    uniform_lights = lights;
+}
 
-        screenShader->set_vec3("objectColor", vec3(color));
-        screenShader->set_vec3("lightPos", light_position);
-        screenShader->set_float("ambient", ambient);
-        break;
-    }
-    }
+void Material::set_uniform_selection_id(int selection_id){
+    uniform_selection_id = selection_id;
+}
 
+void Material::apply(){
+    screenShader->use();
+
+    screenShader->set_mat4("world", *uniform_model_transform->get_matrix());
+    screenShader->set_mat4("view", uniform_camera->get_view());
+    screenShader->set_mat4("projection", uniform_camera->get_projection());
+
+    screenShader->set_vec3("objectColor", vec3(color));
+    screenShader->set_float("ambient", ambient);
+}
+
+void Material::apply_object_selection(){
+    selectionShader->use();
+
+    selectionShader->set_mat4("world", *uniform_model_transform->get_matrix());
+    selectionShader->set_mat4("view", uniform_camera->get_view());
+    selectionShader->set_mat4("projection", uniform_camera->get_projection());
+
+    selectionShader->set_uint("objectID", uniform_selection_id);
 }

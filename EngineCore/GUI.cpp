@@ -116,6 +116,9 @@ void GUI::process_input(){
     for (Shortcut shortcut : shortcuts){
         shortcut.check_execute(glfw_window);
     }
+    for (WorkSpace* workspace : workspaces){
+        workspace->process_input();
+    }
 }
 
 void GUI::dispose(){

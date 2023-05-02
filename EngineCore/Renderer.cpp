@@ -21,7 +21,7 @@ Renderer::Renderer(int viewport_width, int viewport_height){
 
     texture_size = vec2(512, 512); // default
     viewport_size = vec2(viewport_width, viewport_height);
-    camera = new Camera(viewport_width, viewport_height);
+    camera = new Camera((float)viewport_width, (float)viewport_height);
 }
 
 Renderer::~Renderer(){
@@ -67,7 +67,7 @@ void Renderer::set_bind_fbo(int texture_width, int texture_height){ // TODO : �
 }
 
 void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
-    glViewport(0, 0, texture_size.x, texture_size.y);
+    glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
 
 
 
@@ -77,8 +77,7 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     static unsigned int texture = 0;
     static unsigned int depthTexture = 0;
     //===== init ======
-    if (pickingTest == 0)
-    {
+    if (pickingTest == 0)    {
         pickingTest = 1;
         glGenFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -114,7 +113,7 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
        // glClearColor(0, 0, 0, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        
+
 
         //WorldTrans& worldTransform = pMesh->GetWorldTransform();
         //Matrix4f View = m_pGameCamera->GetMatrix();
@@ -129,9 +128,12 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
         //    m_pickingEffect.SetWVP(WVP);
         //    pMesh->Render(&m_pickingEffect);
         //}
-        for (Model* model : models) {
-            model->get_material()->apply(model->get_transform(), camera, lightPos,RenderSpace::Selection);
-            model->render(this);
+        for (Model* model : models){
+            model->get_material()->set_uniform_transform(model->get_transform());
+            model->get_material()->set_uniform_camera(camera);
+            model->get_material()->set_uniform_selection_id(5);
+            model->get_material()->apply_object_selection();
+            model->render();
         }
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -148,9 +150,9 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
 
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-    if (Pixel.objectID== 5)
-    {
-        printf("오브젝트 감지 \n");
+    if (Pixel.objectID == 5)    {
+        //printf("%오브젝트 감지 \n", Pixel.objectID);
+
     }
 
 
@@ -175,24 +177,27 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
 
         parent->active_workspace->models.push_back(newModel);
         camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
-        camera->get_transform()->set_rotation({ 0,-90,0 });
+        camera->get_transform()->set_rotation({0,-90,0});
     }
 
 
     Model* model = parent->active_workspace->find_model("MyModel");
-    if(model!=NULL){
+    if (model != NULL){
         //CSGMesh* newMesh = 
         Transform* newMesh = model->get_transform();
-        newMesh->set_position(vec3(0,0, 2));
+        newMesh->set_position(vec3(0, 0, 2));
         newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
     }
 
-    //lightPos.x = 50 * sin(Utils::time_acc());
-    //lightPos.z = 50 * sin(Utils::time_acc());
+    lightPos.x = 50 * sin(Utils::time_acc());
+    lightPos.z = 50 * sin(Utils::time_acc());
 
     for (Model* model : models){
-        model->get_material()->apply(model->get_transform(), camera, lightPos);
-        model->render(this);
+        model->get_material()->set_uniform_transform(model->get_transform());
+        model->get_material()->set_uniform_camera(camera);
+        model->get_material()->set_uniform_lights(lightPos);
+        model->get_material()->apply();
+        model->render();
     }
 }
 
@@ -202,4 +207,8 @@ void Renderer::dispose(){
 void Renderer::resize(int width, int height){
     viewport_size = vec2(width, height);
     camera->resize((float)width, (float)height);
+}
+
+vec2 Renderer::get_mouse_position(){
+    return vec2();
 }

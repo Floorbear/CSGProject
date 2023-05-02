@@ -8,8 +8,19 @@
 #include <list>
 
 class CSGNode {
+public:
+    enum class Type {
+        Operand, // children 제한 : 0개
+        Union,
+        Intersection,
+        Difference // children 제한 : 2개
+    };
+
+private:
     CSGNode* parent = nullptr;
     std::list<CSGNode*> children;
+
+    Type type;
     Mesh result;
 
     class CSGNodeTransform : Transform { // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
@@ -27,19 +38,9 @@ class CSGNode {
         void scale(const vec3& value) override;
         void add_position(const vec3& value) override;
     };
-
-    CSGNodeTransform transform;
+    CSGNodeTransform transform; // CSGNode의 유일한 component
 
 public:
-    enum class Type {
-        Operand, // children 제한 : 0개
-        Union,
-        Intersection,
-        Difference // children 제한 : 2개
-    };
-
-    Type type; // private? get / set
-
     CSGNode(const Mesh& mesh);
     CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2);
     ~CSGNode();
