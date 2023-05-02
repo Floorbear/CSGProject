@@ -44424,6 +44424,12 @@
     <ClInclude Include="Task.h">
       <Filter>GUI</Filter>
     </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameBuffer.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44499,6 +44505,12 @@
     </ClCompile>
     <ClCompile Include="Task.cpp">
       <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameBuffer.cpp">
+      <Filter>Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

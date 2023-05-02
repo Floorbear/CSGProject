@@ -1,6 +1,7 @@
 #include "Core.h"
 #include "Utils.h"
 #include <GLFW/glfw3.h>
+#include "Texture.h"
 
 #pragma comment(lib,"opengl32.lib")
 #pragma comment(lib,"glu32.lib")
@@ -17,6 +18,10 @@ Core::Core(){
 void Core::dispose(){
     gui.dispose();
     glfwTerminate();
+    for (auto i : Texture::all_textures)
+    {
+        delete i;
+    }
 }
 
 Core* Core::get(){

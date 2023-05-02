@@ -14948,6 +14948,7 @@
     <ClInclude Include="Core.h" />
     <ClInclude Include="CSGNode.h" />
     <ClInclude Include="FileSystem.h" />
+    <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="EngineMinimal.h" />
     <ClInclude Include="GUI_Actions.h" />
@@ -14957,6 +14958,7 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Task.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="WorkSpace.h" />
@@ -14977,6 +14979,7 @@
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="CSGNode.cpp" />
     <ClCompile Include="FileSystem.cpp" />
+    <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="GUI_Actions.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -14985,6 +14988,7 @@
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Task.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="WorkSpace.cpp" />
