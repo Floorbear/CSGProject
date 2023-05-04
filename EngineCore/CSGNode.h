@@ -2,11 +2,13 @@
 
 #include "Mesh.h"
 #include "Shader.h"
+#include "SelectionPixelInfo.h"
 
 #include <glm/glm.hpp>
 
 #include <list>
 
+class Material;
 class CSGNode {
 public:
     enum class Type {
@@ -51,5 +53,8 @@ public:
 
     CSGNode* main_child();
     Transform* get_transform();
+
     void render();
+    void render_selection_id(Material* material, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc);
+    SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, Model* model, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc);
 };

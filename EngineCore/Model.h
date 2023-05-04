@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mesh.h"
+#include "SelectionPixelInfo.h"
 
 #include <glm/glm.hpp>
 
@@ -37,9 +38,8 @@ public:
 
     bool is_renderable();
     void render();
-    void render_leaf_meshes();
+    void render_selection_id(uint32_t* selection_id_model_acc);
+    SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, uint32_t* selection_id_model_acc);
 
     //Transform get_world_position();
-
-    int get_selection_id(); // TODO
 };

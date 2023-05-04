@@ -1,5 +1,6 @@
 #pragma once
 #include "Component.h"
+#include "SelectionPixelInfo.h"
 
 #include <glm/glm.hpp>
 
@@ -18,18 +19,23 @@ class Material : public Component{
     Transform* uniform_model_transform = nullptr;
     Camera* uniform_camera = nullptr;
     vec3 uniform_lights; // TODO : std::list<Light>*
-    int uniform_selection_id = 0;
+    SelectionPixelIdInfo uniform_selection_id;
 
 public:
     Material(); // default material
     ~Material();
 
-    void set_uniform_transform(Transform* model_transform);
+    Transform* get_uniform_model_transform();
+    Camera* get_uniform_camera();
+    vec3 get_uniform_lights();
+    SelectionPixelIdInfo get_uniform_selection_id();
+
+    void set_uniform_model_transform(Transform* model_transform);
     void set_uniform_camera(Camera* camera);
     void set_uniform_lights(vec3 lights);
-    void set_uniform_selection_id(int selection_id);
+    void set_uniform_selection_id(SelectionPixelIdInfo selection_id);
 
     void apply();
-    void apply_object_selection();
+    void apply_selection_id();
 };
 

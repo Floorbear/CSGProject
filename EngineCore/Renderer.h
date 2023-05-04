@@ -3,6 +3,7 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "Utils.h"
+#include "SelectionPixelInfo.h"
 
 #include <glm/glm.hpp>
 
@@ -38,11 +39,12 @@ public:
 
     void init();
     void render(const std::list<Model*>& models, RenderSpace space_ = RenderSpace::Screen);
+    SelectionPixelObjectInfo find_selection(const std::list<Model*>& models, vec2 mouse_position);
     void dispose();
 
-    void resize(int viewport_width, int viewport_height);
+    void resize(vec2 size);
 
-    vec2 get_mouse_position();
+    vec2 get_viewport_size();
 
     //===== Camera ======
     float xPos = 0.f;
@@ -56,13 +58,6 @@ public:
 
     //===== Material ===== 
     static vec3 lightPos; // TODO : 라이트 컴포넌트 만들때 정리하기
-
-    //===== Selection ====== // TODO : 클래스 분리
-    struct PixelInfo {
-        uint objectID = 0;
-        uint secondID = 0;
-        uint primID = 0;
-    };
 
 };
 

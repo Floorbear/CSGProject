@@ -44430,6 +44430,9 @@
     <ClInclude Include="FrameBuffer.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="SelectionPixelInfo.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44510,6 +44513,9 @@
       <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="FrameBuffer.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="SelectionPixelInfo.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
   </ItemGroup>

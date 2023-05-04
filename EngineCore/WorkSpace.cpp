@@ -53,15 +53,27 @@ Model* WorkSpace::find_model(std::string_view name){
 
 void WorkSpace::render_view(Renderer* renderer){
     // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin(Utils::format("View##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
-    renderer->resize((int)ImGui::GetWindowSize().x, (int)ImGui::GetWindowSize().y);
+    vec2 p_min = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMin().x, ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMin().y);
+    vec2 p_max = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x, ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMax().y);
+    renderer->resize(p_max - p_min);
 
-    ImVec2 p_min = ImGui::GetWindowPos();
-    ImVec2 p_max = ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y);
+    // Selection 렌더링
+    if (ImGui::IsAnyMouseDown()){
+        // TODO : 마우스 버튼별 선택 처리 추가
+        vec2 mouse_position = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
+        SelectionPixelObjectInfo info = renderer->find_selection(models, mouse_position);
+        if (!info.empty()){
+            printf("%s", info.model_id->name.c_str()); // TEST
+        }
+    }
 
+    // Gui 렌더링
     #pragma warning(disable: 4312)
-    ImGui::GetWindowDrawList()->AddImage((void*)renderer->frame_texture, p_min, p_max, ImVec2(0, 0), ImVec2(1, 1));
+    ImGui::GetWindowDrawList()->AddImage((void*)renderer->frame_texture, ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y), ImVec2(0, 0), ImVec2(1, 1));
     ImGui::End();
+    ImGui::PopStyleVar();
 
 }
 
@@ -183,12 +195,7 @@ void WorkSpace::render_logs(){
 
 void WorkSpace::render(){
     for (Renderer* renderer : renderers){
-
         renderer->render(models);
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    for (Renderer* renderer : renderers){
         render_view(renderer);
     }
     render_popup_menu();

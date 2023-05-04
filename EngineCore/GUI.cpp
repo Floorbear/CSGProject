@@ -283,6 +283,7 @@ void GUI::render_gui(){
 }
 
 void GUI::render_end(){
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     ImGui::Render();
 

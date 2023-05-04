@@ -6,6 +6,7 @@
 #include "Model.h"
 #include "WorkSpace.h"
 #include "Texture.h"
+
 #include <glad/glad.h>
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -69,6 +70,50 @@ void Renderer::set_bind_fbo(int texture_width, int texture_height){ // TODO : �
 void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
 
+    set_bind_fbo((int)texture_size.x, (int)texture_size.y);
+
+    ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
+    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    camera->calculate_view();
+
+
+    static Model* newModel = NULL;
+    if (newModel == NULL){
+        newModel = new Model("MyModel");
+
+        newModel->set_new(Mesh::Cube);
+        //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
+        //newModel->set_new(Mesh::Sphere);
+
+        parent->active_workspace->models.push_back(newModel);
+        camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
+        camera->get_transform()->set_rotation({0,-90,0});
+    }
+
+
+    Model* model = parent->active_workspace->find_model("MyModel");
+    if (model != NULL){
+        //CSGMesh* newMesh = 
+        Transform* newMesh = model->get_transform();
+        newMesh->set_position(vec3(0, 0, 2));
+        newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
+    }
+
+    lightPos.x = 50 * sin(Utils::time_acc());
+    lightPos.z = 50 * sin(Utils::time_acc());
+
+    for (Model* model : models){
+        model->get_material()->set_uniform_camera(camera);
+        model->get_material()->set_uniform_lights(lightPos);
+        model->render();
+    }
+}
+
+SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& models, vec2 mouse_position){
+    glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
+
 
 
     //픽킹텍스처
@@ -110,7 +155,7 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
 
-       // glClearColor(0, 0, 0, 1.f);
+        // glClearColor(0, 0, 0, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -128,12 +173,10 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
         //    m_pickingEffect.SetWVP(WVP);
         //    pMesh->Render(&m_pickingEffect);
         //}
+        uint32_t selection_id_model_acc = 1;
         for (Model* model : models){
-            model->get_material()->set_uniform_transform(model->get_transform());
             model->get_material()->set_uniform_camera(camera);
-            model->get_material()->set_uniform_selection_id(5);
-            model->get_material()->apply_object_selection();
-            model->render();
+            model->render_selection_id(&selection_id_model_acc);
         }
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -145,70 +188,31 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
 
     glReadBuffer(GL_COLOR_ATTACHMENT0);
 
-    PixelInfo Pixel;
-    glReadPixels(256, 256, 1, 1, GL_RGB_INTEGER, GL_UNSIGNED_INT, &Pixel);
+    SelectionPixelIdInfo Pixel;
+    glReadPixels((GLint)(texture_size.x * mouse_position.x / viewport_size.x), (GLint)(texture_size.y * mouse_position.y / viewport_size.y),
+                 1, 1, GL_RGB_INTEGER, GL_UNSIGNED_INT, &Pixel);
 
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-    if (Pixel.objectID == 5)    {
-        //printf("%오브젝트 감지 \n", Pixel.objectID);
 
+    uint32_t selection_id_model_acc = 1;
+    for(Model* model : models){
+        SelectionPixelObjectInfo info = model->from_selection_id(Pixel, &selection_id_model_acc);
+        if(!info.empty()){
+            return info;
+        }
     }
-
-
-    //===================================================
-
-    set_bind_fbo((int)texture_size.x, (int)texture_size.y);
-
-    ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    camera->calculate_view();
-
-
-    static Model* newModel = NULL;
-    if (newModel == NULL){
-        newModel = new Model("MyModel");
-
-        newModel->set_new(Mesh::Cube);
-        //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
-        //newModel->set_new(Mesh::Sphere);
-
-        parent->active_workspace->models.push_back(newModel);
-        camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
-        camera->get_transform()->set_rotation({0,-90,0});
-    }
-
-
-    Model* model = parent->active_workspace->find_model("MyModel");
-    if (model != NULL){
-        //CSGMesh* newMesh = 
-        Transform* newMesh = model->get_transform();
-        newMesh->set_position(vec3(0, 0, 2));
-        newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
-    }
-
-    lightPos.x = 50 * sin(Utils::time_acc());
-    lightPos.z = 50 * sin(Utils::time_acc());
-
-    for (Model* model : models){
-        model->get_material()->set_uniform_transform(model->get_transform());
-        model->get_material()->set_uniform_camera(camera);
-        model->get_material()->set_uniform_lights(lightPos);
-        model->get_material()->apply();
-        model->render();
-    }
+    return SelectionPixelObjectInfo(); // null
 }
 
 void Renderer::dispose(){
 }
 
-void Renderer::resize(int width, int height){
-    viewport_size = vec2(width, height);
-    camera->resize((float)width, (float)height);
+void Renderer::resize(vec2 size){
+    viewport_size = size;
+    camera->resize(size.x, size.y);
 }
 
-vec2 Renderer::get_mouse_position(){
-    return vec2();
+vec2 Renderer::get_viewport_size(){
+    return viewport_size;
 }
