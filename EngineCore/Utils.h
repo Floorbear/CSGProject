@@ -5,6 +5,8 @@
 #include <string>
 #include <list>
 
+using namespace glm;
+
 
 class Utils{
     static double time_prev_frame; //...

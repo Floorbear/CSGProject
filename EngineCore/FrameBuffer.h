@@ -1,6 +1,6 @@
 #pragma once
 #include "Utils.h"
-
+#include "SelectionPixelInfo.h"
 enum class FrameBufferType
 {
 	
@@ -10,25 +10,41 @@ enum class FrameBufferType
 class Core;
 class FrameBuffer
 {
+	friend Core;
 public:
 	FrameBuffer();
-	~FrameBuffer();
+	virtual ~FrameBuffer();
 
-	//static create_frameBuffer();
-	//virtual void enable
+	static FrameBuffer* create_frameBuffer();
+	virtual void enable();
+	virtual void disable();
 
-private:
+protected:
 	unsigned int fbo = 0;
 	unsigned int frameBufferTexture = 0;
 
+private:
 	static std::list<FrameBuffer*> all_frameBuffer; 
 };
 
-//class SelectionFrameBuffer
+class ScreenFrameBuffer : public FrameBuffer
+{
+public:
+	ScreenFrameBuffer();
+	virtual ~ScreenFrameBuffer();
 
-//
-//SelectionFrameBuffer::enable
-//{
-//	FrameBuffer::enable();
-//	~내꺼 호출~
-//}
+	static ScreenFrameBuffer* create_screenFrameBuffer(const ivec2& _texture_size);
+};
+
+class SelectionFrameBuffer : public FrameBuffer
+{
+public:
+	SelectionFrameBuffer();
+	virtual ~SelectionFrameBuffer();
+
+	static SelectionFrameBuffer* create_selectionFrameBuffer(const ivec2& _texture_size);
+
+	SelectionPixelIdInfo read_pixel(int _x, int _y);
+
+
+};

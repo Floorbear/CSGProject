@@ -4,6 +4,7 @@
 #include "Material.h"
 #include "Utils.h"
 #include "SelectionPixelInfo.h"
+#include "FrameBuffer.h"
 
 #include <glm/glm.hpp>
 
@@ -26,7 +27,7 @@ private:
     vec2 texture_size;
     vec2 viewport_size;
 
-    unsigned int fbo = 0;
+    ScreenFrameBuffer* screenFrameBuffer;
     void set_bind_fbo(int texture_width, int texture_height);
 
 public:
@@ -39,7 +40,6 @@ public:
 
     void init();
     void render(const std::list<Model*>& models, RenderSpace space_ = RenderSpace::Screen);
-    SelectionPixelObjectInfo find_selection(const std::list<Model*>& models, vec2 mouse_position);
     void dispose();
 
     void resize(vec2 size);
@@ -58,6 +58,10 @@ public:
 
     //===== Material ===== 
     static vec3 lightPos; // TODO : 라이트 컴포넌트 만들때 정리하기
+
+    //===== Selection =====
+    SelectionPixelObjectInfo find_selection(const std::list<Model*>& models, vec2 mouse_position);
+    SelectionFrameBuffer* selectioinFrameBuffer;
 
 };
 

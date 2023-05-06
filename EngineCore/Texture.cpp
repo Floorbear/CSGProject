@@ -47,6 +47,8 @@ Texture* Texture::create_frameTexture(const ivec2& _size, GLint _internalformat,
     glBindTexture(GL_TEXTURE_2D, 0);
     all_textures.push_back(newTexture);
     return newTexture;
+
+
 }
 
 Texture* Texture::create_depthTexture(const ivec2& _size)
@@ -59,4 +61,9 @@ Texture* Texture::create_depthTexture(const ivec2& _size)
     all_textures.push_back(newTexture);
     glBindTexture(GL_TEXTURE_2D, 0);
     return newTexture;
+}
+
+void Texture::enable()
+{
+    glBindTexture(GL_TEXTURE_2D,texture);
 }

@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include <GLFW/glfw3.h>
 #include "Texture.h"
+#include "FrameBuffer.h"
 
 #pragma comment(lib,"opengl32.lib")
 #pragma comment(lib,"glu32.lib")
@@ -19,10 +20,18 @@ void Core::dispose(){
     //Texture::dispose();
     gui.dispose();
     glfwTerminate();
+    //프레임버퍼
+    for (auto i : FrameBuffer::all_frameBuffer)
+    {
+        delete i;
+    }
+    //텍스처
     for (auto i : Texture::all_textures)
     {
         delete i;
     }
+
+
 }
 
 Core* Core::get(){

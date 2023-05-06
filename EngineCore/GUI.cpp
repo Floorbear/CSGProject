@@ -5,7 +5,7 @@
 #include "CSGNode.h"
 #include "WorkSpace.h"
 #include "Core.h"
-
+#include "FrameBuffer.h"
 // ===== Shortcut ===== //
 
 Shortcut::Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, ImGuiKey discrete_key_, std::function<void()> callback_) :
@@ -125,6 +125,7 @@ void GUI::dispose(){
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    //싱글톤 & Static 리소스는 Core::dispose에서 삭제
 }
 
 void GUI::init_glfw(){

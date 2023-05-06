@@ -21,6 +21,7 @@ public:
 	static Texture* create_frameTexture(const ivec2& _size, GLint _internalformat = GL_RGBA, GLenum _format = GL_RGBA, GLenum _type = GL_UNSIGNED_BYTE, GLint _filtering = GL_LINEAR);
 	static Texture* create_depthTexture(const ivec2& _size);
 
+	void enable();
 private:
 	unsigned int texture = 0;
 	
