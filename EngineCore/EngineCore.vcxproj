@@ -14556,6 +14556,7 @@
     <ClInclude Include="..\Thirdparty\Eigen\src\SVD\UpperBidiagonalization.h" />
     <ClInclude Include="..\Thirdparty\Eigen\src\UmfPackSupport\InternalHeaderCheck.h" />
     <ClInclude Include="..\Thirdparty\Eigen\src\UmfPackSupport\UmfPackSupport.h" />
+    <ClInclude Include="..\Thirdparty\etc\stb_image.h" />
     <ClInclude Include="..\Thirdparty\glad\glad.h" />
     <ClInclude Include="..\Thirdparty\GLFW\glfw3.h" />
     <ClInclude Include="..\Thirdparty\GLFW\glfw3native.h" />

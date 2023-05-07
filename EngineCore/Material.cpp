@@ -1,6 +1,7 @@
 #include "Material.h"
 #include "Shader.h"
 #include "Camera.h"
+#include "Texture.h"
 
 Material::Material() : Component("Material"){
     screenShader = new Shader();
@@ -70,6 +71,18 @@ void Material::apply(){
     screenShader->set_vec3("objectColor", vec3(color));
     screenShader->set_vec3("lightPos", vec3(uniform_lights));
     screenShader->set_float("ambient", ambient);
+
+    //텍스처가 존재하는경우 유니폼으로 보내버립니다
+    if (texture != nullptr)
+    {
+        screenShader->set_int("texture1",0); //텍스처는 location은  0->1->2->3 , texture 
+        glActiveTexture(GL_TEXTURE0);
+        texture->enable();
+        //if 2번째 texture
+        //screenShader->set_int("texture2", 1); //텍스처는 location은  0->1->2->3 , texture 
+        //glActiveTexture(GL_TEXTURE1);
+        //texture2->enable();
+    }
 }
 
 void Material::apply_selection_id(){
@@ -80,4 +93,14 @@ void Material::apply_selection_id(){
     selectionShader->set_mat4("projection", uniform_camera->get_projection());
 
     selectionShader->set_uint("objectID", uniform_selection_id.model_id); // TODO : 구조체 다 보내도록 처리, 셰이더도 수정.
+}
+
+Texture* Material::get_texture() const
+{
+    return texture;
+}
+
+void Material::set_texture(Texture* _texture)
+{
+    texture = _texture;
 }

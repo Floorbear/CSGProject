@@ -6,6 +6,7 @@
 
 using namespace glm;
 
+class Texture;
 class Shader;
 class Camera;
 class Transform;
@@ -37,5 +38,13 @@ public:
 
     void apply();
     void apply_selection_id();
+
+    // ===== Texture =====
+private:
+    Texture* texture;
+
+public:
+    Texture* get_texture() const;
+    void set_texture(Texture* _texture);
 };
 

@@ -8,6 +8,11 @@
 #include "Texture.h"
 
 
+#include "FileSystem.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include <etc/stb_image.h>
+
+
 #include <glad/glad.h>
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -55,31 +60,54 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
 
     camera->calculate_view();
 
+    //test
+    {
+        static Model* newModel = NULL;
+        if (newModel == NULL) {
+            newModel = new Model("MyModel");
 
-    static Model* newModel = NULL;
-    if (newModel == NULL){
-        newModel = new Model("MyModel");
+            newModel->set_new(Mesh::Cube);
+            //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
+            //newModel->set_new(Mesh::Sphere);
 
-        newModel->set_new(Mesh::Cube);
-        //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
-        //newModel->set_new(Mesh::Sphere);
+            parent->active_workspace->models.push_back(newModel);
+            camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
+            camera->get_transform()->set_rotation({ 0,-90,0 });
+        }
 
-        parent->active_workspace->models.push_back(newModel);
-        camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
-        camera->get_transform()->set_rotation({0,-90,0});
+
+        Model* model = parent->active_workspace->find_model("MyModel");
+        if (model != NULL) {
+            //CSGMesh* newMesh = 
+            Transform* newMesh = model->get_transform();
+            newMesh->set_position(vec3(0, 0, 2));
+            newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
+        }
+
+        lightPos.x = 42;
+        lightPos.z = 42;
+
+
+        static bool TextureTest = true;
+        if (TextureTest)
+        {
+            TextureTest = false;
+            EnginePath newPath = FileSystem::GetProjectPath();
+            newPath.Move("EngineResource");
+            newPath.Move("Texture");
+            newPath.Move("rockTexture.jpg");
+            ivec3 textureSize = { 0,0,0 };//width,height, channel
+            std::string str = newPath.get_path();
+            stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+            unsigned char* data = stbi_load(str.c_str(), &textureSize.x, &textureSize.y, &textureSize.z, 0);
+            Texture* newTexture = Texture::create_texture({ textureSize.x,textureSize.y }, data, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_REPEAT);
+           // stbi_image_free(data);//릴리즈
+            newModel->get_material()->set_texture(newTexture);
+        }
     }
 
 
-    Model* model = parent->active_workspace->find_model("MyModel");
-    if (model != NULL){
-        //CSGMesh* newMesh = 
-        Transform* newMesh = model->get_transform();
-        newMesh->set_position(vec3(0, 0, 2));
-        newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
-    }
 
-    lightPos.x = 50 * sin(Utils::time_acc());
-    lightPos.z = 50 * sin(Utils::time_acc());
 
     for (Model* model : models){
         model->get_material()->set_uniform_camera(camera);

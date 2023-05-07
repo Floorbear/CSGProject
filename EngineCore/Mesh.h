@@ -26,11 +26,13 @@ using namespace glm;
 struct Vertex{
     vec3 position;
     vec3 normal;
+    vec2 texCoord;
     //vec2 texcoords
 
     Vertex(const vec3& position_);
     Vertex(float x, float y, float z);
-    Vertex(float x, float y, float z,float normal_x_, float normal_y_, float normal_z_);
+    Vertex(float x, float y, float z, float normal_x_, float normal_y_, float normal_z_);
+    Vertex(float x, float y, float z,float normal_x_, float normal_y_, float normal_z_,float _tex_x,float _tex_y);
 };
 
 class Mesh{

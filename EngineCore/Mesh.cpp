@@ -16,6 +16,13 @@ Vertex::Vertex(float x, float y, float z, float normal_x_, float normal_y_, floa
 {
 }
 
+Vertex::Vertex(float x, float y, float z, float normal_x_, float normal_y_, float normal_z_, float _tex_x, float _tex_y)
+    :   position(vec3(x, y, z)),
+        normal(vec3(normal_x_, normal_y_, normal_z_)),
+        texCoord(vec2(_tex_x,_tex_y))
+{
+}
+
 
 // ===== Mesh ===== //
 cgal_Mesh Mesh::_cgal_Cube = Mesh::create_cgal_cube(2.0f);
@@ -35,42 +42,48 @@ Mesh Mesh::Square = Mesh({Vertex(-0.5f, -0.5f, 0.0f), // left down
 
 
 Mesh Mesh::Cube = Mesh({
-                                Vertex(-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f),
-                                Vertex(0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f),
-                                Vertex(0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f),
-                                Vertex(0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f),
-                                Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f),
-                                Vertex(-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f),
-                                Vertex(-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f),
-                                Vertex(0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f),
-                                Vertex(0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f),
-                                Vertex(0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f),
-                                Vertex(-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f),
-                                Vertex(-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f),
-                                Vertex(-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f),
-                                Vertex(-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f),
-                                Vertex(-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f),
-                                Vertex(-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f),
-                                Vertex(-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f),
-                                Vertex(-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f),
-                                Vertex(0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f),
-                                Vertex(0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f),
-                                Vertex(0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f),
-                                Vertex(0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f),
-                                Vertex(0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f),
-                                Vertex(0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f),
-                                Vertex(-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f),
-                                Vertex(0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f),
-                                Vertex(0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f),
-                                Vertex(0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f),
-                                Vertex(-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f),
-                                Vertex(-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f),
-                                Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f),
-                                Vertex(0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f),
-                                Vertex(0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f),
-                                Vertex(0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f),
-                                Vertex(-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f),
-                                Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f)
+                                       //Pos                //Normal              //texcoord
+                                Vertex(-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f ,  0.0f, 0.0f                          ),
+                                Vertex(0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f  ,  1.0f, 0.0f                          ),
+                                Vertex(0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f  ,  1.0f, 1.0f                          ),
+                                Vertex(0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f  ,  1.0f, 1.0f                          ),
+                                Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f ,  0.0f, 1.0f                          ),
+                                Vertex(-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f ,  0.0f, 0.0f                          ),
+
+                                Vertex(-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f  ,  0.0f, 0.0f                          ),
+                                Vertex(0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f   ,  1.0f, 0.0f                          ),
+                                Vertex(0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f   ,  1.0f, 1.0f                          ),
+                                Vertex(0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f   ,  1.0f, 1.0f                          ),
+                                Vertex(-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f  ,  0.0f, 1.0f                          ),
+                                Vertex(-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f  ,  0.0f, 0.0f                          ),
+
+                                Vertex(-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f ,  1.0f, 0.0f                          ),
+                                Vertex(-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f ,  1.0f, 1.0f                          ),
+                                Vertex(-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f ,  0.0f, 1.0f                          ),
+                                Vertex(-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f ,  0.0f, 1.0f                          ),
+                                Vertex(-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f ,  0.0f, 0.0f                          ),
+                                Vertex(-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f ,  1.0f, 0.0f                          ),
+
+                                Vertex(0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f  ,  1.0f, 0.0f                          ),
+                                Vertex(0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f  ,  1.0f, 1.0f                          ),
+                                Vertex(0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f  ,  0.0f, 1.0f                          ),
+                                Vertex(0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f  ,  0.0f, 1.0f                          ),
+                                Vertex(0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f  ,  0.0f, 0.0f                          ),
+                                Vertex(0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f  ,  1.0f, 0.0f                          ),
+
+                                Vertex(-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f ,  0.0f, 1.0f                          ),
+                                Vertex(0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f  ,  1.0f, 1.0f                          ),
+                                Vertex(0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f  ,  1.0f, 0.0f                          ),
+                                Vertex(0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f  ,  1.0f, 0.0f                          ),
+                                Vertex(-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f ,  0.0f, 0.0f                          ),
+                                Vertex(-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f ,  0.0f, 1.0f                          ),
+
+                                Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f ,  0.0f, 1.0f                          ),
+                                Vertex(0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f  ,  1.0f, 1.0f                          ),
+                                Vertex(0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f  ,  1.0f, 0.0f                          ),
+                                Vertex(0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f  ,  1.0f, 0.0f                          ),
+                                Vertex(-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f ,  0.0f, 0.0f                          ),
+                                Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f ,  0.0f, 1.0f                          )
 
     },
     { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35 });
@@ -140,23 +153,12 @@ void Mesh::render(){
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
         glEnableVertexAttribArray(1); //Vertex normal Data
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::normal)));
+        glEnableVertexAttribArray(2); //Vertex texcoord Data
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::texCoord)));
     }
 
-    //transform.AddLocalRotation(glm::vec3(0.05f, 0.f, 0.f)); 
-    //transform.SetLocalPosition(glm::vec3(sin(glfwGetTime()), 0, 0)); //
-    //transform.SetLocalScale(glm::vec3(cos(glfwGetTime()), cos(glfwGetTime()), 0)); //
-
-    //int transformLocation = glGetUniformLocation(shader->GetShaderProgram(),"transform");
-    //glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(*transform.GetTransformMat()));
-
-    //int uniformLocation = glGetUniformLocation(shaderProgram, "ourColor");
-    //float timeValue = (sin(glfwGetTime()) / 0.5f) + 0.5f;
-    //glUniform4f(uniformLocation, timeValue, 0.1f, 0.1f, 1.0f);
-
     glBindVertexArray(VAO);
-    //glDrawArrays(GL_TRIANGLES, 0, 3);
     glDrawElements(GL_TRIANGLES, (int)indices.size(), GL_UNSIGNED_INT, 0);
-    //glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
 }
 
 cgal_Mesh Mesh ::create_cgal_cube(float size)

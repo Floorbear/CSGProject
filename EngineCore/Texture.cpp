@@ -25,8 +25,11 @@ Texture* Texture::create_texture(const ivec2& _size, const void* _data, GLint _i
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, _wrap);
 
     glTexImage2D(GL_TEXTURE_2D, 0, _internalformat, _size.x, _size.y, 0, _format, _type, _data);
+    if (_data != nullptr)
+    {
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
 
-    glBindTexture(GL_TEXTURE_2D, 0);
     all_textures.push_back(newTexture);
     return newTexture;
 }

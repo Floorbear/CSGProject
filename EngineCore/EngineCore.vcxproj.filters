@@ -52,6 +52,9 @@
     <Filter Include="Object">
       <UniqueIdentifier>{090173f2-2781-4e0a-82e8-aa1770c2754b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\etc">
+      <UniqueIdentifier>{95c67e6a-bca0-44b8-9e7d-fb68edb0b4d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core.h" />
@@ -44432,6 +44435,9 @@
     </ClInclude>
     <ClInclude Include="SelectionPixelInfo.h">
       <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thirdparty\etc\stb_image.h">
+      <Filter>ThirdParty\etc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

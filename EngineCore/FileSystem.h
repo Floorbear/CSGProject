@@ -12,6 +12,10 @@ public:
 
 	void Move(std::string _Path);
 	std::string ReadFile();
+	inline std::string get_path()
+	{
+		return path.string();
+	}
 
 private:
 	std::filesystem::path path;
