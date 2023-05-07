@@ -68,6 +68,7 @@ void Material::apply(){
     screenShader->set_mat4("projection", uniform_camera->get_projection());
 
     screenShader->set_vec3("objectColor", vec3(color));
+    screenShader->set_vec3("lightPos", vec3(uniform_lights));
     screenShader->set_float("ambient", ambient);
 }
 

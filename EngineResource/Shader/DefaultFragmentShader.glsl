@@ -26,4 +26,5 @@ void main()
     float diffuse = max(dot(norm,lightDir),0);
     vec3 result = (diffuse + ambient) * objectColor;
     FragColor = vec4(result*vec3(depth), 1.0);
+   // FragColor = vec4(normal, 1.0);
 }
