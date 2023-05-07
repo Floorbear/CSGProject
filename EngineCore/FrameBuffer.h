@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils.h"
 #include "SelectionPixelInfo.h"
+
 enum class FrameBufferType
 {
 	
@@ -8,6 +9,7 @@ enum class FrameBufferType
 
 
 class Core;
+class Texture;
 class FrameBuffer
 {
 	friend Core;
@@ -19,9 +21,14 @@ public:
 	virtual void enable();
 	virtual void disable();
 
+	Texture* get_framebufferTexutre()
+	{
+		assert(framebufferTexture != nullptr);
+		return framebufferTexture;
+	}
 protected:
 	unsigned int fbo = 0;
-	unsigned int frameBufferTexture = 0;
+	Texture* framebufferTexture = nullptr;
 
 private:
 	static std::list<FrameBuffer*> all_frameBuffer; 
@@ -34,6 +41,7 @@ public:
 	virtual ~ScreenFrameBuffer();
 
 	static ScreenFrameBuffer* create_screenFrameBuffer(const ivec2& _texture_size);
+
 };
 
 class SelectionFrameBuffer : public FrameBuffer

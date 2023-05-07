@@ -45,7 +45,7 @@ SelectionFrameBuffer* SelectionFrameBuffer::create_selectionFrameBuffer(const iv
 {
 	SelectionFrameBuffer* newFramebuffer = static_cast<SelectionFrameBuffer*>(create_frameBuffer());
 	newFramebuffer->enable();
-	Texture* newTexture = Texture::create_frameTexture(ivec2((int)_texture_size.x, (int)_texture_size.y), GL_RGB32UI, GL_RGB_INTEGER, GL_UNSIGNED_INT);
+	newFramebuffer->framebufferTexture = Texture::create_frameTexture(ivec2((int)_texture_size.x, (int)_texture_size.y), GL_RGB32UI, GL_RGB_INTEGER, GL_UNSIGNED_INT);
 	Texture* newdepthTexture = Texture::create_depthTexture(ivec2((int)_texture_size.x, (int)_texture_size.y));
 	auto Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	assert(Status == GL_FRAMEBUFFER_COMPLETE); //버퍼가 정상적으로 생성됬는지 체크
@@ -77,15 +77,17 @@ ScreenFrameBuffer::~ScreenFrameBuffer()
 
 ScreenFrameBuffer* ScreenFrameBuffer::create_screenFrameBuffer(const ivec2& _texture_size)
 {
-
 	ScreenFrameBuffer* newFramebuffer = static_cast<ScreenFrameBuffer*>(create_frameBuffer());
 	newFramebuffer->enable();
-	Texture* newTexture = Texture::create_frameTexture(ivec2((int)_texture_size.x, (int)_texture_size.y), GL_RGB32UI, GL_RGB_INTEGER, GL_UNSIGNED_INT);
-	Texture* newdepthTexture = Texture::create_depthTexture(ivec2((int)_texture_size.x, (int)_texture_size.y));
-	auto Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	assert(Status == GL_FRAMEBUFFER_COMPLETE); //버퍼가 정상적으로 생성됬는지 체크
+	newFramebuffer->framebufferTexture = Texture::create_frameTexture(_texture_size, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR);
+	newFramebuffer->framebufferTexture->enable();
 
-	glBindTexture(GL_TEXTURE_2D, 0);
-	newFramebuffer->disable();
+	GLuint depthrenderbuffer;
+	glGenRenderbuffers(1, &depthrenderbuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _texture_size.x, _texture_size.y);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+	assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
 	return newFramebuffer;
 }

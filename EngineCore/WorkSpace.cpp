@@ -4,6 +4,8 @@
 #include "Model.h"
 #include "CSGNode.h"
 #include "Renderer.h"
+#include "FrameBuffer.h"
+#include "Texture.h"
 
 int WorkSpace::id_counter = 1; // 1부터 시작
 
@@ -71,7 +73,7 @@ void WorkSpace::render_view(Renderer* renderer){
 
     // Gui 렌더링
     #pragma warning(disable: 4312)
-    ImGui::GetWindowDrawList()->AddImage((void*)renderer->frame_texture, ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y), ImVec2(0, 0), ImVec2(1, 1));
+    ImGui::GetWindowDrawList()->AddImage((void*)renderer->screenFrameBuffer->get_framebufferTexutre()->get_textureHandle(), ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y), ImVec2(0, 0), ImVec2(1, 1));
     ImGui::End();
     ImGui::PopStyleVar();
 

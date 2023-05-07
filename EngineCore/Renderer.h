@@ -27,10 +27,10 @@ private:
     vec2 texture_size;
     vec2 viewport_size;
 
-    ScreenFrameBuffer* screenFrameBuffer;
     void set_bind_fbo(int texture_width, int texture_height);
 
 public:
+    ScreenFrameBuffer* screenFrameBuffer;
     unsigned int frame_texture = 0;
     Camera* camera;
 

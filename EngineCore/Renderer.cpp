@@ -38,38 +38,10 @@ void Renderer::init(){
 }
 
 void Renderer::set_bind_fbo(int texture_width, int texture_height){ // TODO : 리팩토링
-    static FrameBuffer* buffer = nullptr;
-    if (buffer == nullptr){ // 지연 초기화
-        buffer = FrameBuffer::create_frameBuffer();
-        //glGenFramebuffers(1, &fbo);
-        //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        buffer->enable();
-
-        glGenTextures(1, &frame_texture);
-        glBindTexture(GL_TEXTURE_2D, frame_texture);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width, texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        glBindTexture(GL_TEXTURE_2D, frame_texture);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frame_texture, 0);
-
-        GLuint depthrenderbuffer;
-        glGenRenderbuffers(1, &depthrenderbuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, texture_width, texture_height);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    if (screenFrameBuffer == nullptr){ // 지연 초기화
+        screenFrameBuffer = ScreenFrameBuffer::create_screenFrameBuffer(ivec2((int)texture_width, (int)texture_height));
     }
-    //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    buffer->enable();
+    screenFrameBuffer->enable();
 }
 
 void Renderer::render(const std::list<Model*>& models, RenderSpace space_){

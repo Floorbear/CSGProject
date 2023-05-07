@@ -13,7 +13,7 @@ Texture::~Texture()
 std::list<Texture*> Texture::all_textures;
 
 
-Texture* Texture::create_texture(const ivec2& _size, const void* _data, GLint _internalformat, GLenum _format, GLenum _type, GLint _filtering)
+Texture* Texture::create_texture(const ivec2& _size, const void* _data, GLint _internalformat, GLenum _format, GLenum _type, GLint _filtering, GLint _wrap)
 {
     Texture* newTexture = new Texture();
     glGenTextures(1, &newTexture->texture);
@@ -21,8 +21,8 @@ Texture* Texture::create_texture(const ivec2& _size, const void* _data, GLint _i
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _filtering);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _filtering);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, _wrap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, _wrap);
 
     glTexImage2D(GL_TEXTURE_2D, 0, _internalformat, _size.x, _size.y, 0, _format, _type, _data);
 
@@ -34,7 +34,7 @@ Texture* Texture::create_texture(const ivec2& _size, const void* _data, GLint _i
 Texture* Texture::create_frameTexture(const ivec2& _size, GLint _internalformat, GLenum _format, GLenum _type, GLint _filtering)
 {
     Texture* newTexture = new Texture();
-    glGenTextures(1, &newTexture->texture);
+    glGenTextures(1, &(newTexture->texture));
     glBindTexture(GL_TEXTURE_2D, newTexture->texture);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _filtering);
@@ -44,11 +44,24 @@ Texture* Texture::create_frameTexture(const ivec2& _size, GLint _internalformat,
 
     glTexImage2D(GL_TEXTURE_2D, 0, _internalformat, _size.x, _size.y, 0, _format, _type, NULL);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, newTexture->texture, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+   // glBindTexture(GL_TEXTURE_2D, 0);
     all_textures.push_back(newTexture);
     return newTexture;
 
-
+//     glGenTextures(1, &frame_texture);
+// glBindTexture(GL_TEXTURE_2D, frame_texture);
+//
+// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+//
+// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width, texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+//
+//// glBindTexture(GL_TEXTURE_2D, 0);
+//
+// glBindTexture(GL_TEXTURE_2D, frame_texture);
+// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frame_texture, 0);
 }
 
 Texture* Texture::create_depthTexture(const ivec2& _size)
