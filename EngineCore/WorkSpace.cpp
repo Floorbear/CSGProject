@@ -19,6 +19,8 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     renderers.push_back(renderer_focused = new Renderer(512, 512));
     renderer_focused->set_parent(parent);
     renderer_focused->init();
+
+    root_model = new Model("Root");
 }
 
 WorkSpace::~WorkSpace(){
@@ -34,9 +36,7 @@ WorkSpace::~WorkSpace(){
     for (Renderer* renderer : renderers){
         delete renderer;
     }
-    for (Model* model : models){
-        delete model;
-    }
+    delete root_model;
 }
 
 Camera* WorkSpace::get_main_camera(){
@@ -45,12 +45,7 @@ Camera* WorkSpace::get_main_camera(){
 }
 
 Model* WorkSpace::find_model(std::string_view name){
-    for (Model* model : models){
-        if (model->name == name){
-            return model;
-        }
-    }
-    return nullptr;
+    return root_model->find_model(name);
 }
 
 std::list<PointLight*>* WorkSpace::get_lights(){
@@ -82,18 +77,19 @@ void WorkSpace::render_view(Renderer* renderer){
         selected_models.clear();
         selected_meshes.clear();
 
-        SelectionPixelObjectInfo info = renderer->find_selection(models, mouse_pos_left_current_view);
-        if (info.model != nullptr){
-            selected_models.push_back(info.model);
-        }
-        if (info.mesh != nullptr){
-            selected_meshes.push_back(info.mesh);
+        SelectionPixelObjectInfo info = renderer->find_selection(root_model->get_children(), mouse_pos_left_current_view);
+        if (!info.empty()){
+            if (selection_mode == SelectionMode::Model){
+                selected_models.push_back(info.model);
+            } else if (selection_mode == SelectionMode::Mesh){
+                selected_meshes.push_back(info.mesh);
+            }
         }
     }
 
     // Gui 렌더링
     #pragma warning(disable: 4312)
-    ImGui::GetWindowDrawList()->AddImage((void*)renderer->screenFrameBuffer->get_framebufferTexutre()->get_textureHandle(), ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y), ImVec2(0, 0), ImVec2(1, 1));
+    ImGui::GetWindowDrawList()->AddImage((void*)renderer->framebuffer_screen->get_framebufferTexutre()->get_textureHandle(), ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y), ImVec2(0, 0), ImVec2(1, 1));
     ImGui::End();
     ImGui::PopStyleVar();
 
@@ -115,7 +111,11 @@ void WorkSpace::render_hierarchy(){
         }
 
         bool node_open = ImGui::TreeNodeEx((void*)node, node_flags, "<mesh>", 0);
-        if (this->selection_mode == SelectionMode::Mesh_Selection && ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
+        if (!node->is_leaf_node()){
+            ImGui::SameLine();
+            ImGui::Checkbox("##Selection Group", &node->selection_group); // TODO : 체크박스 안쪽에서는 트리노드 클릭 안되게하기...
+        }
+        if (this->selection_mode == SelectionMode::Mesh && ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
             mesh_clicked = node;
         }
         if (ImGui::BeginDragDropSource()){
@@ -138,7 +138,7 @@ void WorkSpace::render_hierarchy(){
         }
 
         bool node_open = ImGui::TreeNodeEx((void*)model, node_flags, model->name.c_str(), 0);
-        if (this->selection_mode == SelectionMode::Model_Selection && ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
+        if (this->selection_mode == SelectionMode::Model && ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
             model_clicked = model;
         }
         if (ImGui::BeginDragDropSource()){
@@ -155,11 +155,11 @@ void WorkSpace::render_hierarchy(){
         }
     };
 
-    for (Model* model : models){
+    for (Model* model : root_model->get_children()){
         draw_model_tree(model);
     }
 
-    if (ImGui::IsMouseClicked(0) && ImGui::IsWindowHovered(ImGuiHoveredFlags_None)
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered(ImGuiHoveredFlags_None)
         && mesh_clicked == nullptr && model_clicked == nullptr){ // 빈칸 선택
         selected_meshes.clear();
         selected_models.clear();
@@ -182,6 +182,7 @@ void WorkSpace::render_hierarchy(){
                 selected_models.remove(model_clicked);
             } else{
                 selected_models.push_back(model_clicked);
+                printf("%s", model_clicked->name.c_str());
             }
         } else{
             selected_models.clear();
@@ -217,7 +218,7 @@ void WorkSpace::render_logs(){
 
 void WorkSpace::render(){
     for (Renderer* renderer : renderers){
-        renderer->render(models, &lights);
+        renderer->render(root_model->get_children(), &lights);
         render_view(renderer);
     }
     render_popup_menu();
@@ -251,6 +252,7 @@ void WorkSpace::process_input(){
 void WorkSpace::on_mouse_press_left(){
     //printf("press left!");
     prevPos = mouse_pos_left_press_raw;
+    // camera_transform_saved = camera.transform;
 }
 
 void WorkSpace::on_mouse_drag_left(){
@@ -263,11 +265,23 @@ void WorkSpace::on_mouse_drag_left(){
         prevPos = mouse_pos_left_current_raw;
         get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta()* sensitivity, 0));
     }
+    // camera.transform.set_rotation(Transform(camera_transform_saved).rotate(C * vec3(0, mouse_pos_left_current_raw - mouse_pos_left_press_raw, 0)));
 }
 
 void WorkSpace::on_mouse_release_left(){
     //printf("release left!");
+    // camera.transform.set_rotation(Transform(camera_transform_saved).rotate(C * vec3(0, mouse_pos_left_current_raw - mouse_pos_left_press_raw, 0))); 그냥 똑같은짓 하고 끝
+    // 아니면 관성 추가!
+    // vec2 mouse_inertia = mouse_pos_left_current_raw - mouse_pos_left_press_raw;
+    //
 }
+
+//  WorkSpace::update (){
+//  ...
+//  while(mouse_inertia.magnitude() < 0.01f){
+//    camera.transform.rotate(vec3(0, mouse_inertia.x * C, 0))); 여기는 누적방식
+//    mouse_inertia *= 0.9;
+//  ...
 
 WorkSpace* WorkSpace::create_new(GUI* parent_, const char* filename){
     return new WorkSpace(parent_, filename);
@@ -282,13 +296,60 @@ void WorkSpace::render_popup_menu(){
         if (ImGui::MenuItem("Cut", "CTRL+X")){}
         if (ImGui::MenuItem("Copy", "CTRL+C")){}
         if (ImGui::MenuItem("Paste", "CTRL+V")){}
-        if (ImGui::MenuItem("Delete", "Del")){} // TODO : 선택이 있는경우 제한
+        if (ImGui::MenuItem("Delete", "Del", false, !selected_models.empty() || !selected_meshes.empty())){
+            actions.delete_selected();
+        }
         ImGui::Separator();
 
         if (ImGui::BeginMenu("Select")){
-            if (ImGui::MenuItem("Select Parent")){}
-            if (ImGui::MenuItem("Reverse Selection")){}
-            if (ImGui::MenuItem("Filter Selection")){}
+            if (ImGui::MenuItem("Switch Last Selected Object To Parent")){
+                if (!selected_models.empty()){
+                    Model* last_item = selected_models.back();
+                    if (last_item->get_parent() != nullptr){
+                        selected_models.pop_back();
+                        if (!Utils::contains(selected_models, last_item->get_parent())){
+                            selected_models.push_back(last_item->get_parent());
+                        }
+                    }
+                } else if (!selected_meshes.empty()){
+                    CSGNode* last_item = selected_meshes.back();
+                    if (last_item->get_parent() != nullptr){
+                        selected_meshes.pop_back();
+                        if (!Utils::contains(selected_meshes, last_item->get_parent())){
+                            selected_meshes.push_back(last_item->get_parent());
+                        }
+                    }
+                }
+            }
+            if (ImGui::MenuItem("Reverse Selection")){
+                if (!selected_models.empty()){
+                    std::list<Model*> selected_models_reversed;
+                    for (Model* model : selected_models){
+                        Model* parent = model->get_parent();
+                        for(Model* child : parent->get_children()){
+                            if(!Utils::contains(selected_models_reversed, child) && !Utils::contains(selected_models, child)){
+                                selected_models_reversed.push_back(child);
+                            }
+                        }
+                    }
+                    selected_models.clear();
+                    selected_models.splice(selected_models.end(), selected_models_reversed);
+                } else if (!selected_meshes.empty()){
+                    if (!selected_meshes.empty()){
+                        std::list<CSGNode*> selected_meshes_reversed;
+                        for (CSGNode* model : selected_meshes){
+                            CSGNode* parent = model->get_parent();
+                            for(CSGNode* child : parent->get_children()){
+                                if(!Utils::contains(selected_meshes_reversed, child) && !Utils::contains(selected_meshes, child)){
+                                    selected_meshes_reversed.push_back(child);
+                                }
+                            }
+                        }
+                        selected_meshes.clear();
+                        selected_meshes.splice(selected_meshes.end(), selected_meshes_reversed);
+                }
+            }
+            // if (ImGui::MenuItem("Filter Selection")){}
             // TODO : 옵션 추가
             ImGui::EndMenu();
         }
@@ -312,9 +373,6 @@ void WorkSpace::render_popup_menu(){
         }
         if (ImGui::MenuItem("Load Model")){}
         ImGui::Separator();
-        if (ImGui::MenuItem("Set To Selection Group")){
-            // csg연산 한거 나눠서 선택 안되게
-        }
 
         // TODO : 메쉬 정제(csg가능하게) 연산들 - cgal 라이브러리 내에 다양한 알고리즘들 제공
         ImGui::EndPopup();

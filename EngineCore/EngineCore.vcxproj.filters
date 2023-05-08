@@ -44442,6 +44442,7 @@
     <ClInclude Include="Component.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="Leaked_Pointers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44530,6 +44531,7 @@
     <ClCompile Include="Component.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="Leaked_Pointers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.lib">

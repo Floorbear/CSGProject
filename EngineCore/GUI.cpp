@@ -356,7 +356,6 @@ void GUI::render_menubar(){
             if (ImGui::MenuItem("Difference Selected Objects")){
                 // TODO : selection에 순서가 있어야함
             }
-            // ? : 굳이 편집메뉴가 중복으로 있을까 해서 우클릭메뉴 중복 내용은 제거함.
             ImGui::EndMenu();
         }
 
@@ -372,8 +371,6 @@ void GUI::render_menubar(){
         ImGui::EndMenuBar();
     }
 }
-
-
 
 int tcnt; // TEST
 void GUI::init_shortcut(){

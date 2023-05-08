@@ -30,7 +30,7 @@ FloatParameter::FloatParameter(std::string label_, std::function<float()> get_, 
     render_action = [this, parameter_count](){ // TODO : completion 액션 추가
         temp = get();
         ImGui::Text(label.c_str());
-        ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count).c_str(), &temp, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
+        ImGui::InputFloat(Utils::format("##InputFloat%1%", parameter_count).c_str(), &temp, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
         if (is_edited){ // TODO : 리팩토링
             if (set != nullptr){
                 set(temp);

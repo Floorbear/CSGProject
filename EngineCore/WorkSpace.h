@@ -34,7 +34,7 @@ class WorkSpace {
 
 public:
     enum class SelectionMode{
-        Model_Selection, Mesh_Selection
+        Model, Mesh
     };
 
     int id;
@@ -49,16 +49,16 @@ public:
     TransactionTaskManager transaction_manager;
 
     std::list<Renderer*> renderers;
-    std::list<Model*> models;
+    Model* root_model = nullptr;
 
-    SelectionMode selection_mode = SelectionMode::Model_Selection;
+    SelectionMode selection_mode = SelectionMode::Model;
     std::list<Model*> selected_models;
     std::list<CSGNode*> selected_meshes;
 
-    vec2 mouse_pos_left_press_raw;
-    vec2 mouse_pos_left_press_view;
-    vec2 mouse_pos_left_current_raw;
-    vec2 mouse_pos_left_current_view;
+    vec2 mouse_pos_left_press_raw = vec2(); // TODO : 구조체로 변경
+    vec2 mouse_pos_left_press_view = vec2();
+    vec2 mouse_pos_left_current_raw = vec2();
+    vec2 mouse_pos_left_current_view = vec2();
     Renderer* renderer_focused = nullptr;
     
     WorkSpace(GUI* parent_);

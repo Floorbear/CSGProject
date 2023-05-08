@@ -1,8 +1,10 @@
 #include "Core.h"
 #include "Utils.h"
-#include <GLFW/glfw3.h>
 #include "Texture.h"
 #include "FrameBuffer.h"
+#include "Leaked_Pointers.h"
+
+#include <GLFW/glfw3.h>
 
 #pragma comment(lib,"opengl32.lib")
 #pragma comment(lib,"glu32.lib")
@@ -30,8 +32,7 @@ void Core::dispose(){
     {
         delete i;
     }
-
-
+    Leaked_Pointers::dispose();
 }
 
 Core* Core::get(){

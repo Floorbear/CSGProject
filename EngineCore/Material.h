@@ -36,24 +36,24 @@ public:
     void apply_selection_id();
 
 
-    // ===== Transform & Camera ======
+    // ===== Transform & Camera ====== //
 protected:
     Transform* uniform_model_transform = nullptr;
     Camera* uniform_camera = nullptr;
 
-    // ===== Selection =====
+    // ===== Selection ===== //
 protected:
     Shader* selectionShader = nullptr;
     SelectionPixelIdInfo uniform_selection_id;
 
-    // ===== FragmentShader =====
+    // ===== FragmentShader ===== //
 protected:
     Shader* screenShader = nullptr;
     vec4 color = { 1.0f, 1.0f, 0.0f, 1.0f };
     float ambient = 0.1f;
     FragmentShaderType fragmentShaderType = FragmentShaderType::Color;
 
-    // ====== Light =====
+    // ====== Light ===== //
 public:
     const std::list<PointLight*>* get_uniform_lights();
 
@@ -80,6 +80,7 @@ class TextureMaterial : public Material
 {
 public:
     TextureMaterial();
+    TextureMaterial(Texture* texture_);
     ~TextureMaterial();
 
     void apply() override;
