@@ -53,6 +53,10 @@ Model* WorkSpace::find_model(std::string_view name){
     return nullptr;
 }
 
+std::list<PointLight*>* WorkSpace::get_lights(){
+    return &lights;
+}
+
 void WorkSpace::render_view(Renderer* renderer){
     // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
@@ -72,9 +76,8 @@ void WorkSpace::render_view(Renderer* renderer){
         mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
     }
 
-    if (renderer_focused == renderer && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
+    if (ImGui::IsWindowHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
         mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
-
         // selection 처리
         selected_models.clear();
         selected_meshes.clear();
@@ -214,11 +217,8 @@ void WorkSpace::render_logs(){
 
 void WorkSpace::render(){
     for (Renderer* renderer : renderers){
-        renderer->render(models);
+        renderer->render(models, &lights);
         render_view(renderer);
-    }
-    if (!ImGui::IsAnyMouseDown()){
-        renderer_focused = nullptr;
     }
     render_popup_menu();
 

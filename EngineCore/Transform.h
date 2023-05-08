@@ -9,7 +9,7 @@ class Transform : public Component{
 	mat4 matrix;
 
 	vec3 position;
-	vec3 rotation = vec3(0.f, 0.f, 0.f);
+	vec3 rotation;
 	vec3 scale3d;
 
 public:

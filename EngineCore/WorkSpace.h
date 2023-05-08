@@ -9,17 +9,22 @@
 
 #include <glm/glm.hpp>
 
+#include <list>
+
 using namespace glm;
 
 class CSGNode;
 class Model;
 class Renderer;
 class Camera;
+class PointLight;
 class WorkSpace {
     static int id_counter;
 
     GUI* parent; // WorkSpace는 GUI에 종속
     WorkSpace_Actions actions;
+
+    std::list<PointLight*> lights;
 
     void render_view(Renderer* renderer);
     void render_hierarchy();
@@ -62,6 +67,7 @@ public:
 
     Camera* get_main_camera();
     Model* find_model(std::string_view name);
+    std::list<PointLight*>* get_lights();
 
     void render();
     void process_input();

@@ -12,6 +12,7 @@ Transform::Transform(const vec4& _Vec4) : Component("Transform"){
     matrix = glm::mat4(1.0f);
 
     position = vec3(0.f, 0.f, 0.f);
+    rotation = vec3(0.f, 0.f, 0.f);
     scale3d = vec3(1.f, 1.f, 1.f);
 
     parameters.push_back(new Vec3Parameter("position", "x", "y", "z", [this](){

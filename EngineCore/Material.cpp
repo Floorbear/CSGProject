@@ -2,6 +2,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Texture.h"
+#include "PointLight.h"
 
 Material::Material() : Component("Material"){
     screenShader = new Shader();
@@ -36,7 +37,7 @@ Camera* Material::get_uniform_camera(){
     return uniform_camera;
 }
 
-vec3 Material::get_uniform_lights(){
+const std::list<PointLight*>* Material::get_uniform_lights(){
     return uniform_lights;
 }
 
@@ -53,7 +54,7 @@ void Material::set_uniform_camera(Camera* camera){
     uniform_camera = camera;
 }
 
-void Material::set_uniform_lights(vec3 lights){
+void Material::set_uniform_lights(const std::list<PointLight*>* lights){
     uniform_lights = lights;
 }
 
@@ -69,7 +70,11 @@ void Material::apply(){
     screenShader->set_mat4("projection", uniform_camera->get_projection());
 
     screenShader->set_vec3("objectColor", vec3(color));
-    screenShader->set_vec3("lightPos", vec3(uniform_lights));
+    if(!uniform_lights->empty()){ // TODO : 여러개 입력으로 바꾸기?
+        screenShader->set_vec3("lightPos", vec3(uniform_lights->front()->get_position()));
+    }else{
+        screenShader->set_vec3("lightPos", vec3(0, 0, 0));// TODO : 지우기
+    }
     screenShader->set_float("ambient", ambient);
 
     //텍스처가 존재하는경우 유니폼으로 보내버립니다

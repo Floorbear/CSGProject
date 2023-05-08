@@ -6,7 +6,7 @@
 #include "Model.h"
 #include "WorkSpace.h"
 #include "Texture.h"
-
+#include "PointLight.h"
 
 #include "FileSystem.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -19,8 +19,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #pragma warning(disable : 4717)
-
-vec3 Renderer::lightPos = vec3(30, -100, -50);
 
 Renderer::Renderer(int viewport_width, int viewport_height){
     parent = nullptr;
@@ -44,12 +42,12 @@ void Renderer::init(){
 
 void Renderer::set_bind_fbo(int texture_width, int texture_height){ // TODO : 리팩토링
     if (screenFrameBuffer == nullptr){ // 지연 초기화
-        screenFrameBuffer = ScreenFrameBuffer::create_screenFrameBuffer(ivec2((int)texture_width, (int)texture_height));
+        screenFrameBuffer = ScreenFrameBuffer::create_screenFrameBuffer(ivec2(texture_width, texture_height));
     }
     screenFrameBuffer->enable();
 }
 
-void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
+void Renderer::render(const std::list<Model*>& models, const std::list<PointLight*>* lights){
     glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
 
     set_bind_fbo((int)texture_size.x, (int)texture_size.y);
@@ -61,12 +59,15 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
     camera->calculate_view();
 
     //test
-    {
-        static Model* newModel = NULL;
-        if (newModel == NULL) {
+    if(parent->active_workspace != nullptr){
+        static Model* newModel = nullptr;
+        static PointLight* newLight = nullptr;
+        if (newModel == nullptr) {
             newModel = new Model("MyModel");
 
             newModel->set_new(Mesh::Cube);
+            newModel->add_component(newLight = new PointLight(parent->active_workspace, vec3(30, -100, -50)));
+            newLight->set_position(vec3(42, 0, 42));
             //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
             //newModel->set_new(Mesh::Sphere);
 
@@ -74,6 +75,10 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
             camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
             camera->get_transform()->set_rotation({ 0,-90,0 });
         }
+
+        /*if (newLight != nullptr) {
+            newLight->set_position(vec3(50 * sin(Utils::time_acc()), 0, 50 * sin(Utils::time_acc())));
+        }*/
 
 
         Model* model = parent->active_workspace->find_model("MyModel");
@@ -83,9 +88,6 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
             newMesh->set_position(vec3(0, 0, 2));
             newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
         }
-
-        lightPos.x = 42;
-        lightPos.z = 42;
 
 
         static bool TextureTest = true;
@@ -106,12 +108,9 @@ void Renderer::render(const std::list<Model*>& models, RenderSpace space_){
         }
     }
 
-
-
-
     for (Model* model : models){
         model->get_material()->set_uniform_camera(camera);
-        model->get_material()->set_uniform_lights(lightPos);
+        model->get_material()->set_uniform_lights(lights);
         model->render();
     }
 }
@@ -120,7 +119,7 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
     glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
 
     //===== init ======
-    if (selectioinFrameBuffer == nullptr)    {
+    if (selectioinFrameBuffer == nullptr){
         selectioinFrameBuffer = SelectionFrameBuffer::create_selectionFrameBuffer(texture_size);
     }
 

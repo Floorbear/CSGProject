@@ -14,14 +14,15 @@ using namespace glm;
 class GUI;
 class Model;
 class Camera;
+class PointLight;
 class Renderer{
-public:
-    enum class RenderSpace{
+//public:
+    /*enum class RenderSpace{
         Selection,
         Screen
-    };
+    };*/
 
-private:
+//private:
     GUI* parent;
 
     vec2 texture_size;
@@ -39,25 +40,12 @@ public:
     void set_parent(GUI* parent_);
 
     void init();
-    void render(const std::list<Model*>& models, RenderSpace space_ = RenderSpace::Screen);
+    void render(const std::list<Model*>& models, const std::list<PointLight*>* lights);
     void dispose();
 
     void resize(vec2 size);
 
     vec2 get_viewport_size();
-
-    //===== Camera ======
-    float xPos = 0.f;
-    float yPos = 0.f;
-    float zPos = 0.f;
-
-    float xDegree = 0.f;
-    float yDegree = 0.f;
-
-    Transform cameraTransfrom;
-
-    //===== Material ===== 
-    static vec3 lightPos; // TODO : 라이트 컴포넌트 만들때 정리하기
 
     //===== Selection =====
     SelectionPixelObjectInfo find_selection(const std::list<Model*>& models, vec2 mouse_position);

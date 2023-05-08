@@ -36,6 +36,10 @@ CSGNode* Model::get_csg_mesh(){
     return csgmesh;
 }
 
+void Model::add_component(Component* component){
+    components.push_back(component);
+}
+
 std::list<Component*> Model::get_components(){
     return components;
 }

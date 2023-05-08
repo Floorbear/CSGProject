@@ -44418,9 +44418,6 @@
     <ClInclude Include="WorkSpace.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="Component.h">
-      <Filter>Object</Filter>
-    </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Component</Filter>
     </ClInclude>
@@ -44438,6 +44435,12 @@
     </ClInclude>
     <ClInclude Include="..\Thirdparty\etc\stb_image.h">
       <Filter>ThirdParty\etc</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLight.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -44506,9 +44509,6 @@
     <ClCompile Include="WorkSpace.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="Component.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
     <ClCompile Include="Material.cpp">
       <Filter>Component</Filter>
     </ClCompile>
@@ -44523,6 +44523,12 @@
     </ClCompile>
     <ClCompile Include="SelectionPixelInfo.cpp">
       <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLight.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -44641,12 +44647,6 @@
     </None>
     <None Include="..\Thirdparty\Eigen\Eigen">
       <Filter>ThirdParty\Eigen</Filter>
-    </None>
-    <None Include="..\EngineResource\Shader\DefaultFragmentShader.glsl">
-      <Filter>Rendering</Filter>
-    </None>
-    <None Include="..\EngineResource\Shader\DefaultVertexShader.glsl">
-      <Filter>Rendering</Filter>
     </None>
     <None Include="..\Thirdparty\glm\detail\func_common.inl">
       <Filter>ThirdParty\glm</Filter>
@@ -45055,9 +45055,6 @@
     </None>
     <None Include="..\Thirdparty\glm\gtx\wrap.inl">
       <Filter>ThirdParty\glm</Filter>
-    </None>
-    <None Include="..\EngineResource\Shader\SelectionFragmentShader.glsl">
-      <Filter>Rendering</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

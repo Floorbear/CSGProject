@@ -29,6 +29,7 @@ public:
     bool is_leaf_node();
     CSGNode* get_csg_mesh();
 
+    void add_component(Component* component);
     std::list<Component*> get_components();
     // TODO : add_component();
     // TODO : get_component(type);
@@ -38,6 +39,7 @@ public:
 
     bool is_renderable();
     void render();
+
     void render_selection_id(uint32_t* selection_id_model_acc);
     SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, uint32_t* selection_id_model_acc);
 
