@@ -250,10 +250,19 @@ void WorkSpace::process_input(){
 
 void WorkSpace::on_mouse_press_left(){
     //printf("press left!");
+    prevPos = mouse_pos_left_press_raw;
 }
 
 void WorkSpace::on_mouse_drag_left(){
     //printf("drag left!");
+    float sensitivity = 15.f;
+    vec2 moveDir = mouse_pos_left_current_raw - prevPos;
+   // printf("%lf \n", abs(length(mouse_pos_left_current_raw) - length(prevPos)));
+    if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f)
+    {
+        prevPos = mouse_pos_left_current_raw;
+        get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta()* sensitivity, 0));
+    }
 }
 
 void WorkSpace::on_mouse_release_left(){

@@ -75,6 +75,7 @@ public:
     void on_mouse_press_left();
     void on_mouse_drag_left();
     void on_mouse_release_left();
+    vec2 prevPos;
 
     static WorkSpace* create_new(GUI* parent_, const char* filename);
 
