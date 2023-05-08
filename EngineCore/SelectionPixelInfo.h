@@ -14,8 +14,8 @@ struct SelectionPixelIdInfo{
 class Model;
 class CSGNode;
 struct SelectionPixelObjectInfo{
-    Model* model_id = nullptr;
-    CSGNode* mesh_id = nullptr;
+    Model* model = nullptr;
+    CSGNode* mesh = nullptr;
     uint32_t primID = 0;
 
     SelectionPixelObjectInfo();

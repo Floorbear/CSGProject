@@ -41,17 +41,21 @@ public:
     bool gui_logs = true;
     bool gui_csgtree = false;
 
-    std::list<Renderer*> renderers;
-    Renderer* renderer_focused = nullptr;
-
     TransactionTaskManager transaction_manager;
 
+    std::list<Renderer*> renderers;
     std::list<Model*> models;
 
     SelectionMode selection_mode = SelectionMode::Model_Selection;
     std::list<Model*> selected_models;
     std::list<CSGNode*> selected_meshes;
 
+    vec2 mouse_pos_left_press_raw;
+    vec2 mouse_pos_left_press_view;
+    vec2 mouse_pos_left_current_raw;
+    vec2 mouse_pos_left_current_view;
+    Renderer* renderer_focused = nullptr;
+    
     WorkSpace(GUI* parent_);
     WorkSpace(GUI* parent_, std::string title_);
     ~WorkSpace();
@@ -62,9 +66,9 @@ public:
     void render();
     void process_input();
 
-    void on_mouse_press(vec2 position);
-    void on_mouse_moved(vec2 position, vec2 position_prev);
-    void on_mouse_released(vec2 position);
+    void on_mouse_press_left();
+    void on_mouse_drag_left();
+    void on_mouse_release_left();
 
     static WorkSpace* create_new(GUI* parent_, const char* filename);
 

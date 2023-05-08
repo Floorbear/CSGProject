@@ -61,13 +61,30 @@ void WorkSpace::render_view(Renderer* renderer){
     vec2 p_max = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x, ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMax().y);
     renderer->resize(p_max - p_min);
 
-    // Selection 렌더링
-    if (ImGui::IsAnyMouseDown()){
-        // TODO : 마우스 버튼별 선택 처리 추가
-        vec2 mouse_position = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
-        SelectionPixelObjectInfo info = renderer->find_selection(models, mouse_position);
-        if (!info.empty()){
-            printf("%s", info.model_id->name.c_str()); // TEST
+    // view 마우스 좌표 측정
+    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
+        renderer_focused = renderer;
+        mouse_pos_left_press_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
+        mouse_pos_left_current_view = mouse_pos_left_press_view;
+    }
+
+    if (renderer_focused == renderer && ImGui::IsMouseDragging(ImGuiMouseButton_Left)){
+        mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
+    }
+
+    if (renderer_focused == renderer && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
+        mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
+
+        // selection 처리
+        selected_models.clear();
+        selected_meshes.clear();
+
+        SelectionPixelObjectInfo info = renderer->find_selection(models, mouse_pos_left_current_view);
+        if (info.model != nullptr){
+            selected_models.push_back(info.model);
+        }
+        if (info.mesh != nullptr){
+            selected_meshes.push_back(info.mesh);
         }
     }
 
@@ -200,6 +217,9 @@ void WorkSpace::render(){
         renderer->render(models);
         render_view(renderer);
     }
+    if (!ImGui::IsAnyMouseDown()){
+        renderer_focused = nullptr;
+    }
     render_popup_menu();
 
     if (gui_hierarchy){
@@ -214,15 +234,30 @@ void WorkSpace::render(){
 }
 
 void WorkSpace::process_input(){
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
+        mouse_pos_left_press_raw = vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+        on_mouse_press_left();
+    }
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)){
+        mouse_pos_left_current_raw = vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+        on_mouse_drag_left();
+    }
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
+        mouse_pos_left_current_raw = vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+        on_mouse_release_left();
+    }
 }
 
-void WorkSpace::on_mouse_press(vec2 position){
+void WorkSpace::on_mouse_press_left(){
+    //printf("press left!");
 }
 
-void WorkSpace::on_mouse_moved(vec2 position, vec2 position_prev){
+void WorkSpace::on_mouse_drag_left(){
+    //printf("drag left!");
 }
 
-void WorkSpace::on_mouse_released(vec2 position){
+void WorkSpace::on_mouse_release_left(){
+    //printf("release left!");
 }
 
 WorkSpace* WorkSpace::create_new(GUI* parent_, const char* filename){
