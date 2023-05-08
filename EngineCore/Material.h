@@ -25,7 +25,6 @@ public:
 
     Transform* get_uniform_model_transform();
     Camera* get_uniform_camera();
-    const std::list<PointLight*>* get_uniform_lights();
     SelectionPixelIdInfo get_uniform_selection_id();
 
     void set_uniform_model_transform(Transform* model_transform);
@@ -52,8 +51,15 @@ protected:
     Shader* screenShader = nullptr;
     vec4 color = { 1.0f, 1.0f, 0.0f, 1.0f };
     float ambient = 0.1f;
-    vec3 uniform_lights; // TODO : std::list<Light>*
     FragmentShaderType fragmentShaderType = FragmentShaderType::Color;
+
+    // ====== Light =====
+public:
+    const std::list<PointLight*>* get_uniform_lights();
+
+protected:
+    const std::list<PointLight*>* uniform_lights = nullptr;
+
 };
 
 
