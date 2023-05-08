@@ -76,7 +76,50 @@ void Material::apply(){
         screenShader->set_vec3("lightPos", vec3(0, 0, 0));// TODO : 지우기
     }
     screenShader->set_float("ambient", ambient);
+    screenShader->set_int("fragmentShaderType", static_cast<int>(fragmentShaderType));
+}
 
+void Material::apply_selection_id(){
+    selectionShader->use();
+
+    selectionShader->set_mat4("world", *uniform_model_transform->get_matrix());
+    selectionShader->set_mat4("view", uniform_camera->get_view());
+    selectionShader->set_mat4("projection", uniform_camera->get_projection());
+
+    selectionShader->set_uint("objectID", uniform_selection_id.model_id); // TODO : 구조체 다 보내도록 처리, 셰이더도 수정.
+}
+
+
+
+ColorMaterial::ColorMaterial()
+{
+    fragmentShaderType = FragmentShaderType::Color;
+}
+
+ColorMaterial::~ColorMaterial()
+{
+}
+
+void ColorMaterial::apply()
+{
+    __super::apply();
+    screenShader->set_vec3("objectColor", vec3(color));
+}
+
+
+
+TextureMaterial::TextureMaterial()
+{
+    fragmentShaderType = FragmentShaderType::Texture;
+}
+
+TextureMaterial::~TextureMaterial()
+{
+}
+
+void TextureMaterial::apply()
+{
+    __super::apply();
     //텍스처가 존재하는경우 유니폼으로 보내버립니다
     if (texture != nullptr)
     {
@@ -90,22 +133,12 @@ void Material::apply(){
     }
 }
 
-void Material::apply_selection_id(){
-    selectionShader->use();
-
-    selectionShader->set_mat4("world", *uniform_model_transform->get_matrix());
-    selectionShader->set_mat4("view", uniform_camera->get_view());
-    selectionShader->set_mat4("projection", uniform_camera->get_projection());
-
-    selectionShader->set_uint("objectID", uniform_selection_id.model_id); // TODO : 구조체 다 보내도록 처리, 셰이더도 수정.
-}
-
-Texture* Material::get_texture() const
+Texture* TextureMaterial::get_texture() const
 {
     return texture;
 }
 
-void Material::set_texture(Texture* _texture)
+void TextureMaterial::set_texture(Texture* _texture)
 {
     texture = _texture;
 }

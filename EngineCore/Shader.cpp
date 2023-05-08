@@ -92,7 +92,7 @@ void Shader::set_vec3(std::string_view uniform_, const glm::vec3& value_)
 	glUniform3fv(uniformLocation, 1, &value_[0]);
 }
 
-void Shader::set_int(std::string_view uniform_, unsigned int _int)
+void Shader::set_int(std::string_view uniform_, int _int)
 {
 	GLuint uniformLocation = glGetUniformLocation(shaderProgram, uniform_.data());
 	glUniform1i(uniformLocation, _int);

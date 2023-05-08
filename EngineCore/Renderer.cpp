@@ -9,8 +9,7 @@
 #include "PointLight.h"
 
 #include "FileSystem.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include <etc/stb_image.h>
+
 
 
 #include <glad/glad.h>
@@ -98,13 +97,14 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
             newPath.Move("EngineResource");
             newPath.Move("Texture");
             newPath.Move("rockTexture.jpg");
-            ivec3 textureSize = { 0,0,0 };//width,height, channel
-            std::string str = newPath.get_path();
-            stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-            unsigned char* data = stbi_load(str.c_str(), &textureSize.x, &textureSize.y, &textureSize.z, 0);
-            Texture* newTexture = Texture::create_texture({ textureSize.x,textureSize.y }, data, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_REPEAT);
-           // stbi_image_free(data);//릴리즈
-            newModel->get_material()->set_texture(newTexture);
+            Texture* newTexture = Texture::create_texture(newPath);
+
+            model->set_material<TextureMaterial>();
+            static_cast<TextureMaterial*>(newModel->get_material())->set_texture(newTexture);
+        }
+        if (Utils::time_acc() > 5.0f)
+        {
+            model->set_material<ColorMaterial>();
         }
     }
 

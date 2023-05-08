@@ -15,8 +15,6 @@ class Model {
 
     std::list<Component*> components;
     CSGNode* csgmesh = nullptr; // root node
-    Material* material = nullptr;
-
 public:
     std::string name;
 
@@ -35,7 +33,6 @@ public:
     // TODO : get_component(type);
 
     Transform* get_transform(); // 필수적인 컴포넌트들 get
-    Material* get_material();
 
     bool is_renderable();
     void render();
@@ -44,4 +41,22 @@ public:
     SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, uint32_t* selection_id_model_acc);
 
     //Transform get_world_position();
+    //===== Material =====
+public:
+    Material* get_material();
+
+    template <typename MaterialType>
+    void set_material()
+    {
+        //이미 존재하는 마테리얼(Default = Color)을 삭제하고 새 마테리얼을 할당합니다.
+        if (material != nullptr)
+        {
+            delete material;
+            material = nullptr;
+        }
+        material = new MaterialType();
+        assert(material != nullptr);//잘못된 형변환 체크
+    }
+private:
+    Material* material = nullptr;
 };

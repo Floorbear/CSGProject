@@ -17,7 +17,8 @@ void Model::set_new(const Mesh& mesh){
     csgmesh = new CSGNode(mesh);
     // TODO : 기존 transform 제거
     components.push_back(csgmesh->get_transform());
-    components.push_back(material = new Material());
+    components.push_back(material = new ColorMaterial());
+
 }
 
 Model* Model::get_parent(){

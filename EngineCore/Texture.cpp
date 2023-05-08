@@ -2,6 +2,9 @@
 
 #include "glad/glad.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <etc/stb_image.h>
+
 Texture::Texture()
 {
 
@@ -12,6 +15,17 @@ Texture::~Texture()
 
 std::list<Texture*> Texture::all_textures;
 
+
+Texture* Texture::create_texture(EnginePath& _path)
+{
+    ivec3 textureSize = { 0,0,0 };
+    unsigned char* data = load_resouce(_path, &textureSize);
+    //TODO : data 확장자 파싱해서 png, jpg 분기 나누기
+
+    Texture* newTexture = Texture::create_texture({ textureSize.x,textureSize.y }, data, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_REPEAT);
+    stbi_image_free(data);//릴리즈
+    return newTexture;
+}
 
 Texture* Texture::create_texture(const ivec2& _size, const void* _data, GLint _internalformat, GLenum _format, GLenum _type, GLint _filtering, GLint _wrap)
 {
@@ -82,4 +96,13 @@ Texture* Texture::create_depthTexture(const ivec2& _size)
 void Texture::enable()
 {
     glBindTexture(GL_TEXTURE_2D,texture);
+}
+
+unsigned char* Texture::load_resouce(EnginePath& _path, ivec3* _return_size)
+{
+    //ivec3 textureSize = { 0,0,0 };
+    std::string str = _path.get_path();
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    unsigned char* data = stbi_load(str.c_str(), &(_return_size->x), &(_return_size->y), &(_return_size->z), 0);
+    return data;
 }

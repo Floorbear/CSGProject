@@ -6,26 +6,22 @@
 
 using namespace glm;
 
+enum class FragmentShaderType
+{
+    Color,
+    Texture,
+    None
+};
+
 class Texture;
 class Shader;
 class Camera;
 class Transform;
 class PointLight;
 class Material : public Component{
-    Shader* screenShader = nullptr;
-    Shader* selectionShader = nullptr;
-
-    vec4 color = {1.0f, 1.0f, 0.0f, 1.0f};
-    float ambient = 0.1f;
-
-    Transform* uniform_model_transform = nullptr;
-    Camera* uniform_camera = nullptr;
-    const std::list<PointLight*>* uniform_lights = nullptr;
-    SelectionPixelIdInfo uniform_selection_id;
-
 public:
     Material(); // default material
-    ~Material();
+    virtual ~Material();
 
     Transform* get_uniform_model_transform();
     Camera* get_uniform_camera();
@@ -37,8 +33,50 @@ public:
     void set_uniform_lights(const std::list<PointLight*>* lights);
     void set_uniform_selection_id(SelectionPixelIdInfo selection_id);
 
-    void apply();
+    virtual void apply();
     void apply_selection_id();
+
+
+    // ===== Transform & Camera ======
+protected:
+    Transform* uniform_model_transform = nullptr;
+    Camera* uniform_camera = nullptr;
+
+    // ===== Selection =====
+protected:
+    Shader* selectionShader = nullptr;
+    SelectionPixelIdInfo uniform_selection_id;
+
+    // ===== FragmentShader =====
+protected:
+    Shader* screenShader = nullptr;
+    vec4 color = { 1.0f, 1.0f, 0.0f, 1.0f };
+    float ambient = 0.1f;
+    vec3 uniform_lights; // TODO : std::list<Light>*
+    FragmentShaderType fragmentShaderType = FragmentShaderType::Color;
+};
+
+
+
+
+class ColorMaterial : public Material
+{
+public:
+    ColorMaterial();
+    ~ColorMaterial();
+
+    void apply() override;
+};
+
+
+
+class TextureMaterial : public Material
+{
+public:
+    TextureMaterial();
+    ~TextureMaterial();
+
+    void apply() override;
 
     // ===== Texture =====
 private:
@@ -47,5 +85,7 @@ private:
 public:
     Texture* get_texture() const;
     void set_texture(Texture* _texture);
+
+
 };
 
