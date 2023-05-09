@@ -53,22 +53,23 @@ void CSGNode::render(){
 }
 
 void CSGNode::render_selection_id(Material* material, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc){
-    if (children.empty()){ // leaf node
+    if (selection_group || children.empty()){ // leaf node
         material->set_uniform_selection_id(SelectionPixelIdInfo(selection_id_model_acc, *selection_id_mesh_acc));
         result.render();
     }
     (*selection_id_mesh_acc)++;
-    for (CSGNode* child : children){
-        child->render_selection_id(material, selection_id_model_acc, selection_id_mesh_acc);
+    if (!selection_group){
+        for (CSGNode* child : children){
+            child->render_selection_id(material, selection_id_model_acc, selection_id_mesh_acc);
+        }
     }
-    // TODO : 그룹 관련 추가
 }
 
 SelectionPixelObjectInfo CSGNode::from_selection_id(SelectionPixelIdInfo selection_id, Model* model, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc){
     SelectionPixelObjectInfo info;
     if (selection_id.model_id == selection_id_model_acc){ // TEST
         info = SelectionPixelObjectInfo(model, this);
-        if(!info.empty()){
+        if (!info.empty()){
             return info;
         }
     }
@@ -82,10 +83,12 @@ SelectionPixelObjectInfo CSGNode::from_selection_id(SelectionPixelIdInfo selecti
         return info;
     }
 
-    for (CSGNode* child : children){
-        SelectionPixelObjectInfo info = child->from_selection_id(selection_id, model, selection_id_model_acc, selection_id_mesh_acc);
-        if (!info.empty()){
-            return info;
+    if (!selection_group){
+        for (CSGNode* child : children){
+            SelectionPixelObjectInfo info = child->from_selection_id(selection_id, model, selection_id_model_acc, selection_id_mesh_acc);
+            if (!info.empty()){
+                return info;
+            }
         }
     }
     return SelectionPixelObjectInfo(); // null

@@ -12,6 +12,11 @@ class Utils{
     static double time_prev_frame; //...
 
 public:
+    template <typename T>
+    T get(std::list<T> _list, int _index);
+    template <typename T>
+    void insert(std::list<T> _list, T item, int _index);
+
     template<class _container, class _Ty> inline
         static bool contains(_container _C, const _Ty& _Val){
         return std::find(_C.begin(), _C.end(), _Val) != _C.end();

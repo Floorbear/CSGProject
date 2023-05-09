@@ -115,3 +115,18 @@ std::string TransactionTaskManager::redo_detail(){
     }
     return redo_stack.back().detail;
 }
+
+MultiTransactionTask::MultiTransactionTask(std::string detail_) : TransactionTask(detail_, [this](){
+    for (TransactionTask task : tasks){
+        task.work();
+    }
+}, [this](){
+    for (TransactionTask task : tasks){
+        task.work_undo();
+    }
+}){
+}
+
+void MultiTransactionTask::add_task(TransactionTask task){
+    tasks.push_back(task);
+}

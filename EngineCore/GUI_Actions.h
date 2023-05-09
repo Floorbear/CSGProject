@@ -4,11 +4,13 @@ class WorkSpace;
 class GUI;
 
 class WorkSpace_Actions{
-    WorkSpace* parent;
+    WorkSpace* workspace;
 public:
-    WorkSpace_Actions(WorkSpace* parent_);
+    WorkSpace_Actions(WorkSpace* workspace_);
 
     // 여기부턴 gui 기능 함수들
+
+    void delete_selected();
     void add_cube_new();
 
 

@@ -43,6 +43,8 @@ private:
     CSGNodeTransform transform; // CSGNode의 유일한 component
 
 public:
+    bool selection_group = false;
+
     CSGNode(const Mesh& mesh);
     CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2);
     ~CSGNode();

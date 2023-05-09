@@ -7,17 +7,6 @@
 Material::Material() : Component("Material"){
     screenShader = new Shader();
     selectionShader = new Shader("DefaultVertexShader.glsl", "SelectionFragmentShader.glsl");
-
-    parameters.push_back(new ColorParameter("color", [this](){
-        return color;
-    }, [this](vec4 value){
-        color = value;
-    }));
-    parameters.push_back(new FloatParameter("ambient", [this](){
-        return ambient;
-    }, [this](float value){
-        ambient = value;
-    }));
 }
 
 Material::~Material(){
@@ -94,6 +83,17 @@ void Material::apply_selection_id(){
 ColorMaterial::ColorMaterial()
 {
     fragmentShaderType = FragmentShaderType::Color;
+
+    parameters.push_back(new ColorParameter("color", [this](){
+        return color;
+    }, [this](vec4 value){
+        color = value;
+    }));
+    parameters.push_back(new FloatParameter("ambient", [this](){
+        return ambient;
+    }, [this](float value){
+        ambient = value;
+    }));
 }
 
 ColorMaterial::~ColorMaterial()
@@ -108,7 +108,12 @@ void ColorMaterial::apply()
 
 
 
-TextureMaterial::TextureMaterial()
+TextureMaterial::TextureMaterial() : TextureMaterial(nullptr)
+{
+    // TODO : texture parameter 구현해서 추가
+}
+
+TextureMaterial::TextureMaterial(Texture* texture_) : texture(texture_)
 {
     fragmentShaderType = FragmentShaderType::Texture;
 }

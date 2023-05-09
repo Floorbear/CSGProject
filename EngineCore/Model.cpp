@@ -2,23 +2,24 @@
 #include "CSGNode.h"
 #include "Material.h"
 #include "Utils.h"
+#include "Leaked_Pointers.h"
 
 Model::Model(std::string name_) : name(name_){
 }
 
 Model::~Model(){
+    for (Model* child : children){
+        delete child;
+    }
+    for (Component* component : components){
+        if (component == get_transform()){ // Transform 만 예외처리 필요!
+            continue;
+        }
+        delete component;
+    }
     if (csgmesh != nullptr){
         delete csgmesh;
     }
-    delete material;
-}
-
-void Model::set_new(const Mesh& mesh){
-    csgmesh = new CSGNode(mesh);
-    // TODO : 기존 transform 제거
-    components.push_back(csgmesh->get_transform());
-    components.push_back(material = new ColorMaterial());
-
 }
 
 Model* Model::get_parent(){
@@ -29,12 +30,39 @@ std::list<Model*> Model::get_children(){
     return children;
 }
 
+void Model::add_child(Model* model){
+    model->parent = this;
+    children.push_back(model);
+}
+
 bool Model::is_leaf_node(){
     return children.empty();
 }
 
 CSGNode* Model::get_csg_mesh(){
     return csgmesh;
+}
+
+void Model::set_new(const Mesh& mesh){
+    if (csgmesh != nullptr){
+        components.remove(csgmesh->get_transform());
+    }
+    csgmesh = new CSGNode(mesh);
+    components.push_back(csgmesh->get_transform());
+    components.push_back(material_ptr = new ColorMaterial());
+}
+
+Model* Model::find_model(std::string_view name_){
+    if (name == name_){
+        return this;
+    }
+    for (Model* child : children){
+        Model* temp = child->find_model(name_);
+        if (temp != nullptr){
+            return temp;
+        }
+    }
+    return nullptr;
 }
 
 void Model::add_component(Component* component){
@@ -53,7 +81,14 @@ Transform* Model::get_transform(){
 }
 
 Material* Model::get_material(){
-    return material;
+    return material_ptr;
+}
+
+void Model::set_material(Material* material_){
+    components.remove(material_ptr);
+    Leaked_Pointers::add(material_ptr);
+    components.push_back(material_);
+    material_ptr = material_;
 }
 
 bool Model::is_renderable(){
@@ -62,13 +97,13 @@ bool Model::is_renderable(){
 
 void Model::render(){
     // TODO : csg 연산 젹용해서 지연 연산
-    material->set_uniform_model_transform(get_transform());
-    material->apply();
+    material_ptr->set_uniform_model_transform(get_transform());
+    material_ptr->apply();
     csgmesh->render();
 
     for (Model* child : children){
-        child->material->set_uniform_camera(material->get_uniform_camera());
-        child->material->set_uniform_lights(material->get_uniform_lights());
+        child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
+        child->material_ptr->set_uniform_lights(material_ptr->get_uniform_lights());
         child->render();
     }
 }
@@ -76,13 +111,13 @@ void Model::render(){
 void Model::render_selection_id(uint32_t* selection_id_model_acc){
     uint32_t selection_id_mesh_acc = 1;
 
-    material->set_uniform_model_transform(get_transform());
-    material->apply_selection_id();
-    csgmesh->render_selection_id(material, *selection_id_model_acc, &selection_id_mesh_acc);
+    material_ptr->set_uniform_model_transform(get_transform());
+    material_ptr->apply_selection_id();
+    csgmesh->render_selection_id(material_ptr, *selection_id_model_acc, &selection_id_mesh_acc);
     (*selection_id_model_acc)++;
 
     for (Model* child : children){
-        child->material->set_uniform_camera(material->get_uniform_camera());
+        child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
         child->render_selection_id(selection_id_model_acc);
     }
 }

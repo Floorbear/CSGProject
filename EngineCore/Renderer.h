@@ -16,23 +16,16 @@ class Model;
 class Camera;
 class PointLight;
 class Renderer{
-//public:
-    /*enum class RenderSpace{
-        Selection,
-        Screen
-    };*/
-
-//private:
     GUI* parent;
 
     vec2 texture_size;
     vec2 viewport_size;
 
-    void set_bind_fbo(int texture_width, int texture_height);
-
 public:
-    ScreenFrameBuffer* screenFrameBuffer;
+    ScreenFrameBuffer* framebuffer_screen = nullptr;
+    SelectionFrameBuffer* framebuffer_selection = nullptr;
     unsigned int frame_texture = 0;
+
     Camera* camera;
 
     Renderer(int viewport_width, int viewport_height);
@@ -47,9 +40,6 @@ public:
 
     vec2 get_viewport_size();
 
-    //===== Selection =====
     SelectionPixelObjectInfo find_selection(const std::list<Model*>& models, vec2 mouse_position);
-    SelectionFrameBuffer* selectioinFrameBuffer;
-
 };
 

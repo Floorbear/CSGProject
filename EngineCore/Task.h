@@ -14,14 +14,22 @@ public:
 };
 
 class TransactionTask{
+public:
     const std::function<void()> work;
     const std::function<void()> work_undo;
-public:
+    
     const std::string detail;
 
     TransactionTask(std::string detail_, std::function<void()> work_, std::function<void()> work_undo_);
     void execute() const;
     TransactionTask undo_task() const;
+};
+
+class MultiTransactionTask : public TransactionTask{
+    std::list<TransactionTask> tasks;
+public:
+    MultiTransactionTask(std::string detail_);
+    void add_task(TransactionTask task);
 };
 
 class TaskManager{
