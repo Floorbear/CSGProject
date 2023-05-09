@@ -64,10 +64,16 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
         if (newModel == nullptr) {
             newModel = new Model("MyModel");
 
-            newModel->set_new(Mesh::Cube);
+            //newModel->set_new(Mesh::Cube2);
+            //newModel->set_new(Mesh::compute_difference(Mesh::t_Cube2, Mesh::Cube2));
+            //newModel->set_new(Mesh::compute_union(Mesh::Cube2, Mesh::Sphere));
+            //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2, Mesh::Sphere));
+            //newModel->set_new(Mesh::compute_difference(Mesh::Cube2, Mesh::Sphere));
+            //newModel->set_new(Mesh::compute_difference2(Mesh::Cube2, Mesh::Sphere));
+            //newModel->set_new(Mesh::compute_intersection(Mesh::Sphere, Mesh::t_Cube2));  ///union
             newModel->add_component(newLight = new PointLight(parent->active_workspace, vec3(30, -100, -50)));
             newLight->set_position(vec3(42, 0, 42));
-            //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
+            
             //newModel->set_new(Mesh::Sphere);
 
             parent->active_workspace->models.push_back(newModel);

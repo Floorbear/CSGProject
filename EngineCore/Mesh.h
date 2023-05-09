@@ -13,7 +13,8 @@
 #include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
 #include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
-
+#include <CGAL/Polygon_mesh_processing/transform.h>
+#include <CGAL/Aff_transformation_3.h>
 typedef CGAL::Simple_cartesian<double>                       Kernel;
 typedef Kernel::Point_3                                      Point;
 typedef CGAL::Surface_mesh<Point>                            cgal_Mesh;
@@ -53,7 +54,9 @@ public:
     static Mesh Square;
     static Mesh Cube;
     static Mesh Cube2;
+    static Mesh t_Cube2;
     static Mesh Sphere;
+    static Mesh t_Sphere;
 
     Mesh();
     Mesh(const Mesh& ref);
@@ -68,6 +71,7 @@ public:
     void render();
 
     static cgal_Mesh create_cgal_cube(float size);
+    static cgal_Mesh create_cgal_t_cube(float size, float x, float y, float z);
     static cgal_Mesh create_cgal_sphere(int radius, int stackCount, int sectorCount);
 
     static Mesh cgal_mesh_to_mesh(cgal_Mesh cg_Mesh);
@@ -76,8 +80,13 @@ public:
     static cgal_Mesh _cgal_Cube;
     static cgal_Mesh _cgal_Cube2;
     static cgal_Mesh _cgal_Sphere;
+    static cgal_Mesh t_cgal_Sphere;
+    static cgal_Mesh t_cgal_Cube2;
 
     static Mesh compute_intersection(Mesh m1, Mesh m2);
+    static Mesh compute_union(Mesh m1, Mesh m2);
+    static Mesh compute_difference(Mesh m1, Mesh m2);
+    static Mesh compute_difference2(Mesh m1, Mesh m2)
 
 };
 
