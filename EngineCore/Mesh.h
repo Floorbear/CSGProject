@@ -41,13 +41,14 @@ class Mesh{
     unsigned int VBO = 0;
     unsigned int EBO = 0;
 
-    const std::vector<Vertex> vertices;
-    const std::vector<unsigned int> indices;
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
 
     bool is_buffer_created;
 
     void buffers_bind() const;
     void buffers_unbind() const;
+    void buffers_update() const;
 
 public:
     static Mesh Triangle;
@@ -86,7 +87,7 @@ public:
     static Mesh compute_intersection(Mesh m1, Mesh m2);
     static Mesh compute_union(Mesh m1, Mesh m2);
     static Mesh compute_difference(Mesh m1, Mesh m2);
-    static Mesh compute_difference2(Mesh m1, Mesh m2)
+    static Mesh compute_difference2(Mesh m1, Mesh m2);
 
 };
 

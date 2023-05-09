@@ -4,6 +4,7 @@
 
 CSGNode::CSGNode(const Mesh& mesh) : result(mesh), transform(CSGNodeTransform(this)){
     type = Type::Operand;
+    is_result_valid = true;
 }
 
 CSGNode::CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2) : transform(CSGNodeTransform(this)){
@@ -11,6 +12,7 @@ CSGNode::CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2) : transform(C
     type = type_;
     children.push_back(new CSGNode(mesh1));
     children.push_back(new CSGNode(mesh2));
+    is_result_valid = false;
 }
 
 CSGNode::~CSGNode(){
@@ -31,6 +33,40 @@ bool CSGNode::is_leaf_node(){
     return children.empty(); // <=> type == Operand
 }
 
+void CSGNode::add_child(CSGNode* node){
+    assert(type != Type::Operand);
+    if (type == Type::Difference){
+        assert(children.size() < 2);
+    }
+    children.push_back(node);
+    CSGNode* parent_ = parent;
+    while (parent_ != nullptr){
+        parent_->is_result_valid = false;
+        parent_ = parent_->parent;
+    }
+}
+
+std::list<CSGNode::Type> CSGNode::get_changable_types(){
+    if (type == Type::Operand){
+        return {Type::Operand, Type::Union, Type::Intersection, Type::Difference};
+    } else if (type == Type::Difference){
+        return {Type::Union, Type::Intersection, Type::Difference};
+    }
+    if (children.size() <= 2){
+        return {Type::Union, Type::Intersection, Type::Difference};
+    }
+    return {Type::Union, Type::Intersection};
+}
+
+CSGNode::Type CSGNode::get_type(){
+    return type;
+}
+
+void CSGNode::set_type(Type type_){
+    assert(Utils::contains(get_changable_types(), type_));
+    type = type_;
+}
+
 CSGNode* CSGNode::main_child(){
     if (children.empty()){
         return nullptr;
@@ -49,6 +85,16 @@ Transform* CSGNode::get_transform(){
 }
 
 void CSGNode::render(){
+    if (!is_result_valid){
+        if (type == Type::Union){
+            result = Mesh::compute_union(children.front()->result, children.back()->result);
+        } else if (type == Type::Intersection){
+            result = Mesh::compute_intersection(children.front()->result, children.back()->result);
+        } else if (type == Type::Difference){
+            result = Mesh::compute_difference(children.front()->result, children.back()->result);
+        }
+        is_result_valid = true;
+    }
     result.render();
 }
 

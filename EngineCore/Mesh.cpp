@@ -109,6 +109,13 @@ void Mesh::buffers_unbind() const{
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void Mesh::buffers_update() const{
+    buffers_bind();
+
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), indices.data(), GL_STATIC_DRAW);
+}
+
 Mesh::Mesh(){
     is_buffer_created = false;
 }
@@ -136,6 +143,7 @@ Mesh::~Mesh(){
         glDeleteBuffers(1, &EBO);
     }
 }
+
 // TODO : vertex, index 하나만 변경되어도 is_buffer_valid = false 해야한다!
 
 Mesh* Mesh::clone_new() const{

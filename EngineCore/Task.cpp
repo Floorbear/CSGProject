@@ -61,6 +61,7 @@ void TransactionTaskManager::execute_all(){
         work_queue.front().execute();
         history_stack.push_back(work_queue.front());
         if (history_stack.size() > option_undo_max_cnt){
+            //history_stack.front.dispose(); TODO
             history_stack.pop_front();
         }
         work_queue.pop();

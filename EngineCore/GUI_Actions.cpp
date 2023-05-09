@@ -12,6 +12,7 @@ void WorkSpace_Actions::delete_selected(){
         for (Model* model : workspace->selected_models){
             task_multi.add_task(TransactionTask(std::string("delete ") + model->name, [this, model](){ // TODO : 구현 ㅠㅠㅠ
                 //model->remove_self();
+                //DeleteData = (model, index)
             }, [this](){
                 //workspace->models.push_back(new Model(model_data)); 트리형태에서 인덱스까지 고려해야함
             }));

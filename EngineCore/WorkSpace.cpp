@@ -65,6 +65,7 @@ void WorkSpace::render_view(Renderer* renderer){
         renderer_focused = renderer;
         mouse_pos_left_press_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
         mouse_pos_left_current_view = mouse_pos_left_press_view;
+        is_view_pressed = true;
     }
 
     if (renderer_focused == renderer && ImGui::IsMouseDragging(ImGuiMouseButton_Left)){
@@ -92,7 +93,6 @@ void WorkSpace::render_view(Renderer* renderer){
     ImGui::GetWindowDrawList()->AddImage((void*)renderer->framebuffer_screen->get_framebufferTexutre()->get_textureHandle(), ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y), ImVec2(0, 0), ImVec2(1, 1));
     ImGui::End();
     ImGui::PopStyleVar();
-
 }
 
 void WorkSpace::render_hierarchy(){
@@ -217,6 +217,9 @@ void WorkSpace::render_logs(){
 }
 
 void WorkSpace::render(){
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
+        is_view_pressed = false;
+    }
     for (Renderer* renderer : renderers){
         renderer->render(root_model->get_children(), &lights);
         render_view(renderer);
@@ -250,26 +253,22 @@ void WorkSpace::process_input(){
 }
 
 void WorkSpace::on_mouse_press_left(){
-    //printf("press left!");
     prevPos = mouse_pos_left_press_raw;
     // camera_transform_saved = camera.transform;
 }
 
 void WorkSpace::on_mouse_drag_left(){
-    //printf("drag left!");
     float sensitivity = 15.f;
     vec2 moveDir = mouse_pos_left_current_raw - prevPos;
-   // printf("%lf \n", abs(length(mouse_pos_left_current_raw) - length(prevPos)));
-    if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f)
-    {
+    // printf("%lf \n", abs(length(mouse_pos_left_current_raw) - length(prevPos)));
+    if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f)    {
         prevPos = mouse_pos_left_current_raw;
-        get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta()* sensitivity, 0));
+        get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta() * sensitivity, 0));
     }
     // camera.transform.set_rotation(Transform(camera_transform_saved).rotate(C * vec3(0, mouse_pos_left_current_raw - mouse_pos_left_press_raw, 0)));
 }
 
 void WorkSpace::on_mouse_release_left(){
-    //printf("release left!");
     // camera.transform.set_rotation(Transform(camera_transform_saved).rotate(C * vec3(0, mouse_pos_left_current_raw - mouse_pos_left_press_raw, 0))); 그냥 똑같은짓 하고 끝
     // 아니면 관성 추가!
     // vec2 mouse_inertia = mouse_pos_left_current_raw - mouse_pos_left_press_raw;
@@ -326,8 +325,8 @@ void WorkSpace::render_popup_menu(){
                     std::list<Model*> selected_models_reversed;
                     for (Model* model : selected_models){
                         Model* parent = model->get_parent();
-                        for(Model* child : parent->get_children()){
-                            if(!Utils::contains(selected_models_reversed, child) && !Utils::contains(selected_models, child)){
+                        for (Model* child : parent->get_children()){
+                            if (!Utils::contains(selected_models_reversed, child) && !Utils::contains(selected_models, child)){
                                 selected_models_reversed.push_back(child);
                             }
                         }
@@ -339,14 +338,15 @@ void WorkSpace::render_popup_menu(){
                         std::list<CSGNode*> selected_meshes_reversed;
                         for (CSGNode* model : selected_meshes){
                             CSGNode* parent = model->get_parent();
-                            for(CSGNode* child : parent->get_children()){
-                                if(!Utils::contains(selected_meshes_reversed, child) && !Utils::contains(selected_meshes, child)){
+                            for (CSGNode* child : parent->get_children()){
+                                if (!Utils::contains(selected_meshes_reversed, child) && !Utils::contains(selected_meshes, child)){
                                     selected_meshes_reversed.push_back(child);
                                 }
                             }
                         }
                         selected_meshes.clear();
                         selected_meshes.splice(selected_meshes.end(), selected_meshes_reversed);
+                    }
                 }
             }
             // if (ImGui::MenuItem("Filter Selection")){}

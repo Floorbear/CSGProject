@@ -60,6 +60,7 @@ public:
     vec2 mouse_pos_left_current_raw = vec2();
     vec2 mouse_pos_left_current_view = vec2();
     Renderer* renderer_focused = nullptr;
+    bool is_view_pressed = false;
     
     WorkSpace(GUI* parent_);
     WorkSpace(GUI* parent_, std::string title_);

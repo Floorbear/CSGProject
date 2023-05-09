@@ -56,22 +56,22 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
     // TEST
     if(parent->active_workspace != nullptr){
         static Model* newModel = nullptr;
+        static Model* newModel3 = nullptr;
         static PointLight* newLight = nullptr;
         if (newModel == nullptr) {
             newModel = new Model("MyModel");
+            newModel3 = new Model("MyModel3");
 
-<<<<<<< HEAD
-            //newModel->set_new(Mesh::Cube2);
-            //newModel->set_new(Mesh::compute_difference(Mesh::t_Cube2, Mesh::Cube2));
-            //newModel->set_new(Mesh::compute_union(Mesh::Cube2, Mesh::Sphere));
-            //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2, Mesh::Sphere));
-            //newModel->set_new(Mesh::compute_difference(Mesh::Cube2, Mesh::Sphere));
-            //newModel->set_new(Mesh::compute_difference2(Mesh::Cube2, Mesh::Sphere));
-            //newModel->set_new(Mesh::compute_intersection(Mesh::Sphere, Mesh::t_Cube2));  ///union
-            newModel->add_component(newLight = new PointLight(parent->active_workspace, vec3(30, -100, -50)));
-            newLight->set_position(vec3(42, 0, 42));
+//<<<<<<< HEAD
+            //newModel3->set_new(Mesh::Cube2);
+            //newModel3->set_new(Mesh::compute_difference(Mesh::t_Cube2, Mesh::Cube2));
+            newModel3->set_new(Mesh::compute_union(Mesh::Cube2, Mesh::Sphere));
+            //newModel3->set_new(Mesh::compute_intersection(Mesh::Cube2, Mesh::Sphere));
+            //newModel3->set_new(Mesh::compute_difference(Mesh::Cube2, Mesh::Sphere));
+            //newModel3->set_new(Mesh::compute_difference2(Mesh::Cube2, Mesh::Sphere));
+            //newModel3->set_new(Mesh::compute_intersection(Mesh::Sphere, Mesh::t_Cube2));  ///union
             
-=======
+//=======
             newModel->set_new(Mesh::Cube);
             newModel->add_component(newLight = new PointLight(parent->active_workspace, vec3(42, 0, 42)));
 
@@ -81,10 +81,11 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
             newModel2->set_new(Mesh::Cube);
             newModel2->get_transform()->set_position(vec3(0, 2, 2));
             //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
->>>>>>> 8407016d5fc7ef8bcead817904e5711cc6024d43
+//>>>>>>> 8407016d5fc7ef8bcead817904e5711cc6024d43
             //newModel->set_new(Mesh::Sphere);
 
             parent->active_workspace->root_model->add_child(newModel);
+            parent->active_workspace->root_model->add_child(newModel3);
             camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
             camera->get_transform()->set_rotation({ 0,-90,0 });
         }

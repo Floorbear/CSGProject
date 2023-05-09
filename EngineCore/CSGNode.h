@@ -24,6 +24,7 @@ private:
 
     Type type;
     Mesh result;
+    bool is_result_valid = false;
 
     class CSGNodeTransform : Transform { // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
         CSGNode* parent; // 값 타입으로 전달할땐 슬라이싱 되어도 무관, Transform*으로 전달할땐 접근 못해도 무관
@@ -52,6 +53,11 @@ public:
     CSGNode* get_parent();
     std::list<CSGNode*> get_children();
     bool is_leaf_node();
+    void add_child(CSGNode* node);
+
+    std::list<Type> get_changable_types();
+    Type get_type();
+    void set_type(Type type_);
 
     CSGNode* main_child();
     Transform* get_transform();
