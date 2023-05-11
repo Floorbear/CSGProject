@@ -6,6 +6,7 @@
 #include "Renderer.h"
 #include "FrameBuffer.h"
 #include "Texture.h"
+#include "PointLight.h"
 
 int WorkSpace::id_counter = 1; // 1부터 시작
 
@@ -21,6 +22,8 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     renderer_focused->init();
 
     root_model = new Model("Root");
+    root_model->add_component(new PointLight(this, vec3(42, 0, 42))); // TODO : value 바꿔!
+    // light->set_position(vec3(50 * sin(Utils::time_acc()), 0, 50 * sin(Utils::time_acc())));
 }
 
 WorkSpace::~WorkSpace(){
@@ -91,6 +94,8 @@ void WorkSpace::render_view(Renderer* renderer){
     // Gui 렌더링
     #pragma warning(disable: 4312)
     ImGui::GetWindowDrawList()->AddImage((void*)renderer->framebuffer_screen->get_framebufferTexutre()->get_textureHandle(), ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y), ImVec2(0, 0), ImVec2(1, 1));
+
+    render_popup_menu_view();
     ImGui::End();
     ImGui::PopStyleVar();
 }
@@ -189,22 +194,31 @@ void WorkSpace::render_hierarchy(){
             selected_models.push_back(model_clicked);
         }
     }
-
     ImGui::End();
 }
 
 void WorkSpace::render_inspector(){
     ImGui::Begin(Utils::format("Inspector##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
 
-    if (selected_models.empty()){ // 모델과 메쉬가 모두 컴포넌트를 가진 오브젝트니까 이부분에서 추상화를 시켜도 좋을텐데 일단 보류...
-        if (!selected_meshes.empty()){
-            selected_meshes.front()->get_transform()->render();
+    // 마지막으로 선택된 것 (기즈모가 그려지는 것)
+    if (!selected_models.empty()){
+        ImGui::Text(("Model : " + selected_models.back()->name + "\n\n").c_str());
+        for (Component* component : selected_models.back()->get_components()){
+            component->render();
         }
-    } else{
-        for (Component* component : selected_models.front()->get_components()){
+    } else if (!selected_meshes.empty()){
+        ImGui::Text("Mesh\n\n");
+        for (Component* component : selected_meshes.back()->get_components()){
+            component->render();
+        }
+    } else if (selected_models.empty() && selected_meshes.empty()){
+        ImGui::Text("World Properties\n\n");
+        for (Component* component : root_model->get_components()){
             component->render();
         }
     }
+
+    render_popup_menu_inspector();
     ImGui::End();
 }
 
@@ -224,7 +238,6 @@ void WorkSpace::render(){
         renderer->render(root_model->get_children(), &lights);
         render_view(renderer);
     }
-    render_popup_menu();
 
     if (gui_hierarchy){
         render_hierarchy();
@@ -261,7 +274,7 @@ void WorkSpace::on_mouse_drag_left(){
     float sensitivity = 15.f;
     vec2 moveDir = mouse_pos_left_current_raw - prevPos;
     // printf("%lf \n", abs(length(mouse_pos_left_current_raw) - length(prevPos)));
-    if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f)    {
+    if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
         prevPos = mouse_pos_left_current_raw;
         get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta() * sensitivity, 0));
     }
@@ -286,12 +299,11 @@ WorkSpace* WorkSpace::create_new(GUI* parent_, const char* filename){
     return new WorkSpace(parent_, filename);
 }
 
-void WorkSpace::render_popup_menu(){
-    if (ImGui::GetIO().MouseReleased[1]){
+void WorkSpace::render_popup_menu_view(){
+    if (ImGui::IsWindowHovered(ImGuiHoveredFlags_None) && ImGui::GetIO().MouseReleased[ImGuiMouseButton_Right]){
         ImGui::OpenPopup("View_Popup_Edit");
     }
     if (ImGui::BeginPopup("View_Popup_Edit")){
-
         if (ImGui::MenuItem("Cut", "CTRL+X")){}
         if (ImGui::MenuItem("Copy", "CTRL+C")){}
         if (ImGui::MenuItem("Paste", "CTRL+V")){}
@@ -375,6 +387,17 @@ void WorkSpace::render_popup_menu(){
         ImGui::Separator();
 
         // TODO : 메쉬 정제(csg가능하게) 연산들 - cgal 라이브러리 내에 다양한 알고리즘들 제공
+        ImGui::EndPopup();
+    }
+}
+
+void WorkSpace::render_popup_menu_inspector(){
+    if (ImGui::IsWindowHovered(ImGuiHoveredFlags_None) && ImGui::GetIO().MouseReleased[ImGuiMouseButton_Right]){
+        ImGui::OpenPopup("View_Popup_Hierarchy");
+    }
+    if (ImGui::BeginPopup("View_Popup_Hierarchy")){
+        if (ImGui::MenuItem("Add Component", 0, false, selected_models.size() <= 1 && selected_meshes.size() <= 1)){} // TODO : 구현
+        if (ImGui::MenuItem("Show Remove Button", 0, &Component::show_remove_button)){}
         ImGui::EndPopup();
     }
 }

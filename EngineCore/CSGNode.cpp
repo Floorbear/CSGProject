@@ -1,24 +1,62 @@
 #include "CSGNode.h"
 #include "Utils.h"
 #include "Material.h"
+#include "EnumParameter.hpp"
 
-CSGNode::CSGNode(const Mesh& mesh) : result(mesh), transform(CSGNodeTransform(this)){
+const char* CSGNode::type_string_values[] = {"None", "Union", "Intersection", "Difference"};
+
+CSGNode::CSGNode(const Mesh& mesh) : Component("CSG Params"), result(mesh), transform(CSGNodeTransform(this)){
     type = Type::Operand;
     is_result_valid = true;
+
+    components.push_back(&transform);
+    components.push_back(this);
+
+    parameters.push_back(new EnumParameter<Type>("type", [this](){
+        return type;
+    }, [this](Type value){
+        type = value;
+    }, [this](){
+        return get_changable_types();
+    }, type_string_values));
+
+    parameters.push_back(new BoolParameter("selection group", [this](){
+        return selection_group;
+    }, [this](bool value){
+        selection_group = value;
+    }));
 }
 
-CSGNode::CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2) : transform(CSGNodeTransform(this)){
+CSGNode::CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2) : Component("CSG Params"), transform(CSGNodeTransform(this)){
     assert(type != Type::Operand);
     type = type_;
     children.push_back(new CSGNode(mesh1));
     children.push_back(new CSGNode(mesh2));
     is_result_valid = false;
+
+    components.push_back(&transform);
+    components.push_back(this);
+
+    parameters.push_back(new EnumParameter<Type>("type", [this](){
+        return type;
+    }, [this](Type value){
+        type = value;
+    }, [this](){
+        return get_changable_types();
+    }, type_string_values));
+
+    parameters.push_back(new BoolParameter("selection group", [this](){
+        return selection_group;
+    }, [this](bool value){
+        selection_group = value;
+    }));
 }
 
 CSGNode::~CSGNode(){
     for (CSGNode* child : children){
         delete child;
     }
+    ComponentContainer::~ComponentContainer();
 }
 
 CSGNode* CSGNode::get_parent(){
@@ -47,12 +85,10 @@ void CSGNode::add_child(CSGNode* node){
 }
 
 std::list<CSGNode::Type> CSGNode::get_changable_types(){
-    if (type == Type::Operand){
+    if (type == Type::Operand || children.size() <= 2){
         return {Type::Operand, Type::Union, Type::Intersection, Type::Difference};
-    } else if (type == Type::Difference){
-        return {Type::Union, Type::Intersection, Type::Difference};
     }
-    if (children.size() <= 2){
+    if (type == Type::Difference){
         return {Type::Union, Type::Intersection, Type::Difference};
     }
     return {Type::Union, Type::Intersection};
@@ -75,13 +111,10 @@ CSGNode* CSGNode::main_child(){
 }
 
 Transform* CSGNode::get_transform(){
-    if (type == Type::Operand){
-        return (Transform*)&transform;
-    }
     if (!children.empty()){
         return main_child()->get_transform();
     }
-    return NULL;
+    return (Transform*)&transform;
 }
 
 void CSGNode::render(){

@@ -7,10 +7,7 @@
 #include "WorkSpace.h"
 #include "Texture.h"
 #include "PointLight.h"
-
 #include "FileSystem.h"
-
-
 
 #include <glad/glad.h>
 
@@ -54,26 +51,23 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
     camera->calculate_view();
 
     // TEST
-    if(parent->active_workspace != nullptr){
+    if (parent->active_workspace != nullptr){
         static Model* newModel = nullptr;
         static Model* newModel3 = nullptr;
-        static PointLight* newLight = nullptr;
-        if (newModel == nullptr) {
+        if (newModel == nullptr){
             newModel = new Model("MyModel");
             newModel3 = new Model("MyModel3");
 
-//<<<<<<< HEAD
-            //newModel3->set_new(Mesh::Cube2);
-            //newModel3->set_new(Mesh::compute_difference(Mesh::t_Cube2, Mesh::Cube2));
+            //<<<<<<< HEAD
+                        //newModel3->set_new(Mesh::Cube2);
+                        //newModel3->set_new(Mesh::compute_difference(Mesh::t_Cube2, Mesh::Cube2));
             newModel3->set_new(Mesh::compute_union(Mesh::Cube2, Mesh::Sphere));
             //newModel3->set_new(Mesh::compute_intersection(Mesh::Cube2, Mesh::Sphere));
             //newModel3->set_new(Mesh::compute_difference(Mesh::Cube2, Mesh::Sphere));
             //newModel3->set_new(Mesh::compute_difference2(Mesh::Cube2, Mesh::Sphere));
             //newModel3->set_new(Mesh::compute_intersection(Mesh::Sphere, Mesh::t_Cube2));  ///union
-            
-//=======
+
             newModel->set_new(Mesh::Cube);
-            newModel->add_component(newLight = new PointLight(parent->active_workspace, vec3(42, 0, 42)));
 
             Model* newModel2 = new Model("MyModel2");
 
@@ -87,16 +81,13 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
             parent->active_workspace->root_model->add_child(newModel);
             parent->active_workspace->root_model->add_child(newModel3);
             camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
-            camera->get_transform()->set_rotation({ 0,-90,0 });
+            camera->get_transform()->set_rotation({0,-90,0});
         }
 
-        /*if (newLight != nullptr) {
-            newLight->set_position(vec3(50 * sin(Utils::time_acc()), 0, 50 * sin(Utils::time_acc())));
-        }*/
 
 
         Model* model = parent->active_workspace->find_model("MyModel");
-        if (model != NULL) {
+        if (model != NULL){
             //CSGMesh* newMesh = 
             Transform* newMesh = model->get_transform();
             newMesh->set_position(vec3(0, 0, 2));
@@ -106,8 +97,7 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
 
         static bool TextureTest = true;
         static bool TextureTest2 = true;
-        if (TextureTest)
-        {
+        if (TextureTest)        {
             TextureTest = false;
             EnginePath newPath = FileSystem::GetProjectPath();
             newPath.Move("EngineResource");
@@ -117,8 +107,7 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
 
             model->set_material(new TextureMaterial(newTexture));
         }
-        if (TextureTest2 && Utils::time_acc() > 5.0f)
-        {
+        if (TextureTest2 && Utils::time_acc() > 5.0f)        {
             TextureTest2 = false;
             model->set_material(new ColorMaterial());
         }
@@ -152,13 +141,13 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
 
     // 셀렉션 렌더링 정보 읽기
     framebuffer_selection->enable();
-    SelectionPixelIdInfo Pixel = framebuffer_selection->read_pixel(texture_size.x * mouse_position.x / viewport_size.x, texture_size.y * mouse_position.y / viewport_size.y);
+    SelectionPixelIdInfo Pixel = framebuffer_selection->read_pixel((int)(texture_size.x * mouse_position.x / viewport_size.x), (int)(texture_size.y * mouse_position.y / viewport_size.y));
     framebuffer_selection->disable();
 
     uint32_t selection_id_model_acc = 1;
-    for(Model* model : models){
+    for (Model* model : models){
         SelectionPixelObjectInfo info = model->from_selection_id(Pixel, &selection_id_model_acc);
-        if(!info.empty()){
+        if (!info.empty()){
             return info;
         }
     }

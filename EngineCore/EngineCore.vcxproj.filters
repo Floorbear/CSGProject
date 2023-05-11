@@ -44443,6 +44443,9 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="Leaked_Pointers.h" />
+    <ClInclude Include="EnumParameter.hpp">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />

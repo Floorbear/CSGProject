@@ -14948,6 +14948,7 @@
     <ClInclude Include="Component.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="CSGNode.h" />
+    <ClInclude Include="EnumParameter.hpp" />
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="GUI.h" />

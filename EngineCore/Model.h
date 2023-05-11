@@ -2,6 +2,7 @@
 
 #include "Mesh.h"
 #include "SelectionPixelInfo.h"
+#include "Component.h"
 
 #include <glm/glm.hpp>
 
@@ -9,13 +10,12 @@
 
 class CSGNode;
 class Material;
-class Model {
+class Model : public ComponentContainer{
     Model* parent = nullptr;
     std::list<Model*> children;
 
-    std::list<Component*> components;
     CSGNode* csgmesh = nullptr; // root node
-    Material* material_ptr;
+    Material* material_ptr = nullptr;
 
 public:
     std::string name;
@@ -31,11 +31,6 @@ public:
 
     void set_new(const Mesh& mesh);
     Model* find_model(std::string_view name_);
-
-    void add_component(Component* component);
-    std::list<Component*> get_components();
-    // TODO : add_component();
-    // TODO : get_component(type);
 
     Transform* get_transform(); // 필수적인 컴포넌트들 get set
     Material* get_material();

@@ -11,12 +11,8 @@ Model::~Model(){
     for (Model* child : children){
         delete child;
     }
-    for (Component* component : components){
-        if (component == get_transform()){ // Transform 만 예외처리 필요!
-            continue;
-        }
-        delete component;
-    }
+    components.remove(get_transform()); // Transform만은 미리 삭제하면 안됨!
+    ComponentContainer::~ComponentContainer();
     if (csgmesh != nullptr){
         delete csgmesh;
     }
@@ -65,14 +61,6 @@ Model* Model::find_model(std::string_view name_){
     return nullptr;
 }
 
-void Model::add_component(Component* component){
-    components.push_back(component);
-}
-
-std::list<Component*> Model::get_components(){
-    return components;
-}
-
 Transform* Model::get_transform(){
     if (csgmesh == nullptr){
         return nullptr;
@@ -96,7 +84,6 @@ bool Model::is_renderable(){
 }
 
 void Model::render(){
-    // TODO : csg 연산 젹용해서 지연 연산
     material_ptr->set_uniform_model_transform(get_transform());
     material_ptr->apply();
     csgmesh->render();

@@ -39,6 +39,19 @@ FloatParameter::FloatParameter(std::string label_, std::function<float()> get_, 
     };
 }
 
+BoolParameter::BoolParameter(std::string label_, std::function<bool()> get_, std::function<void(bool)> set_) :
+    Parameter(label_), get(get_), set(set_){
+    int parameter_count = GUI::parameter_count++;
+    render_action = [this, parameter_count](){ // TODO : completion 액션 추가
+        bool temp = get();
+        if (ImGui::Checkbox((label + Utils::format("##CheckBox%1%", parameter_count)).c_str(), &temp)){
+            printf("aa");
+            set(temp);
+        }
+    };
+}
+
+
 Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::string label_y_, std::string label_z_, std::function<vec3()> get_, std::function<void(vec3)> set_) :
     Parameter(label_), label_x(label_x_), label_y(label_y_), label_z(label_z_), get(get_), set(set_){
     int parameter_count = GUI::parameter_count++; // TODO : parameter id로 리팩토링
@@ -51,17 +64,17 @@ Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::stri
             ImGui::Text("x");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count).c_str(), &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
+            ImGui::InputFloat(Utils::format("##InputFloat%1%", parameter_count).c_str(), &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("y");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat(Utils::format("InputFloat##%1%", parameter_count + 1).c_str(), &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
+            ImGui::InputFloat(Utils::format("##InputFloat%1%", parameter_count + 1).c_str(), &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
             ImGui::TableSetColumnIndex(2);
             ImGui::Text("z");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat(Utils::format("InputFloat%1%", parameter_count + 2).c_str(), &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
+            ImGui::InputFloat(Utils::format("##InputFloat%1%", parameter_count + 2).c_str(), &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
             ImGui::EndTable();
         }
         if (is_edited){ // TODO : 리팩토링
@@ -83,7 +96,7 @@ ColorParameter::ColorParameter(std::string label_, std::function<vec4()> get_, s
         temp[3] = temp_vec.w;
         ImGui::Text(label.c_str());
         // ImGuiColorEditFlags_PickerHueWheel
-        ImGui::ColorEdit4(Utils::format("ColorEdit##%1%", parameter_count).c_str(), temp, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_NoOptions);
+        ImGui::ColorEdit4(Utils::format("##ColorEdit%1%", parameter_count).c_str(), temp, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_NoOptions);
         is_edited = true;
         if (is_edited){
             if (set != nullptr){
@@ -92,6 +105,8 @@ ColorParameter::ColorParameter(std::string label_, std::function<vec4()> get_, s
         }
     };
 }
+
+bool Component::show_remove_button = false;
 
 Component::Component(std::string label_) : label(label_){
 }
@@ -103,10 +118,31 @@ Component::~Component(){
 }
 void Component::render(){
     ImGui::SeparatorText(label.c_str());
+    if (show_remove_button){
+        ImGui::SameLine();
+        if (ImGui::Button(("x##" + this->label).c_str())){
+            printf("remove component %s\n", this->label.c_str()); // TODO : 구현, ComponentContainer* parent 사용해야함!
+        }
+    }
     for (Parameter* parameter : parameters){
         parameter->render();
     }
 }
+
+ComponentContainer::~ComponentContainer(){
+    for (Component* component : components){
+        delete component;
+    }
+}
+
+void ComponentContainer::add_component(Component* component){
+    components.push_back(component);
+}
+
+std::list<Component*> ComponentContainer::get_components(){
+    return components;
+}
+
 /*
 * TODO : undo redo에서 focus가 inputtext인지 확인
 *

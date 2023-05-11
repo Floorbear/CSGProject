@@ -30,7 +30,8 @@ class WorkSpace {
     void render_hierarchy();
     void render_inspector();
     void render_logs();
-    void render_popup_menu();
+    void render_popup_menu_view();
+    void render_popup_menu_inspector();
 
 public:
     enum class SelectionMode{

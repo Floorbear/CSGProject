@@ -3,15 +3,16 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "SelectionPixelInfo.h"
+#include "Component.h"
 
 #include <glm/glm.hpp>
 
 #include <list>
 
 class Material;
-class CSGNode {
+class CSGNode : public ComponentContainer, Component{
 public:
-    enum class Type {
+    enum class Type{
         Operand, // children 제한 : 0개
         Union,
         Intersection,
@@ -19,14 +20,9 @@ public:
     };
 
 private:
-    CSGNode* parent = nullptr;
-    std::list<CSGNode*> children;
+    static const char* type_string_values[];
 
-    Type type;
-    Mesh result;
-    bool is_result_valid = false;
-
-    class CSGNodeTransform : Transform { // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
+    class CSGNodeTransform : public Transform{ // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
         CSGNode* parent; // 값 타입으로 전달할땐 슬라이싱 되어도 무관, Transform*으로 전달할땐 접근 못해도 무관
 
     public:
@@ -41,7 +37,15 @@ private:
         void scale(const vec3& value) override;
         void add_position(const vec3& value) override;
     };
-    CSGNodeTransform transform; // CSGNode의 유일한 component
+
+    CSGNode* parent = nullptr;
+    std::list<CSGNode*> children;
+
+    Mesh result;
+    bool is_result_valid = false;
+
+    CSGNodeTransform transform;
+    Type type;
 
 public:
     bool selection_group = false;

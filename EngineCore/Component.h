@@ -33,6 +33,14 @@ public:
     FloatParameter(std::string label_, std::function<float()> get_, std::function<void(float)> set_);
 };
 
+class BoolParameter : public Parameter{
+    std::function<bool()> get;
+    std::function<void(bool)> set;
+
+public:
+    BoolParameter(std::string label_, std::function<bool()> get_, std::function<void(bool)> set_);
+};
+
 class Vec3Parameter : public Parameter{
     std::string label_x;
     std::string label_y;
@@ -62,8 +70,23 @@ protected:
     std::list<Parameter*> parameters;
 
 public:
+    static bool show_remove_button;
+
     Component(std::string label_);
     ~Component();
 
     void render();
+};
+
+class ComponentContainer{
+protected:
+    std::list<Component*> components;
+
+public:
+    ~ComponentContainer();
+
+    void add_component(Component* component);
+    std::list<Component*> get_components();
+    // TODO : add_component();
+    // TODO : get_component(type);
 };
