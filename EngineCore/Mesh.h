@@ -9,18 +9,19 @@
 #include <math.h>
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Surface_mesh.h>
-#include <CGAL/draw_surface_mesh.h>
 #include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
-#include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
 #include <CGAL/Polygon_mesh_processing/transform.h>
 #include <CGAL/Aff_transformation_3.h>
-typedef CGAL::Simple_cartesian<double>                       Kernel;
+#include <CGAL/Polygon_mesh_processing/compute_normal.h>
+
+typedef CGAL::Simple_cartesian<float>                       Kernel;
 typedef Kernel::Point_3                                      Point;
+typedef Kernel::Vector_3                                     Vector;
 typedef CGAL::Surface_mesh<Point>                            cgal_Mesh;
 typedef cgal_Mesh::Vertex_index vertex_descriptor;
 typedef cgal_Mesh::Face_index face_descriptor;
-typedef CGAL::Simple_cartesian<double> K;
+typedef CGAL::Simple_cartesian<float> K;
 
 using namespace glm;
 

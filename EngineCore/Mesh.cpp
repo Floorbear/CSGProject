@@ -25,11 +25,11 @@ Vertex::Vertex(float x, float y, float z, float normal_x_, float normal_y_, floa
 
 
 // ===== Mesh ===== //
-cgal_Mesh Mesh::_cgal_Cube = Mesh::create_cgal_cube(2.0f);
-cgal_Mesh Mesh::_cgal_Cube2 = Mesh::create_cgal_cube(6.0f);
-cgal_Mesh Mesh::_cgal_Sphere = Mesh::create_cgal_sphere(6,20,20);
+//cgal_Mesh Mesh::_cgal_Cube = Mesh::mesh_to_cgal_mesh(Mesh::Cube);
+//cgal_Mesh Mesh::_cgal_Cube2 = Mesh::create_cgal_cube(6.0f);
+//cgal_Mesh Mesh::_cgal_Sphere = Mesh::create_cgal_sphere(6,20,20);
 
-cgal_Mesh Mesh::t_cgal_Cube2 = Mesh::create_cgal_t_cube(8.0f, 2, 2, 2);
+//cgal_Mesh Mesh::t_cgal_Cube2 = Mesh::create_cgal_t_cube(8.0f, 2, 2, 2);
 
 
 Mesh Mesh::Triangle = Mesh({Vertex(0.5f, -0.5f, 0.0f),
@@ -93,9 +93,9 @@ Mesh Mesh::Cube = Mesh({
     { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35 });
 
 
-Mesh Mesh::Cube2 = Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Cube2);
-Mesh Mesh::t_Cube2 = Mesh::cgal_mesh_to_mesh(Mesh::t_cgal_Cube2);
-Mesh Mesh::Sphere = Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Sphere);
+//Mesh Mesh::Cube2 = Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Cube2);
+//Mesh Mesh::t_Cube2 = Mesh::cgal_mesh_to_mesh(Mesh::t_cgal_Cube2);
+//Mesh Mesh::Sphere = Mesh::cgal_mesh_to_mesh(Mesh::_cgal_Sphere);
 
 void Mesh::buffers_bind() const{
     glBindVertexArray(VAO);
@@ -176,7 +176,7 @@ void Mesh::render(){
     glDrawElements(GL_TRIANGLES, (int)indices.size(), GL_UNSIGNED_INT, 0);
 }
 
-cgal_Mesh Mesh ::create_cgal_cube(float size)
+/*cgal_Mesh Mesh::create_cgal_cube(float size)
 {
     cgal_Mesh cgal_Cube;
     std::vector<vertex_descriptor> vd;
@@ -205,10 +205,10 @@ cgal_Mesh Mesh ::create_cgal_cube(float size)
     face_descriptor f12 = cgal_Cube.add_face(vd[4], vd[1], vd[5]);   
 
     return cgal_Cube;
-}
+}*/
 
 
-cgal_Mesh Mesh::create_cgal_t_cube(float size, float x, float y, float z)
+/*cgal_Mesh Mesh::create_cgal_t_cube(float size, float x, float y, float z)
 {
     cgal_Mesh cgal_Cube;
     std::vector<vertex_descriptor> vd;
@@ -238,7 +238,7 @@ cgal_Mesh Mesh::create_cgal_t_cube(float size, float x, float y, float z)
     CGAL::Polygon_mesh_processing::transform(CGAL::Aff_transformation_3<Kernel>(CGAL::Translation(), Kernel::Vector_3(x, y, z)), cgal_Cube);
     
     return cgal_Cube;
-}
+}*/
 
 
 cgal_Mesh Mesh::create_cgal_sphere(int radius, int stackCount, int sectorCount)
@@ -384,14 +384,32 @@ cgal_Mesh Mesh::create_cgal_sphere(int radius, int stackCount, int sectorCount)
 Mesh Mesh::cgal_mesh_to_mesh(cgal_Mesh cg_Mesh)
 {
     std::vector<Vertex> vertices;
+    std::vector<vertex_descriptor> vd;
+    
+    struct Vertex vtx = { 1,2,3,4,5,6 };
+    cgal_Mesh::Property_map<vertex_descriptor, Vector> normal_map = cg_Mesh.property_map<vertex_descriptor, Vector>("v:normals").first;
+    int i = 0;
     for (cgal_Mesh::Vertex_index vi : cg_Mesh.vertices())
     {
         //uint32_t index = vd; //via size_t
         float v_x = (float)(cg_Mesh).point(vi).x();
         float v_y = (float)(cg_Mesh).point(vi).y();
-        float v_z = (float)(cg_Mesh).point(vi).z();       
-        vertices.push_back({ v_x, v_y, v_z });
+        float v_z = (float)(cg_Mesh).point(vi).z();
+        float v_narmal_x = normal_map[vi].x();
+        float v_narmal_y = normal_map[vi].y();
+        float v_narmal_z = normal_map[vi].z();
+        std::cout << v_narmal_x << "    " << v_narmal_y << "    " << v_narmal_z << "    \n";
+        vtx.position = { v_x,v_y,v_z };   
+        vtx.normal = { v_narmal_x,v_narmal_y,v_narmal_z };
+        vertices.push_back(vtx);
     }
+
+    
+    /*std::cout << "Vertex normals :" << std::endl;
+    for (vertex_descriptor vd : cg_Mesh.vertices())
+        std::cout << normal_map[vd] << std::endl;*/
+    
+
 
     std::vector<unsigned int> indices;
     for (cgal_Mesh::Face_index face_index : cg_Mesh.faces()) {
@@ -401,7 +419,8 @@ Mesh Mesh::cgal_mesh_to_mesh(cgal_Mesh cg_Mesh)
             indices.push_back(*vcirc++);
         } while (vcirc != done);
     }
-   
+    //CGAL::Polygon_mesh_processing::compute_vertex_normals(vertices,cg_Mesh);
+
     return Mesh(vertices,indices);
 }
 
@@ -419,8 +438,6 @@ cgal_Mesh Mesh::mesh_to_cgal_mesh(Mesh m)
         vd.push_back(cg_Mesh.add_vertex(K::Point_3(m.vertices[i].position.x, m.vertices[i].position.y, m.vertices[i].position.z)));        
     }
 
-   
-
     int j = 0;
     for (int i = 0; i < fd_size; i++)
     {
@@ -431,6 +448,18 @@ cgal_Mesh Mesh::mesh_to_cgal_mesh(Mesh m)
         j = j + 3;
     }
 
+    std::cout << "--------------------------\n";
+    auto vnormals = cg_Mesh.add_property_map<vertex_descriptor, Vector>("v:normals", CGAL::NULL_VECTOR).first;
+    auto fnormals = cg_Mesh.add_property_map<face_descriptor, Vector>("f:normals", CGAL::NULL_VECTOR).first;
+    CGAL::Polygon_mesh_processing::compute_normals(cg_Mesh, vnormals, fnormals);
+    std::cout << "Vertex normals :" << std::endl;
+    for (cgal_Mesh::Vertex_index vi : cg_Mesh.vertices())
+        std::cout << vnormals[vi] << std::endl;
+    /*std::cout << "Face normals :" << std::endl;
+    for (face_descriptor fd : faces(cg_Mesh))
+        std::cout << fnormals[fd] << std::endl;
+   */
+    std::cout << "--------------------------\n";
     return cg_Mesh;
 }
 
