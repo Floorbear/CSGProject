@@ -10,7 +10,7 @@
 
 class CSGNode;
 class Material;
-class Model : public ComponentContainer{
+class Model : public Entity{
     Model* parent = nullptr;
     std::list<Model*> children;
 
@@ -26,6 +26,8 @@ public:
     Model* get_parent();
     std::list<Model*> get_children();
     void add_child(Model* model);
+    void set_child(Model* model);
+    void swap_child(Model* child1, Model* child2);
     bool is_leaf_node();
     CSGNode* get_csg_mesh();
 

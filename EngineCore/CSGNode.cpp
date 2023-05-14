@@ -56,7 +56,7 @@ CSGNode::~CSGNode(){
     for (CSGNode* child : children){
         delete child;
     }
-    ComponentContainer::~ComponentContainer();
+    Entity::~Entity();
 }
 
 CSGNode* CSGNode::get_parent(){
@@ -81,6 +81,18 @@ void CSGNode::add_child(CSGNode* node){
     while (parent_ != nullptr){
         parent_->is_result_valid = false;
         parent_ = parent_->parent;
+    }
+}
+
+void CSGNode::set_child(CSGNode* node){
+}
+
+void CSGNode::swap_child(CSGNode* child1, CSGNode* child2){
+    auto it1 = std::find(children.begin(), children.end(), child1);
+    auto it2 = std::find(children.begin(), children.end(), child2);
+    std::swap(*it1, *it2);
+    if (type == Type::Difference){
+        is_result_valid = false;
     }
 }
 

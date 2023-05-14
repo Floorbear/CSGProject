@@ -78,12 +78,12 @@ public:
     void render();
 };
 
-class ComponentContainer{
+class Entity{
 protected:
     std::list<Component*> components;
 
 public:
-    ~ComponentContainer();
+    ~Entity();
 
     void add_component(Component* component);
     std::list<Component*> get_components();

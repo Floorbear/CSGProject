@@ -121,7 +121,7 @@ void Component::render(){
     if (show_remove_button){
         ImGui::SameLine();
         if (ImGui::Button(("x##" + this->label).c_str())){
-            printf("remove component %s\n", this->label.c_str()); // TODO : 구현, ComponentContainer* parent 사용해야함!
+            printf("remove component %s\n", this->label.c_str()); // TODO : 구현, Entity* parent 사용해야함!
         }
     }
     for (Parameter* parameter : parameters){
@@ -129,17 +129,17 @@ void Component::render(){
     }
 }
 
-ComponentContainer::~ComponentContainer(){
+Entity::~Entity(){
     for (Component* component : components){
         delete component;
     }
 }
 
-void ComponentContainer::add_component(Component* component){
+void Entity::add_component(Component* component){
     components.push_back(component);
 }
 
-std::list<Component*> ComponentContainer::get_components(){
+std::list<Component*> Entity::get_components(){
     return components;
 }
 

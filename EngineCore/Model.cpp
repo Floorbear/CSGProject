@@ -12,7 +12,7 @@ Model::~Model(){
         delete child;
     }
     components.remove(get_transform()); // Transform만은 미리 삭제하면 안됨!
-    ComponentContainer::~ComponentContainer();
+    Entity::~Entity();
     if (csgmesh != nullptr){
         delete csgmesh;
     }
@@ -29,6 +29,15 @@ std::list<Model*> Model::get_children(){
 void Model::add_child(Model* model){
     model->parent = this;
     children.push_back(model);
+}
+
+void Model::set_child(Model* model){
+}
+
+void Model::swap_child(Model* child1, Model* child2){
+    auto it1 = std::find(children.begin(), children.end(), child1);
+    auto it2 = std::find(children.begin(), children.end(), child2);
+    std::swap(*it1, *it2);
 }
 
 bool Model::is_leaf_node(){

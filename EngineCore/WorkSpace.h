@@ -56,7 +56,7 @@ public:
     std::list<Model*> selected_models;
     std::list<CSGNode*> selected_meshes;
 
-    vec2 mouse_pos_left_press_raw = vec2(); // TODO : 구조체로 변경
+    vec2 mouse_pos_left_press_raw = vec2(); // ImGui::GetIO().MouseClickedPos[ImGuiMouseButton_Left] / TODO : 구조체로 변경
     vec2 mouse_pos_left_press_view = vec2();
     vec2 mouse_pos_left_current_raw = vec2();
     vec2 mouse_pos_left_current_view = vec2();

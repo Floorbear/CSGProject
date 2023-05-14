@@ -10,7 +10,7 @@
 #include <list>
 
 class Material;
-class CSGNode : public ComponentContainer, Component{
+class CSGNode : public Entity, Component{
 public:
     enum class Type{
         Operand, // children 제한 : 0개
@@ -56,8 +56,10 @@ public:
 
     CSGNode* get_parent();
     std::list<CSGNode*> get_children();
-    bool is_leaf_node();
     void add_child(CSGNode* node);
+    void set_child(CSGNode* node);
+    void swap_child(CSGNode* child1, CSGNode* child2);
+    bool is_leaf_node();
 
     std::list<Type> get_changable_types();
     Type get_type();

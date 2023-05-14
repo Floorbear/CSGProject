@@ -77,16 +77,32 @@ void WorkSpace::render_view(Renderer* renderer){
 
     if (ImGui::IsWindowHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
         mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
-        // selection 처리
-        selected_models.clear();
-        selected_meshes.clear();
 
+        // selection 처리
         SelectionPixelObjectInfo info = renderer->find_selection(root_model->get_children(), mouse_pos_left_current_view);
         if (!info.empty()){
             if (selection_mode == SelectionMode::Model){
-                selected_models.push_back(info.model);
+                if (ImGui::GetIO().KeyCtrl){
+                    if (Utils::contains(selected_models, info.model)){
+                        selected_models.remove(info.model);
+                    } else{
+                        selected_models.push_back(info.model);
+                    }
+                } else{
+                    selected_models.clear();
+                    selected_models.push_back(info.model);
+                }
             } else if (selection_mode == SelectionMode::Mesh){
-                selected_meshes.push_back(info.mesh);
+                if (ImGui::GetIO().KeyCtrl){
+                    if (Utils::contains(selected_meshes, info.mesh)){
+                        selected_meshes.remove(info.mesh);
+                    } else{
+                        selected_meshes.push_back(info.mesh);
+                    }
+                } else{
+                    selected_meshes.clear();
+                    selected_meshes.push_back(info.mesh);
+                }
             }
         }
     }
@@ -94,10 +110,10 @@ void WorkSpace::render_view(Renderer* renderer){
     // Gui 렌더링
     #pragma warning(disable: 4312)
     ImGui::GetWindowDrawList()->AddImage((void*)renderer->framebuffer_screen->get_framebufferTexutre()->get_textureHandle(), ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y), ImVec2(0, 0), ImVec2(1, 1));
+    ImGui::PopStyleVar();
 
     render_popup_menu_view();
     ImGui::End();
-    ImGui::PopStyleVar();
 }
 
 void WorkSpace::render_hierarchy(){
@@ -107,6 +123,7 @@ void WorkSpace::render_hierarchy(){
     Model* model_clicked = nullptr;
 
     static std::function<void(CSGNode*)> draw_mesh_tree = [&](CSGNode* node){
+        // 노드 생성
         ImGuiTreeNodeFlags node_flags = base_flags;
         if (Utils::contains(selected_meshes, node)){
             node_flags |= ImGuiTreeNodeFlags_Selected;
@@ -114,20 +131,52 @@ void WorkSpace::render_hierarchy(){
         if (node->is_leaf_node()){
             node_flags |= ImGuiTreeNodeFlags_Leaf;
         }
-
         bool node_open = ImGui::TreeNodeEx((void*)node, node_flags, "<mesh>", 0);
+        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
+            mesh_clicked = node;
+        }
+
+        // 재배열 메뉴
+        if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right)){
+            ImGui::OpenPopup(Utils::format("View_Popup_Inspector_%1%", (int)node).c_str());
+        }
+        if (ImGui::BeginPopup(Utils::format("View_Popup_Inspector_%1%", (int)node).c_str())){
+            if (ImGui::MenuItem("Move Up", 0, false, node->get_parent() != nullptr && node->get_parent()->get_children().front() != node)){
+                actions.reorder_mesh_up(node);
+            }
+            if (ImGui::MenuItem("Move Down", 0, false, node->get_parent() != nullptr && node->get_parent()->get_children().back() != node)){
+                actions.reorder_mesh_down(node);
+            }
+            ImGui::EndPopup();
+        }
+
+        // 드래그 드롭
+        if (ImGui::BeginDragDropSource()){
+            ImGui::SetDragDropPayload("DND_Payload_Mesh", &node, sizeof(CSGNode*), ImGuiCond_Once);
+            ImGui::Text("<mesh>");
+            ImGui::EndDragDropSource();
+        }
+        if (ImGui::BeginDragDropTarget()){
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){
+                IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
+                CSGNode* payload_mesh = *(CSGNode**)payload->Data;
+                printf("mesh to mesh\n");
+            }
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
+                IM_ASSERT(payload->DataSize == sizeof(Model*));
+                Model* payload_model = *(Model**)payload->Data;
+                printf("%s to mesh\n", payload_model->name.c_str());
+            }
+            ImGui::EndDragDropTarget();
+        }
+
+        // 추가 ui
         if (!node->is_leaf_node()){
             ImGui::SameLine();
             ImGui::Checkbox("##Selection Group", &node->selection_group); // TODO : 체크박스 안쪽에서는 트리노드 클릭 안되게하기...
         }
-        if (this->selection_mode == SelectionMode::Mesh && ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
-            mesh_clicked = node;
-        }
-        if (ImGui::BeginDragDropSource()){
-            ImGui::SetDragDropPayload("_TREENODE", NULL, 0); // TODO : 수정
-            ImGui::Text("This is a drag and drop source");
-            ImGui::EndDragDropSource();
-        }
+
+        // 하위 노드
         if (node_open){
             for (CSGNode* child : node->get_children()){
                 draw_mesh_tree(child);
@@ -137,20 +186,48 @@ void WorkSpace::render_hierarchy(){
     };
 
     static std::function<void(Model*)> draw_model_tree = [&](Model* model){
+        // 노드 생성
         ImGuiTreeNodeFlags node_flags = base_flags;
         if (Utils::contains(selected_models, model)){
             node_flags |= ImGuiTreeNodeFlags_Selected;
         }
-
         bool node_open = ImGui::TreeNodeEx((void*)model, node_flags, model->name.c_str(), 0);
-        if (this->selection_mode == SelectionMode::Model && ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
+        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
             model_clicked = model;
         }
+
+        // 재배열 메뉴
+        if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right)){
+            ImGui::OpenPopup(Utils::format("View_Popup_Inspector_%1%", (int)model).c_str());
+        }
+        if (ImGui::BeginPopup(Utils::format("View_Popup_Inspector_%1%", (int)model).c_str())){
+            if (ImGui::MenuItem("Move Up", 0, false, model->get_parent()->get_children().front() != model)){
+                actions.reorder_model_up(model);
+            }
+            if (ImGui::MenuItem("Move Down", 0, false, model->get_parent()->get_children().back() != model)){
+                actions.reorder_model_down(model);
+            }
+            ImGui::EndPopup();
+        }
+
+        WorkSpace* ws = this;
+        // 드래그 드롭
         if (ImGui::BeginDragDropSource()){
-            ImGui::SetDragDropPayload("_TREENODE", NULL, 0); // TODO : 수정
-            ImGui::Text("This is a drag and drop source");
+            ImGui::SetDragDropPayload("DND_Payload_Model", &model, sizeof(Model*), ImGuiCond_Once);
+            ImGui::Text(model->name.c_str());
             ImGui::EndDragDropSource();
         }
+        if (ImGui::BeginDragDropTarget()){
+            // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){ empty } 
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
+                IM_ASSERT(payload->DataSize == sizeof(Model*));
+                Model* payload_model = *(Model**)payload->Data;
+                printf("%s to %s\n", payload_model->name.c_str(), model->name.c_str());
+            }
+            ImGui::EndDragDropTarget();
+        }
+
+        // 하위 노드
         if (node_open){
             draw_mesh_tree(model->get_csg_mesh());
             for (Model* child : model->get_children()){
@@ -171,25 +248,35 @@ void WorkSpace::render_hierarchy(){
 
     } else if (mesh_clicked != nullptr){ // 메쉬 선택
         if (ImGui::GetIO().KeyCtrl){
-            if (Utils::contains(selected_meshes, mesh_clicked)){
-                selected_meshes.remove(mesh_clicked);
-            } else{
-                selected_meshes.push_back(mesh_clicked);
+            if (selected_models.empty()){
+                this->selection_mode = SelectionMode::Mesh;
+                if (Utils::contains(selected_meshes, mesh_clicked)){
+                    selected_meshes.remove(mesh_clicked);
+                } else{
+                    selected_meshes.push_back(mesh_clicked);
+                }
             }
         } else{
+            this->selection_mode = SelectionMode::Mesh;
             selected_meshes.clear();
+            selected_models.clear();
             selected_meshes.push_back(mesh_clicked);
         }
 
     } else if (model_clicked != nullptr){ // 모델 선택
         if (ImGui::GetIO().KeyCtrl){
-            if (Utils::contains(selected_models, model_clicked)){
-                selected_models.remove(model_clicked);
-            } else{
-                selected_models.push_back(model_clicked);
-                printf("%s", model_clicked->name.c_str());
+            if (selected_meshes.empty()){
+                this->selection_mode = SelectionMode::Model;
+                if (Utils::contains(selected_models, model_clicked)){
+                    selected_models.remove(model_clicked);
+                } else{
+                    selected_models.push_back(model_clicked);
+                    printf("%s", model_clicked->name.c_str());
+                }
             }
         } else{
+            this->selection_mode = SelectionMode::Model;
+            selected_meshes.clear();
             selected_models.clear();
             selected_models.push_back(model_clicked);
         }

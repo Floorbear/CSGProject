@@ -2,6 +2,8 @@
 
 class WorkSpace;
 class GUI;
+class CSGNode;
+class Model;
 
 class WorkSpace_Actions{
     WorkSpace* workspace;
@@ -12,10 +14,13 @@ public:
 
     void delete_selected();
     void add_cube_new();
+    void reorder_mesh_up(CSGNode* mesh);
+    void reorder_mesh_down(CSGNode* mesh);
+    void reorder_model_up(Model* model);
+    void reorder_model_down(Model* model);
 
 
     //delete model
-    //reorder model
     //...
 };
 
