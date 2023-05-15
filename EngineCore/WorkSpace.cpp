@@ -59,9 +59,12 @@ void WorkSpace::render_view(Renderer* renderer){
     // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin(Utils::format("View##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
-    vec2 p_min = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMin().x, ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMin().y);
-    vec2 p_max = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x, ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMax().y);
+    vec2 p_min = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMin().x, 
+                      ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMin().y);
+    vec2 p_max = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x, 
+                      ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMax().y);
     renderer->resize(p_max - p_min);
+    renderer->render(root_model->get_children(), &lights);
 
     // view 마우스 좌표 측정
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
@@ -109,9 +112,11 @@ void WorkSpace::render_view(Renderer* renderer){
 
     // Gui 렌더링
     #pragma warning(disable: 4312)
-    ImGui::GetWindowDrawList()->AddImage((void*)renderer->framebuffer_screen->get_framebufferTexutre()->get_textureHandle(), ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y), ImVec2(0, 0), ImVec2(1, 1));
+    ImGui::GetWindowDrawList()->AddImage((void*)renderer->framebuffer_screen->
+                                         get_framebufferTexutre()->get_textureHandle(),
+                                         ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y),
+                                         ImVec2(0, 0), ImVec2(1, 1));
     ImGui::PopStyleVar();
-
     render_popup_menu_view();
     ImGui::End();
 }
@@ -329,7 +334,6 @@ void WorkSpace::render(){
         is_view_pressed = false;
     }
     for (Renderer* renderer : renderers){
-        renderer->render(root_model->get_children(), &lights);
         render_view(renderer);
     }
 

@@ -166,9 +166,11 @@ SelectionPixelObjectInfo CSGNode::from_selection_id(SelectionPixelIdInfo selecti
     }
     return SelectionPixelObjectInfo(); // TODO : info가 다 채워지고나면 이 위를 지우고 밑을 사용.
 
+    //SelectionPixelObjectInfo info;
     if (selection_id.model_id == selection_id_model_acc && selection_id.mesh_id == *selection_id_mesh_acc){
         info = SelectionPixelObjectInfo(model, this);
     }
+
     (*selection_id_mesh_acc)++;
     if (!info.empty()){
         return info;

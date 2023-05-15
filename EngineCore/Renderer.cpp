@@ -142,7 +142,9 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
 
     // 셀렉션 렌더링 정보 읽기
     framebuffer_selection->enable();
-    SelectionPixelIdInfo Pixel = framebuffer_selection->read_pixel((int)(texture_size.x * mouse_position.x / viewport_size.x), (int)(texture_size.y * mouse_position.y / viewport_size.y));
+    SelectionPixelIdInfo Pixel = framebuffer_selection->
+        read_pixel((int)(texture_size.x * mouse_position.x / viewport_size.x),
+                   (int)(texture_size.y * mouse_position.y / viewport_size.y));
     framebuffer_selection->disable();
 
     uint32_t selection_id_model_acc = 1;
