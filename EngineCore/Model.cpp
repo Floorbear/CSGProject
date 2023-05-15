@@ -18,32 +18,6 @@ Model::~Model(){
     }
 }
 
-Model* Model::get_parent(){
-    return parent;
-}
-
-std::list<Model*> Model::get_children(){
-    return children;
-}
-
-void Model::add_child(Model* model){
-    model->parent = this;
-    children.push_back(model);
-}
-
-void Model::set_child(Model* model){
-}
-
-void Model::swap_child(Model* child1, Model* child2){
-    auto it1 = std::find(children.begin(), children.end(), child1);
-    auto it2 = std::find(children.begin(), children.end(), child2);
-    std::swap(*it1, *it2);
-}
-
-bool Model::is_leaf_node(){
-    return children.empty();
-}
-
 CSGNode* Model::get_csg_mesh(){
     return csgmesh;
 }
@@ -93,9 +67,11 @@ bool Model::is_renderable(){
 }
 
 void Model::render(){
-    material_ptr->set_uniform_model_transform(get_transform());
-    material_ptr->apply();
-    csgmesh->render();
+    if (csgmesh != nullptr){
+        material_ptr->set_uniform_model_transform(get_transform());
+        material_ptr->apply();
+        csgmesh->render();
+    }
 
     for (Model* child : children){
         child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());

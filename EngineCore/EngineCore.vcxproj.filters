@@ -44446,6 +44446,9 @@
     <ClInclude Include="EnumParameter.hpp">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="TreeNode.hpp">
+      <Filter>Object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />

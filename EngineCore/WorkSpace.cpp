@@ -159,14 +159,12 @@ void WorkSpace::render_hierarchy(){
         if (ImGui::BeginDragDropTarget()){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){
                 IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
-                CSGNode* payload_mesh = *(CSGNode**)payload->Data;
-                printf("mesh to mesh\n");
+                CSGNode* payload_node = *(CSGNode**)payload->Data;
+                // printf("mesh to mesh\n"); // TODO : undo추가
+                node->set_child(payload_node);
+                // TODO : 빈 모델 삭제 (reversable)
             }
-            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
-                IM_ASSERT(payload->DataSize == sizeof(Model*));
-                Model* payload_model = *(Model**)payload->Data;
-                printf("%s to mesh\n", payload_model->name.c_str());
-            }
+            // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){ empty }
             ImGui::EndDragDropTarget();
         }
 
@@ -177,6 +175,7 @@ void WorkSpace::render_hierarchy(){
         }
 
         // 하위 노드
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (node_open){
             for (CSGNode* child : node->get_children()){
                 draw_mesh_tree(child);
@@ -207,6 +206,9 @@ void WorkSpace::render_hierarchy(){
             if (ImGui::MenuItem("Move Down", 0, false, model->get_parent()->get_children().back() != model)){
                 actions.reorder_model_down(model);
             }
+            if (ImGui::MenuItem("Move To Parent", 0, false, model->get_parent() != root_model)){
+                model->get_parent()->get_parent()->set_child(model, model->get_parent()); // TODO : undo
+            }
             ImGui::EndPopup();
         }
 
@@ -222,12 +224,17 @@ void WorkSpace::render_hierarchy(){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
                 IM_ASSERT(payload->DataSize == sizeof(Model*));
                 Model* payload_model = *(Model**)payload->Data;
-                printf("%s to %s\n", payload_model->name.c_str(), model->name.c_str());
+                transaction_manager.add("Nodel Tree Edit", [=](){
+                    // TreeNode<Model>::TreeSnapShot snapshot = root_model->make_snapshot();
+                    model->set_child(payload_model);// TODO : undo작업 만들기
+                }, [=](){
+                });
             }
             ImGui::EndDragDropTarget();
         }
 
         // 하위 노드
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (node_open){
             draw_mesh_tree(model->get_csg_mesh());
             for (Model* child : model->get_children()){

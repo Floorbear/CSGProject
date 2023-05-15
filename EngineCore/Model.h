@@ -3,6 +3,7 @@
 #include "Mesh.h"
 #include "SelectionPixelInfo.h"
 #include "Component.h"
+#include "TreeNode.hpp"
 
 #include <glm/glm.hpp>
 
@@ -10,10 +11,7 @@
 
 class CSGNode;
 class Material;
-class Model : public Entity{
-    Model* parent = nullptr;
-    std::list<Model*> children;
-
+class Model : public Entity, public TreeNode<Model>{
     CSGNode* csgmesh = nullptr; // root node
     Material* material_ptr = nullptr;
 
@@ -23,14 +21,7 @@ public:
     Model(std::string name_);
     ~Model();
     
-    Model* get_parent();
-    std::list<Model*> get_children();
-    void add_child(Model* model);
-    void set_child(Model* model);
-    void swap_child(Model* child1, Model* child2);
-    bool is_leaf_node();
     CSGNode* get_csg_mesh();
-
     void set_new(const Mesh& mesh);
     Model* find_model(std::string_view name_);
 

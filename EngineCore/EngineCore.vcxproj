@@ -14965,6 +14965,7 @@
     <ClInclude Include="Task.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="TreeNode.hpp" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="WorkSpace.h" />
   </ItemGroup>
