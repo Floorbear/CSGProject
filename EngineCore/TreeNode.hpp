@@ -1,4 +1,5 @@
 #pragma once
+#include "Task.h"
 
 #include <list>
 
@@ -13,6 +14,15 @@ public:
         public:
             T* ptr;
             Node(T* ptr_) : ptr(ptr_){}
+
+            void recover(){
+                ptr->children.clear();
+                for (Node* node_child : Node::get_children()){
+                    node_child->ptr->parent = ptr;
+                    ptr->children.push_back(node_child->ptr);
+                    node_child->recover();
+                }
+            }
         };
         Node* root;
 
@@ -22,7 +32,7 @@ public:
         }
 
         void recover(){
-            root->ptr->recover_from_snapshot_(root);
+            root->recover();
         }
     };
 
@@ -91,9 +101,9 @@ public:
         return parent == parent_;
     }
 
-    TreeSnapShot make_snapshot(){
-        TreeSnapShot ret(static_cast<T*>(this));
-        make_snapshot_(ret.root);
+    TreeSnapShot* make_snapshot_new(){
+        TreeSnapShot* ret = new TreeSnapShot(static_cast<T*>(this));
+        make_snapshot_(ret->root);
         return ret;
     }
 
@@ -105,13 +115,21 @@ private:
             child->make_snapshot_(node_child);
         }
     }
+};
 
-    void recover_from_snapshot_(TreeSnapShot::Node* node){
-        children.clear();
-        for (auto node_child : node->ptr->get_children()){
-            node_child->ptr->parent = static_cast<T*>(this);
-            children.push_back(node_child->ptr);
-            node_child->recover_from_snapshot_();
-        }
+template <typename T>
+class TreeModifyTask : public TransactionTask{
+    TreeNode<T>* unmodified_root;
+    TreeNode<T>::TreeSnapShot* snapshot;
+public:
+    TreeModifyTask(std::string detail_, TreeNode<T>* unmodified_root_, std::function<void()> work_) : TransactionTask(detail_, [this, work_](){
+        snapshot = unmodified_root->make_snapshot_new();
+        work_();
+    }, [this](){
+        snapshot->recover();
+    }), unmodified_root(unmodified_root_){
+    }
+    ~TreeModifyTask(){
+        delete snapshot;
     }
 };

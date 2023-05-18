@@ -49,8 +49,6 @@ protected:
     // ===== FragmentShader ===== //
 protected:
     Shader* screenShader = nullptr;
-    vec4 color = { 1.0f, 1.0f, 0.0f, 1.0f };
-    float ambient = 0.1f;
     FragmentShaderType fragmentShaderType = FragmentShaderType::Color;
 
     // ====== Light ===== //
@@ -67,6 +65,8 @@ protected:
 
 class ColorMaterial : public Material
 {
+    vec4 color = { 1.0f, 1.0f, 0.0f, 1.0f };
+    float ambient = 0.1f;
 public:
     ColorMaterial();
     ~ColorMaterial();

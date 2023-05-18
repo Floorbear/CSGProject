@@ -9,9 +9,9 @@ WorkSpace_Actions::WorkSpace_Actions(WorkSpace* workspace_) : workspace(workspac
 
 void WorkSpace_Actions::delete_selected(){
     if (!workspace->selected_models.empty()){
-        MultiTransactionTask task_multi = MultiTransactionTask(Utils::format("delete %1% objects", (int)workspace->selected_models.size()));
+        MultiTransactionTask* task_multi = new MultiTransactionTask(Utils::format("delete %1% objects", (int)workspace->selected_models.size()));
         for (Model* model : workspace->selected_models){
-            task_multi.add_task(TransactionTask(std::string("delete ") + model->name, [this, model](){ // TODO : 구현 ㅠㅠㅠ
+            task_multi->add_task(new TransactionTask(std::string("delete ") + model->name, [this, model](){ // TODO : 구현 ㅠㅠㅠ
                 //model->remove_self();
                 //DeleteData = (model, index)
             }, [this](){
@@ -32,7 +32,8 @@ void WorkSpace_Actions::add_cube_new(){
     Transform* newMesh = model->get_transform();
     newMesh->set_position(vec3(-count * 2.5, 0, 0)); // TODO : I believe it places objects in the center of the active viewport
     ++count;
-
+    workspace->transaction_manager.add("add cube", [this](){
+    }, [this](){ /*actions.delete_model();*/ });
 }
 
 void WorkSpace_Actions::reorder_mesh_up(CSGNode* mesh){

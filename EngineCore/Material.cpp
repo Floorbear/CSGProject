@@ -58,13 +58,11 @@ void Material::apply(){
     screenShader->set_mat4("view", uniform_camera->get_view());
     screenShader->set_mat4("projection", uniform_camera->get_projection());
 
-    screenShader->set_vec3("objectColor", vec3(color));
     if(!uniform_lights->empty()){ // TODO : 여러개 입력으로 바꾸기?
         screenShader->set_vec3("lightPos", vec3(uniform_lights->front()->get_position()));
     }else{
         screenShader->set_vec3("lightPos", vec3(0, 0, 0));// TODO : 지우기
     }
-    screenShader->set_float("ambient", ambient);
     screenShader->set_int("fragmentShaderType", static_cast<int>(fragmentShaderType));
 }
 
@@ -104,6 +102,7 @@ void ColorMaterial::apply()
 {
     __super::apply();
     screenShader->set_vec3("objectColor", vec3(color));
+    screenShader->set_float("ambient", ambient);
 }
 
 

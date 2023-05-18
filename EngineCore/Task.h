@@ -26,10 +26,11 @@ public:
 };
 
 class MultiTransactionTask : public TransactionTask{
-    std::list<TransactionTask> tasks;
+    std::list<TransactionTask*> tasks;
 public:
     MultiTransactionTask(std::string detail_);
-    void add_task(TransactionTask task);
+    ~MultiTransactionTask();
+    void add_task(TransactionTask* task);
 };
 
 class TaskManager{
@@ -43,16 +44,16 @@ public:
 
 class TransactionTaskManager{
     std::queue<Task> work_queue_no_history;
-    std::queue<TransactionTask> work_queue;
-    std::deque<TransactionTask> history_stack;
-    std::deque<TransactionTask> redo_stack;
+    std::queue<TransactionTask*> work_queue;
+    std::deque<TransactionTask*> history_stack;
+    std::deque<TransactionTask*> redo_stack;
 
 public:
     int option_undo_max_cnt;
 
     TransactionTaskManager();
     void add(std::string detail_, std::function<void()> work_, std::function<void()> work_undo_);
-    void add(const TransactionTask task_);
+    void add(TransactionTask* task_);
     void execute_all();
     void undo();
     void redo();

@@ -59,9 +59,9 @@ void WorkSpace::render_view(Renderer* renderer){
     // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin(Utils::format("View##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
-    vec2 p_min = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMin().x, 
+    vec2 p_min = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMin().x,
                       ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMin().y);
-    vec2 p_max = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x, 
+    vec2 p_max = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x,
                       ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMax().y);
     renderer->resize(p_max - p_min);
     renderer->render(root_model->get_children(), &lights);
@@ -143,8 +143,10 @@ void WorkSpace::render_hierarchy(){
 
         // 재배열 메뉴
         if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right)){
+            #pragma warning(disable : 4311)
             ImGui::OpenPopup(Utils::format("View_Popup_Inspector_%1%", (int)node).c_str());
         }
+        #pragma warning(disable : 4302)
         if (ImGui::BeginPopup(Utils::format("View_Popup_Inspector_%1%", (int)node).c_str())){
             if (ImGui::MenuItem("Move Up", 0, false, node->get_parent() != nullptr && node->get_parent()->get_children().front() != node)){
                 actions.reorder_mesh_up(node);
@@ -202,8 +204,10 @@ void WorkSpace::render_hierarchy(){
 
         // 재배열 메뉴
         if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right)){
+            #pragma warning(disable : 4311)
             ImGui::OpenPopup(Utils::format("View_Popup_Inspector_%1%", (int)model).c_str());
         }
+        #pragma warning(disable : 4302)
         if (ImGui::BeginPopup(Utils::format("View_Popup_Inspector_%1%", (int)model).c_str())){
             if (ImGui::MenuItem("Move Up", 0, false, model->get_parent()->get_children().front() != model)){
                 actions.reorder_model_up(model);
@@ -212,7 +216,9 @@ void WorkSpace::render_hierarchy(){
                 actions.reorder_model_down(model);
             }
             if (ImGui::MenuItem("Move To Parent", 0, false, model->get_parent() != root_model)){
-                model->get_parent()->get_parent()->set_child(model, model->get_parent()); // TODO : undo
+                transaction_manager.add(new TreeModifyTask("Model Tree Edit", model->get_parent()->get_parent(), [=](){
+                    model->get_parent()->get_parent()->set_child(model, model->get_parent());
+                }));
             }
             ImGui::EndPopup();
         }
@@ -229,11 +235,9 @@ void WorkSpace::render_hierarchy(){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
                 IM_ASSERT(payload->DataSize == sizeof(Model*));
                 Model* payload_model = *(Model**)payload->Data;
-                transaction_manager.add("Nodel Tree Edit", [=](){
-                    // TreeNode<Model>::TreeSnapShot snapshot = root_model->make_snapshot();
-                    model->set_child(payload_model);// TODO : undo작업 만들기
-                }, [=](){
-                });
+                transaction_manager.add(new TreeModifyTask("Model Tree Edit", payload_model->get_parent(), [=](){
+                    model->set_child(payload_model);
+                }));
             }
             ImGui::EndDragDropTarget();
         }
@@ -469,9 +473,7 @@ void WorkSpace::render_popup_menu_view(){
         // TODO : if 선택된 메쉬가 있는경우 add mesh_union, add mesh intersention, add mesh difference(제한적으로 활성화)
         if (ImGui::BeginMenu("Add Model")){
             if (ImGui::MenuItem("Cube")){
-                transaction_manager.add("add cube",
-                    [this](){ actions.add_cube_new(); },
-                    [this](){ /*actions.delete_model();*/ });
+                actions.add_cube_new();
             }
             /*if (ImGui::MenuItem("Sphere")){} TODO : 주석해제
             if (ImGui::MenuItem("Cylinder")){}

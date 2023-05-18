@@ -47,21 +47,21 @@ TransactionTaskManager::TransactionTaskManager(){
 }
 
 void TransactionTaskManager::add(std::string detail_, std::function<void()> work_, std::function<void()> work_undo_){
-    work_queue.push(TransactionTask(detail_, work_, work_undo_));
+    work_queue.push(new TransactionTask(detail_, work_, work_undo_));
     redo_stack.clear();
 }
 
-void TransactionTaskManager::add(const TransactionTask task_){
+void TransactionTaskManager::add(TransactionTask* task_){
     work_queue.push(task_);
     redo_stack.clear();
 }
 
 void TransactionTaskManager::execute_all(){
     while (!work_queue.empty()){
-        work_queue.front().execute();
+        work_queue.front()->execute();
         history_stack.push_back(work_queue.front());
         if (history_stack.size() > option_undo_max_cnt){
-            //history_stack.front.dispose(); TODO
+            delete history_stack.front();
             history_stack.pop_front();
         }
         work_queue.pop();
@@ -77,11 +77,11 @@ void TransactionTaskManager::undo(){
         return;
     }
 
-    TransactionTask task_to_undo = history_stack.back();
+    TransactionTask* task_to_undo = history_stack.back();
     history_stack.pop_back();
 
     work_queue_no_history.push(Task([=](){
-        task_to_undo.undo_task().execute();
+        task_to_undo->undo_task().execute();
         redo_stack.push_back(task_to_undo);
     }));
 }
@@ -107,27 +107,33 @@ std::string TransactionTaskManager::undo_detail(){
     if (history_stack.empty()){
         return std::string();
     }
-    return history_stack.back().detail;
+    return history_stack.back()->detail;
 }
 
 std::string TransactionTaskManager::redo_detail(){
     if (redo_stack.empty()){
         return std::string();
     }
-    return redo_stack.back().detail;
+    return redo_stack.back()->detail;
 }
 
 MultiTransactionTask::MultiTransactionTask(std::string detail_) : TransactionTask(detail_, [this](){
-    for (TransactionTask task : tasks){
-        task.work();
+    for (TransactionTask* task : tasks){
+        task->work();
     }
 }, [this](){
-    for (TransactionTask task : tasks){
-        task.work_undo();
+    for (TransactionTask* task : tasks){
+        task->work_undo();
     }
 }){
 }
 
-void MultiTransactionTask::add_task(TransactionTask task){
+MultiTransactionTask::~MultiTransactionTask(){
+    for(TransactionTask* task : tasks){
+        delete task;
+    }
+}
+
+void MultiTransactionTask::add_task(TransactionTask* task){
     tasks.push_back(task);
 }
