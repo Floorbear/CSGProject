@@ -4,13 +4,14 @@
 #include "Shader.h"
 #include "SelectionPixelInfo.h"
 #include "Component.h"
+#include "TreeNode.hpp"
 
 #include <glm/glm.hpp>
 
 #include <list>
 
 class Material;
-class CSGNode : public Entity, Component{
+class CSGNode : public Entity, Component, public TreeNode<CSGNode>{
 public:
     enum class Type{
         Operand, // children 제한 : 0개
@@ -38,9 +39,6 @@ private:
         void add_position(const vec3& value) override;
     };
 
-    CSGNode* parent = nullptr;
-    std::list<CSGNode*> children;
-
     Mesh result;
     bool is_result_valid = false;
 
@@ -48,18 +46,17 @@ private:
     Type type;
 
 public:
+    Model* model = nullptr; // root mesh 조작시 사용
+
     bool selection_group = false;
 
     CSGNode(const Mesh& mesh);
-    CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2);
+    CSGNode(Type type_, CSGNode* node1, CSGNode* node2);
     ~CSGNode();
 
-    CSGNode* get_parent();
-    std::list<CSGNode*> get_children();
-    void add_child(CSGNode* node);
-    void set_child(CSGNode* node);
-    void swap_child(CSGNode* child1, CSGNode* child2);
-    bool is_leaf_node();
+    bool add_child(CSGNode* node) override;
+    bool reparent_child(CSGNode* node, CSGNode* after = nullptr) override;
+    void swap_child(CSGNode* child1, CSGNode* child2) override;
 
     std::list<Type> get_changable_types();
     Type get_type();

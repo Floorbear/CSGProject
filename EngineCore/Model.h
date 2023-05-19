@@ -22,7 +22,8 @@ public:
     ~Model();
     
     CSGNode* get_csg_mesh();
-    void set_new(const Mesh& mesh);
+    void set_csg_mesh(CSGNode* csgmesh_);
+    void set_csg_mesh_new(const Mesh& mesh);
     Model* find_model(std::string_view name_);
 
     Transform* get_transform(); // 필수적인 컴포넌트들 get set

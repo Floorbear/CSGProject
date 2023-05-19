@@ -372,7 +372,6 @@ void GUI::render_menubar(){
     }
 }
 
-int tcnt; // TEST
 void GUI::init_shortcut(){
 
     // ===== 편집 기능 ===== //
@@ -381,13 +380,6 @@ void GUI::init_shortcut(){
             printf("save");
         }));
         shortcuts.push_back(Shortcut("paste", true, false, false, ImGuiKey_V, [this](){
-            int ttcnt = tcnt;
-            active_workspace->transaction_manager.add(Utils::format("paste %1%", ttcnt), [=](){
-                printf("paste %d do\n", ttcnt);
-            }, [=](){
-                printf("paste %d undo\n", ttcnt);
-            });
-            tcnt++;
         }));
         shortcuts.push_back(Shortcut("undo", true, false, false, ImGuiKey_Z, [this](){
             active_workspace->transaction_manager.undo();

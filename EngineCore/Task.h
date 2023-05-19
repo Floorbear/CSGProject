@@ -15,13 +15,13 @@ public:
 
 class TransactionTask{
 public:
-    const std::function<void()> work;
+    const std::function<bool()> work;
     const std::function<void()> work_undo;
     
     const std::string detail;
 
-    TransactionTask(std::string detail_, std::function<void()> work_, std::function<void()> work_undo_);
-    void execute() const;
+    TransactionTask(std::string detail_, std::function<bool()> work_, std::function<void()> work_undo_);
+    bool execute() const;
     TransactionTask undo_task() const;
 };
 
@@ -52,7 +52,7 @@ public:
     int option_undo_max_cnt;
 
     TransactionTaskManager();
-    void add(std::string detail_, std::function<void()> work_, std::function<void()> work_undo_);
+    void add(std::string detail_, std::function<bool()> work_, std::function<void()> work_undo_);
     void add(TransactionTask* task_);
     void execute_all();
     void undo();

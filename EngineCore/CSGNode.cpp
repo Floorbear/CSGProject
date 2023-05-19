@@ -1,4 +1,5 @@
 #include "CSGNode.h"
+#include "Model.h"
 #include "Utils.h"
 #include "Material.h"
 #include "EnumParameter.hpp"
@@ -27,11 +28,11 @@ CSGNode::CSGNode(const Mesh& mesh) : Component("CSG Params"), result(mesh), tran
     }));
 }
 
-CSGNode::CSGNode(Type type_, const Mesh& mesh1, const Mesh& mesh2) : Component("CSG Params"), transform(CSGNodeTransform(this)){
-    assert(type != Type::Operand);
+CSGNode::CSGNode(Type type_, CSGNode* node1, CSGNode* node2) : Component("CSG Params"), transform(CSGNodeTransform(this)){
     type = type_;
-    children.push_back(new CSGNode(mesh1));
-    children.push_back(new CSGNode(mesh2));
+    assert(type != Type::Operand);
+    children.push_back(node1);
+    children.push_back(node2);
     is_result_valid = false;
 
     components.push_back(&transform);
@@ -59,46 +60,57 @@ CSGNode::~CSGNode(){
     Entity::~Entity();
 }
 
-CSGNode* CSGNode::get_parent(){
-    return parent;
-}
-
-std::list<CSGNode*> CSGNode::get_children(){
-    return children;
-}
-
-bool CSGNode::is_leaf_node(){
-    return children.empty(); // <=> type == Operand
-}
-
-void CSGNode::add_child(CSGNode* node){
+bool CSGNode::add_child(CSGNode* node){
     assert(type != Type::Operand);
     if (type == Type::Difference){
         assert(children.size() < 2);
     }
-    children.push_back(node);
-    CSGNode* parent_ = parent;
-    while (parent_ != nullptr){
-        parent_->is_result_valid = false;
-        parent_ = parent_->parent;
+    if (TreeNode<CSGNode>::add_child(node)){
+        CSGNode* parent_ = parent;
+        while (parent_ != nullptr){
+            parent_->is_result_valid = false;
+            parent_ = parent_->parent;
+        }
+        return true;
     }
+    return false;
 }
 
-void CSGNode::set_child(CSGNode* node){
+bool CSGNode::reparent_child(CSGNode* node, CSGNode* after){
+    if (is_leaf_node()){ // type == Operand
+        CSGNode* union_node = new CSGNode(Type::Union, this, node);
+        if (parent == nullptr){ // root
+            model->set_csg_mesh(union_node);
+        } else{
+            parent->children.insert(std::find(parent->children.begin(), parent->children.end(), this), union_node);
+            parent->children.remove(this);
+        }
+        if(node->parent == nullptr){
+            node->model->set_csg_mesh(nullptr);
+        }else{
+            node->parent->children.remove(node);
+        }
+        parent = union_node;
+        node->parent = union_node;
+    } else{
+        if (type == Type::Difference && children.size() >= 2){ // 더이상 자식 추가 불가
+            return false;
+        }
+        return TreeNode<CSGNode>::reparent_child(node, after);
+    }
+    return true;
 }
 
 void CSGNode::swap_child(CSGNode* child1, CSGNode* child2){
-    auto it1 = std::find(children.begin(), children.end(), child1);
-    auto it2 = std::find(children.begin(), children.end(), child2);
-    std::swap(*it1, *it2);
+    TreeNode<CSGNode>::swap_child(child1, child2);
     if (type == Type::Difference){
         is_result_valid = false;
     }
 }
 
 std::list<CSGNode::Type> CSGNode::get_changable_types(){
-    if (type == Type::Operand || children.size() <= 2){
-        return {Type::Operand, Type::Union, Type::Intersection, Type::Difference};
+    if (type == Type::Operand){
+        return {Type::Operand};
     }
     if (type == Type::Difference){
         return {Type::Union, Type::Intersection, Type::Difference};
@@ -132,7 +144,7 @@ Transform* CSGNode::get_transform(){
 void CSGNode::render(){
     if (!is_result_valid){
         if (type == Type::Union){
-            result = Mesh::compute_union(children.front()->result, children.back()->result);
+            result = children.back()->result;//TODO : Mesh::compute_union(children.front()->result, children.back()->result);
         } else if (type == Type::Intersection){
             result = Mesh::compute_intersection(children.front()->result, children.back()->result);
         } else if (type == Type::Difference){

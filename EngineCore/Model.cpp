@@ -5,6 +5,7 @@
 #include "Leaked_Pointers.h"
 
 Model::Model(std::string name_) : name(name_){
+    components.push_back(material_ptr = new ColorMaterial());
 }
 
 Model::~Model(){
@@ -22,13 +23,19 @@ CSGNode* Model::get_csg_mesh(){
     return csgmesh;
 }
 
-void Model::set_new(const Mesh& mesh){
+void Model::set_csg_mesh(CSGNode* csgmesh_){
     if (csgmesh != nullptr){
         components.remove(csgmesh->get_transform());
     }
-    csgmesh = new CSGNode(mesh);
-    components.push_back(csgmesh->get_transform());
-    components.push_back(material_ptr = new ColorMaterial());
+    csgmesh = csgmesh_;
+    if(csgmesh != nullptr){
+        components.push_back(csgmesh->get_transform());
+        csgmesh->model = this;
+    }
+}
+
+void Model::set_csg_mesh_new(const Mesh& mesh){
+    set_csg_mesh(new CSGNode(mesh));
 }
 
 Model* Model::find_model(std::string_view name_){

@@ -51,21 +51,26 @@ public:
         return parent;
     }
 
+    void set_parent(T* parent_){
+        parent = parent_;
+    }
+
     std::list<T*> get_children(){
         return children;
     }
 
-    virtual void add_child(T* item){
+    virtual bool add_child(T* item){
         if (is_descendant_of(item)){
-            return;
+            return false;
         }
         item->parent = static_cast<T*>(this);
         children.push_back(item);
+        return true;
     }
 
-    virtual void set_child(T* item, T* after = nullptr){
+    virtual bool reparent_child(T* item, T* after = nullptr){
         if (is_descendant_of(item)){
-            return;
+            return false;
         }
         if (item->parent != nullptr){
             item->parent->children.remove(item);
@@ -76,6 +81,7 @@ public:
         } else{
             children.push_back(item);
         }
+        return true;
     }
 
     virtual void swap_child(T* child1, T* child2){
@@ -85,7 +91,7 @@ public:
     }
 
     virtual void remove_self(){
-        assert(parent != nullptr);
+        assert(parent != nullptr); // root는 있어야한다
         auto it = std::next(std::find(parent->children.begin(), parent->children.end(), static_cast<T*>(this)));
         for (T* child : children){
             parent->children.insert(it, child);
@@ -128,17 +134,51 @@ private:
 
 template <typename T>
 class TreeModifyTask : public TransactionTask{
-    TreeNode<T>* unmodified_root;
-    TreeNode<T>::TreeSnapShot* snapshot;
+    TreeNode<T>::TreeSnapShot* snapshot1 = nullptr;
+    TreeNode<T>::TreeSnapShot* snapshot2 = nullptr;
 public:
-    TreeModifyTask(std::string detail_, TreeNode<T>* unmodified_root_, std::function<void()> work_) : TransactionTask(detail_, [this, work_](){
-        snapshot = unmodified_root->make_snapshot_new();
-        work_();
+    TreeModifyTask(std::string detail_, TreeNode<T>* recovery_root, std::function<bool()> work_) : TransactionTask(detail_, [=, this](){
+        snapshot1 = recovery_root->make_snapshot_new();
+        return work_();
     }, [this](){
-        snapshot->recover();
-    }), unmodified_root(unmodified_root_){
+        snapshot1->recover();
+    }){
     }
+
+    TreeModifyTask(std::string detail_, std::function<bool()> work_with_set_root,
+                   TreeNode<T>* root_old1, std::function<void(T*)> set_root1,
+                   TreeNode<T>* root_old2, std::function<void(T*)> set_root2) : TransactionTask(detail_, [=, this](){ // root가 수정되는 작업
+        if (root_old1 != nullptr){
+            snapshot1 = root_old1->make_snapshot_new();
+        }
+        if (root_old2 != nullptr){
+            snapshot2 = root_old2->make_snapshot_new();
+        }
+        return work_with_set_root(); // set root 작업이 있어도 되고 없어도 됨.
+    }, [=, this](){
+        if (snapshot1 != nullptr){
+            snapshot1->recover();
+        }
+        if (snapshot2 != nullptr){
+            snapshot2->recover();
+        }
+        set_root1(static_cast<T*>(root_old1));
+        set_root2(static_cast<T*>(root_old2));
+        if (root_old1 != nullptr){
+            root_old1->set_parent(nullptr);
+        }
+        if (root_old2 != nullptr){
+            root_old2->set_parent(nullptr);
+        }
+    }){
+    }
+
     ~TreeModifyTask(){
-        delete snapshot;
+        if (snapshot1 != nullptr){
+            delete snapshot1;
+        }
+        if (snapshot2 != nullptr){
+            delete snapshot2;
+        }
     }
 };

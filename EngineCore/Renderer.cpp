@@ -59,25 +59,25 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
             newModel3 = new Model("MyModel3");
 
             //<<<<<<< HEAD
-                        //newModel3->set_new(Mesh::Cube2);
-                        //newModel3->set_new(Mesh::compute_difference(Mesh::t_Cube2, Mesh::Cube2));
-            //newModel3->set_new(Mesh::compute_union(Mesh::Cube2, Mesh::Sphere));
-            //newModel3->set_new(Mesh::compute_intersection(Mesh::Cube2, Mesh::Sphere));
-            //newModel3->set_new(Mesh::compute_difference(Mesh::Cube2, Mesh::Sphere));
-            //newModel3->set_new(Mesh::compute_difference2(Mesh::Cube2, Mesh::Sphere));
-            //newModel3->set_new(Mesh::compute_intersection(Mesh::Sphere, Mesh::t_Cube2));  ///union
+                        //newModel3->set_csg_mesh_new(Mesh::Cube2);
+                        //newModel3->set_csg_mesh_new(Mesh::compute_difference(Mesh::t_Cube2, Mesh::Cube2));
+            //newModel3->set_csg_mesh_new(Mesh::compute_union(Mesh::Cube2, Mesh::Sphere));
+            //newModel3->set_csg_mesh_new(Mesh::compute_intersection(Mesh::Cube2, Mesh::Sphere));
+            //newModel3->set_csg_mesh_new(Mesh::compute_difference(Mesh::Cube2, Mesh::Sphere));
+            //newModel3->set_csg_mesh_new(Mesh::compute_difference2(Mesh::Cube2, Mesh::Sphere));
+            //newModel3->set_csg_mesh_new(Mesh::compute_intersection(Mesh::Sphere, Mesh::t_Cube2));  ///union
 
-            newModel->set_new(Mesh::cgal_mesh_to_mesh(Mesh::mesh_to_cgal_mesh(Mesh::Cube)));
-            //newModel->set_new(Mesh::Cube);
+            newModel->set_csg_mesh_new(Mesh::cgal_mesh_to_mesh(Mesh::mesh_to_cgal_mesh(Mesh::Cube)));
+            //newModel->set_csg_mesh_new(Mesh::Cube);
 
             //Model* newModel2 = new Model("MyModel2");
 
             //newModel->add_child(newModel2);
-            //newModel2->set_new(Mesh::Cube);
+            //newModel2->set_csg_mesh_new(Mesh::Cube);
             //newModel2->get_transform()->set_position(vec3(0, 2, 2));
-            //newModel->set_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
+            //newModel->set_csg_mesh_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
 //>>>>>>> 8407016d5fc7ef8bcead817904e5711cc6024d43
-            //newModel->set_new(Mesh::Sphere);
+            //newModel->set_csg_mesh_new(Mesh::Sphere);
 
             parent->active_workspace->root_model->add_child(newModel);
             //parent->active_workspace->root_model->add_child(newModel3);

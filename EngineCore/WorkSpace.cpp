@@ -150,15 +150,24 @@ void WorkSpace::render_hierarchy(){
                     }
                 }
             } else{
-                this->selection_mode = SelectionMode::Mesh;
-                selected_meshes.clear();
-                selected_models.clear();
-                selected_meshes.push_back(mesh_clicked);
+                if (!Utils::contains(selected_meshes, mesh_clicked)){
+                    this->selection_mode = SelectionMode::Mesh;
+                    selected_meshes.clear();
+                    selected_models.clear();
+                    selected_meshes.push_back(mesh_clicked);
+                }
             }
         }
 
         // 재배열 메뉴
         if (ImGui::BeginPopupContextItem()){
+            if (ImGui::MenuItem("Cut", "CTRL+X")){}
+            if (ImGui::MenuItem("Copy", "CTRL+C")){}
+            if (ImGui::MenuItem("Paste", "CTRL+V")){}
+            if (ImGui::MenuItem("Delete Selection", "Del", false, !selected_meshes.empty())){
+            }
+            ImGui::Separator();
+
             if (ImGui::MenuItem("Move Up", 0, false, node->get_parent() != nullptr && node->get_parent()->get_children().front() != node)){
                 actions.reorder_mesh_up(node);
             }
@@ -178,19 +187,27 @@ void WorkSpace::render_hierarchy(){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){
                 IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
                 CSGNode* payload_node = *(CSGNode**)payload->Data;
-                // printf("mesh to mesh\n"); // TODO : undo추가
-                node->set_child(payload_node);
-                // TODO : 빈 모델 삭제 (reversable)
+                transaction_manager.add(new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){ // TODO : payload_node와 node의 공통조상으로 바꾸기
+                    return node->reparent_child(payload_node);
+                }, node->model->get_csg_mesh(), [=](CSGNode* root){
+                    node->model->set_csg_mesh((CSGNode*)root);
+                }, payload_node->model->get_csg_mesh(), [=](CSGNode* root){
+                    payload_node->model->set_csg_mesh((CSGNode*)root);
+                }));
+                /*transaction_manager->add(new TreeModifyTask("Delete Model", model->get_parent(), [this, model](){ // TODO : 연계작업으로 변경
+                    model->remove_self();
+                    return true;
+                }));*/
             }
             // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){ empty }
             ImGui::EndDragDropTarget();
         }
 
         // 추가 ui
-        if (!node->is_leaf_node()){
-            ImGui::SameLine();
-            ImGui::Checkbox("##Selection Group", &node->selection_group); // TODO : 체크박스 안쪽에서는 트리노드 클릭 안되게하기...
-        }
+        //if (!node->is_leaf_node()){
+        //    ImGui::SameLine();
+        //    ImGui::Checkbox("##Selection Group", &node->selection_group); // TODO : 체크박스 안쪽에서는 트리노드 클릭 안되게하기...
+        //}
 
         // 하위 노드
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
@@ -204,7 +221,7 @@ void WorkSpace::render_hierarchy(){
 
     static std::function<void(Model*)> draw_model_tree = [&](Model* model){
         // 노드 생성
-        ImGuiTreeNodeFlags node_flags = base_flags | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap;
+        ImGuiTreeNodeFlags node_flags = base_flags | ImGuiTreeNodeFlags_AllowItemOverlap;
         if (Utils::contains(selected_models, model)){
             node_flags |= ImGuiTreeNodeFlags_Selected;
         }
@@ -222,10 +239,12 @@ void WorkSpace::render_hierarchy(){
                     }
                 }
             } else{
-                this->selection_mode = SelectionMode::Model;
-                selected_meshes.clear();
-                selected_models.clear();
-                selected_models.push_back(model_clicked);
+                if (!Utils::contains(selected_models, model_clicked)){
+                    this->selection_mode = SelectionMode::Model;
+                    selected_meshes.clear();
+                    selected_models.clear();
+                    selected_models.push_back(model_clicked);
+                }
             }
         }
 
@@ -239,59 +258,6 @@ void WorkSpace::render_hierarchy(){
             }
             ImGui::Separator();
 
-            if (ImGui::BeginMenu("Select")){
-                if (ImGui::MenuItem("Switch Last Selected Object To Parent")){ // TODO : 메쉬랑 분리
-                    if (!selected_models.empty()){
-                        Model* last_item = selected_models.back();
-                        if (last_item->get_parent() != nullptr){
-                            selected_models.pop_back();
-                            if (!Utils::contains(selected_models, last_item->get_parent())){
-                                selected_models.push_back(last_item->get_parent());
-                            }
-                        }
-                    } else if (!selected_meshes.empty()){
-                        CSGNode* last_item = selected_meshes.back();
-                        if (last_item->get_parent() != nullptr){
-                            selected_meshes.pop_back();
-                            if (!Utils::contains(selected_meshes, last_item->get_parent())){
-                                selected_meshes.push_back(last_item->get_parent());
-                            }
-                        }
-                    }
-                }
-                if (ImGui::MenuItem("Reverse Selection")){
-                    if (!selected_models.empty()){
-                        std::list<Model*> selected_models_reversed;
-                        for (Model* model : selected_models){
-                            Model* parent = model->get_parent();
-                            for (Model* child : parent->get_children()){
-                                if (!Utils::contains(selected_models_reversed, child) && !Utils::contains(selected_models, child)){
-                                    selected_models_reversed.push_back(child);
-                                }
-                            }
-                        }
-                        selected_models.clear();
-                        selected_models.splice(selected_models.end(), selected_models_reversed);
-                    } else if (!selected_meshes.empty()){
-                        if (!selected_meshes.empty()){
-                            std::list<CSGNode*> selected_meshes_reversed;
-                            for (CSGNode* model : selected_meshes){
-                                CSGNode* parent = model->get_parent();
-                                for (CSGNode* child : parent->get_children()){
-                                    if (!Utils::contains(selected_meshes_reversed, child) && !Utils::contains(selected_meshes, child)){
-                                        selected_meshes_reversed.push_back(child);
-                                    }
-                                }
-                            }
-                            selected_meshes.clear();
-                            selected_meshes.splice(selected_meshes.end(), selected_meshes_reversed);
-                        }
-                    }
-                }
-                // if (ImGui::MenuItem("Filter Selection")){}
-                ImGui::EndMenu();
-            }
-            ImGui::Separator();
             if (ImGui::MenuItem("Move Up", 0, false, model->get_parent()->get_children().front() != model)){
                 actions.reorder_model_up(model);
             }
@@ -307,17 +273,26 @@ void WorkSpace::render_hierarchy(){
         // 드래그 드롭
         if (ImGui::BeginDragDropSource()){
             ImGui::SetDragDropPayload("DND_Payload_Model", &model, sizeof(Model*), ImGuiCond_Once);
-            ImGui::Text(model->name.c_str());
+            std::string selected_names;
+            for (Model* selected_model : selected_models){
+                if (selected_models.front() != selected_model){
+                    selected_names.append(", ");
+                }
+                selected_names.append(selected_model->name);
+            }
+            ImGui::Text(selected_names.c_str());
             ImGui::EndDragDropSource();
         }
         if (ImGui::BeginDragDropTarget()){
             // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){ empty } 
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
-                IM_ASSERT(payload->DataSize == sizeof(Model*));
-                Model* payload_model = *(Model**)payload->Data;
-                transaction_manager.add(new TreeModifyTask("Model Tree Edit", payload_model->get_parent(), [=](){
-                    model->set_child(payload_model);
-                }));
+                MultiTransactionTask* task_multi = new MultiTransactionTask(Utils::format("Reparent %1% Model(s)", (int)selected_models.size()));
+                for (Model* selected_model : selected_models){
+                    task_multi->add_task(new TreeModifyTask("Reparent Model", root_model, [=](){ // TODO : root_model을 selected_model과 model 의 공통조상으로 변경
+                        return model->reparent_child(selected_model);
+                    }));
+                }
+                transaction_manager.add(task_multi);
             }
             ImGui::EndDragDropTarget();
         }
@@ -325,7 +300,9 @@ void WorkSpace::render_hierarchy(){
         // 하위 노드
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (node_open){
-            draw_mesh_tree(model->get_csg_mesh());
+            if (model->get_csg_mesh() != nullptr){
+                draw_mesh_tree(model->get_csg_mesh());
+            }
             for (Model* child : model->get_children()){
                 draw_model_tree(child);
             }
@@ -452,6 +429,59 @@ void WorkSpace::render_popup_menu_view(){
         ImGui::OpenPopup("View_Popup_Edit");
     }
     if (ImGui::BeginPopup("View_Popup_Edit")){
+        if (ImGui::BeginMenu("Select")){
+            if (ImGui::MenuItem("Switch Last Selected Object To Parent")){ // TODO : 메쉬랑 분리
+                if (!selected_models.empty()){
+                    Model* last_item = selected_models.back();
+                    if (last_item->get_parent() != nullptr){
+                        selected_models.pop_back();
+                        if (!Utils::contains(selected_models, last_item->get_parent())){
+                            selected_models.push_back(last_item->get_parent());
+                        }
+                    }
+                } else if (!selected_meshes.empty()){
+                    CSGNode* last_item = selected_meshes.back();
+                    if (last_item->get_parent() != nullptr){
+                        selected_meshes.pop_back();
+                        if (!Utils::contains(selected_meshes, last_item->get_parent())){
+                            selected_meshes.push_back(last_item->get_parent());
+                        }
+                    }
+                }
+            }
+            if (ImGui::MenuItem("Reverse Selection")){
+                if (!selected_models.empty()){
+                    std::list<Model*> selected_models_reversed;
+                    for (Model* model : selected_models){
+                        Model* parent = model->get_parent();
+                        for (Model* child : parent->get_children()){
+                            if (!Utils::contains(selected_models_reversed, child) && !Utils::contains(selected_models, child)){
+                                selected_models_reversed.push_back(child);
+                            }
+                        }
+                    }
+                    selected_models.clear();
+                    selected_models.splice(selected_models.end(), selected_models_reversed);
+                } else if (!selected_meshes.empty()){
+                    if (!selected_meshes.empty()){
+                        std::list<CSGNode*> selected_meshes_reversed;
+                        for (CSGNode* model : selected_meshes){
+                            CSGNode* parent = model->get_parent();
+                            for (CSGNode* child : parent->get_children()){
+                                if (!Utils::contains(selected_meshes_reversed, child) && !Utils::contains(selected_meshes, child)){
+                                    selected_meshes_reversed.push_back(child);
+                                }
+                            }
+                        }
+                        selected_meshes.clear();
+                        selected_meshes.splice(selected_meshes.end(), selected_meshes_reversed);
+                    }
+                }
+            }
+            // if (ImGui::MenuItem("Filter Selection")){}
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
         // 우클릭도 선택가능.
         // TODO : if 선택된 모델이 있는경우 클릭하면 add child model
         // TODO : if 선택된 메쉬가 있는경우 add mesh_union, add mesh intersention, add mesh difference(제한적으로 활성화)

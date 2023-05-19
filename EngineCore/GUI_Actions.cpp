@@ -12,6 +12,7 @@ void WorkSpace_Actions::delete_selected_models(){
     for (Model* model : workspace->selected_models){
         task_multi->add_task(new TreeModifyTask("Delete Model", model->get_parent(), [this, model](){
             model->remove_self();
+            return true;
         }));
     }
     workspace->transaction_manager.add(task_multi);
@@ -20,14 +21,14 @@ void WorkSpace_Actions::delete_selected_models(){
 void WorkSpace_Actions::add_cube_new(){
     static int count = 0;
     Model* model = new Model(Utils::format("Cube%1%", count).c_str());
-    model->set_new(Mesh::Cube);
+    model->set_csg_mesh_new(Mesh::Cube);
 
     // TEST
     Transform* newMesh = model->get_transform();
     newMesh->set_position(vec3(-count * 2.5, 0, 0)); // TODO : I believe it places objects in the center of the active viewport
     ++count;
     workspace->transaction_manager.add(new TreeModifyTask("Add Cube", workspace->root_model, [this, model](){
-        workspace->root_model->add_child(model);
+        return workspace->root_model->add_child(model);
     }));
 }
 
@@ -38,6 +39,7 @@ void WorkSpace_Actions::reorder_mesh_up(CSGNode* mesh){
         if (it != siblings.end()){
             mesh->get_parent()->swap_child(*std::prev(it), *it);
         }
+        return true;
     }, [=](){
         std::list<CSGNode*> siblings = mesh->get_parent()->get_children();
         auto it = std::find(siblings.begin(), siblings.end(), mesh);
@@ -54,6 +56,7 @@ void WorkSpace_Actions::reorder_mesh_down(CSGNode* mesh){
         if (it != siblings.end()){
             mesh->get_parent()->swap_child(*it, *std::next(it));
         }
+        return true;
     }, [=](){
         std::list<CSGNode*> siblings = mesh->get_parent()->get_children();
         auto it = std::find(siblings.begin(), siblings.end(), mesh);
@@ -70,6 +73,7 @@ void WorkSpace_Actions::reorder_model_up(Model* model){
         if (it != siblings.end()){
             model->get_parent()->swap_child(*std::prev(it), *it);
         }
+        return true;
     }, [=](){
         std::list<Model*> siblings = model->get_parent()->get_children();
         auto it = std::find(siblings.begin(), siblings.end(), model);
@@ -86,6 +90,7 @@ void WorkSpace_Actions::reorder_model_down(Model* model){
         if (it != siblings.end()){
             model->get_parent()->swap_child(*it, *std::next(it));
         }
+        return true;
     }, [=](){
         std::list<Model*> siblings = model->get_parent()->get_children();
         auto it = std::find(siblings.begin(), siblings.end(), model);
@@ -97,7 +102,7 @@ void WorkSpace_Actions::reorder_model_down(Model* model){
 
 void WorkSpace_Actions::move_model_to_parent(Model* model){
     workspace->transaction_manager.add(new TreeModifyTask("Model Tree Edit", model->get_parent()->get_parent(), [=](){
-        model->get_parent()->get_parent()->set_child(model, model->get_parent());
+        return model->get_parent()->get_parent()->reparent_child(model, model->get_parent());
     }));
 }
 
