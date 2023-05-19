@@ -84,6 +84,15 @@ public:
         std::swap(*it1, *it2);
     }
 
+    virtual void remove_self(){
+        assert(parent != nullptr);
+        auto it = std::next(std::find(parent->children.begin(), parent->children.end(), static_cast<T*>(this)));
+        for (T* child : children){
+            parent->children.insert(it, child);
+        }
+        parent->children.remove(static_cast<T*>(this));
+    }
+
     // void remove_child(T* item){
     //    children.remove(item);
     // }

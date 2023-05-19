@@ -137,17 +137,28 @@ void WorkSpace::render_hierarchy(){
             node_flags |= ImGuiTreeNodeFlags_Leaf;
         }
         bool node_open = ImGui::TreeNodeEx((void*)node, node_flags, "<mesh>", 0);
-        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
+        if ((ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right)) &&
+            ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) && !ImGui::IsItemToggledOpen()){
             mesh_clicked = node;
+            if (ImGui::GetIO().KeyCtrl){
+                if (selected_models.empty()){
+                    this->selection_mode = SelectionMode::Mesh;
+                    if (Utils::contains(selected_meshes, mesh_clicked)){
+                        selected_meshes.remove(mesh_clicked);
+                    } else{
+                        selected_meshes.push_back(mesh_clicked);
+                    }
+                }
+            } else{
+                this->selection_mode = SelectionMode::Mesh;
+                selected_meshes.clear();
+                selected_models.clear();
+                selected_meshes.push_back(mesh_clicked);
+            }
         }
 
         // 재배열 메뉴
-        if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right)){
-            #pragma warning(disable : 4311)
-            ImGui::OpenPopup(Utils::format("View_Popup_Inspector_%1%", (int)node).c_str());
-        }
-        #pragma warning(disable : 4302)
-        if (ImGui::BeginPopup(Utils::format("View_Popup_Inspector_%1%", (int)node).c_str())){
+        if (ImGui::BeginPopupContextItem()){
             if (ImGui::MenuItem("Move Up", 0, false, node->get_parent() != nullptr && node->get_parent()->get_children().front() != node)){
                 actions.reorder_mesh_up(node);
             }
@@ -193,22 +204,94 @@ void WorkSpace::render_hierarchy(){
 
     static std::function<void(Model*)> draw_model_tree = [&](Model* model){
         // 노드 생성
-        ImGuiTreeNodeFlags node_flags = base_flags;
+        ImGuiTreeNodeFlags node_flags = base_flags | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap;
         if (Utils::contains(selected_models, model)){
             node_flags |= ImGuiTreeNodeFlags_Selected;
         }
         bool node_open = ImGui::TreeNodeEx((void*)model, node_flags, model->name.c_str(), 0);
-        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
+        if ((ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right)) &&
+            ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) && !ImGui::IsItemToggledOpen()){
             model_clicked = model;
+            if (ImGui::GetIO().KeyCtrl){
+                if (selected_meshes.empty()){
+                    this->selection_mode = SelectionMode::Model;
+                    if (Utils::contains(selected_models, model_clicked)){
+                        selected_models.remove(model_clicked);
+                    } else{
+                        selected_models.push_back(model_clicked);
+                    }
+                }
+            } else{
+                this->selection_mode = SelectionMode::Model;
+                selected_meshes.clear();
+                selected_models.clear();
+                selected_models.push_back(model_clicked);
+            }
         }
 
-        // 재배열 메뉴
-        if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right)){
-            #pragma warning(disable : 4311)
-            ImGui::OpenPopup(Utils::format("View_Popup_Inspector_%1%", (int)model).c_str());
-        }
-        #pragma warning(disable : 4302)
-        if (ImGui::BeginPopup(Utils::format("View_Popup_Inspector_%1%", (int)model).c_str())){
+        // 메뉴
+        if (ImGui::BeginPopupContextItem()){
+            if (ImGui::MenuItem("Cut", "CTRL+X")){}
+            if (ImGui::MenuItem("Copy", "CTRL+C")){}
+            if (ImGui::MenuItem("Paste", "CTRL+V")){}
+            if (ImGui::MenuItem("Delete Selection", "Del", false, !selected_models.empty())){
+                actions.delete_selected_models();
+            }
+            ImGui::Separator();
+
+            if (ImGui::BeginMenu("Select")){
+                if (ImGui::MenuItem("Switch Last Selected Object To Parent")){ // TODO : 메쉬랑 분리
+                    if (!selected_models.empty()){
+                        Model* last_item = selected_models.back();
+                        if (last_item->get_parent() != nullptr){
+                            selected_models.pop_back();
+                            if (!Utils::contains(selected_models, last_item->get_parent())){
+                                selected_models.push_back(last_item->get_parent());
+                            }
+                        }
+                    } else if (!selected_meshes.empty()){
+                        CSGNode* last_item = selected_meshes.back();
+                        if (last_item->get_parent() != nullptr){
+                            selected_meshes.pop_back();
+                            if (!Utils::contains(selected_meshes, last_item->get_parent())){
+                                selected_meshes.push_back(last_item->get_parent());
+                            }
+                        }
+                    }
+                }
+                if (ImGui::MenuItem("Reverse Selection")){
+                    if (!selected_models.empty()){
+                        std::list<Model*> selected_models_reversed;
+                        for (Model* model : selected_models){
+                            Model* parent = model->get_parent();
+                            for (Model* child : parent->get_children()){
+                                if (!Utils::contains(selected_models_reversed, child) && !Utils::contains(selected_models, child)){
+                                    selected_models_reversed.push_back(child);
+                                }
+                            }
+                        }
+                        selected_models.clear();
+                        selected_models.splice(selected_models.end(), selected_models_reversed);
+                    } else if (!selected_meshes.empty()){
+                        if (!selected_meshes.empty()){
+                            std::list<CSGNode*> selected_meshes_reversed;
+                            for (CSGNode* model : selected_meshes){
+                                CSGNode* parent = model->get_parent();
+                                for (CSGNode* child : parent->get_children()){
+                                    if (!Utils::contains(selected_meshes_reversed, child) && !Utils::contains(selected_meshes, child)){
+                                        selected_meshes_reversed.push_back(child);
+                                    }
+                                }
+                            }
+                            selected_meshes.clear();
+                            selected_meshes.splice(selected_meshes.end(), selected_meshes_reversed);
+                        }
+                    }
+                }
+                // if (ImGui::MenuItem("Filter Selection")){}
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
             if (ImGui::MenuItem("Move Up", 0, false, model->get_parent()->get_children().front() != model)){
                 actions.reorder_model_up(model);
             }
@@ -216,14 +299,11 @@ void WorkSpace::render_hierarchy(){
                 actions.reorder_model_down(model);
             }
             if (ImGui::MenuItem("Move To Parent", 0, false, model->get_parent() != root_model)){
-                transaction_manager.add(new TreeModifyTask("Model Tree Edit", model->get_parent()->get_parent(), [=](){
-                    model->get_parent()->get_parent()->set_child(model, model->get_parent());
-                }));
+                actions.move_model_to_parent(model);
             }
             ImGui::EndPopup();
         }
 
-        WorkSpace* ws = this;
         // 드래그 드롭
         if (ImGui::BeginDragDropSource()){
             ImGui::SetDragDropPayload("DND_Payload_Model", &model, sizeof(Model*), ImGuiCond_Once);
@@ -262,40 +342,6 @@ void WorkSpace::render_hierarchy(){
         selected_meshes.clear();
         selected_models.clear();
 
-    } else if (mesh_clicked != nullptr){ // 메쉬 선택
-        if (ImGui::GetIO().KeyCtrl){
-            if (selected_models.empty()){
-                this->selection_mode = SelectionMode::Mesh;
-                if (Utils::contains(selected_meshes, mesh_clicked)){
-                    selected_meshes.remove(mesh_clicked);
-                } else{
-                    selected_meshes.push_back(mesh_clicked);
-                }
-            }
-        } else{
-            this->selection_mode = SelectionMode::Mesh;
-            selected_meshes.clear();
-            selected_models.clear();
-            selected_meshes.push_back(mesh_clicked);
-        }
-
-    } else if (model_clicked != nullptr){ // 모델 선택
-        if (ImGui::GetIO().KeyCtrl){
-            if (selected_meshes.empty()){
-                this->selection_mode = SelectionMode::Model;
-                if (Utils::contains(selected_models, model_clicked)){
-                    selected_models.remove(model_clicked);
-                } else{
-                    selected_models.push_back(model_clicked);
-                    printf("%s", model_clicked->name.c_str());
-                }
-            }
-        } else{
-            this->selection_mode = SelectionMode::Model;
-            selected_meshes.clear();
-            selected_models.clear();
-            selected_models.push_back(model_clicked);
-        }
     }
     ImGui::End();
 }
@@ -406,68 +452,6 @@ void WorkSpace::render_popup_menu_view(){
         ImGui::OpenPopup("View_Popup_Edit");
     }
     if (ImGui::BeginPopup("View_Popup_Edit")){
-        if (ImGui::MenuItem("Cut", "CTRL+X")){}
-        if (ImGui::MenuItem("Copy", "CTRL+C")){}
-        if (ImGui::MenuItem("Paste", "CTRL+V")){}
-        if (ImGui::MenuItem("Delete", "Del", false, !selected_models.empty() || !selected_meshes.empty())){
-            actions.delete_selected();
-        }
-        ImGui::Separator();
-
-        if (ImGui::BeginMenu("Select")){
-            if (ImGui::MenuItem("Switch Last Selected Object To Parent")){
-                if (!selected_models.empty()){
-                    Model* last_item = selected_models.back();
-                    if (last_item->get_parent() != nullptr){
-                        selected_models.pop_back();
-                        if (!Utils::contains(selected_models, last_item->get_parent())){
-                            selected_models.push_back(last_item->get_parent());
-                        }
-                    }
-                } else if (!selected_meshes.empty()){
-                    CSGNode* last_item = selected_meshes.back();
-                    if (last_item->get_parent() != nullptr){
-                        selected_meshes.pop_back();
-                        if (!Utils::contains(selected_meshes, last_item->get_parent())){
-                            selected_meshes.push_back(last_item->get_parent());
-                        }
-                    }
-                }
-            }
-            if (ImGui::MenuItem("Reverse Selection")){
-                if (!selected_models.empty()){
-                    std::list<Model*> selected_models_reversed;
-                    for (Model* model : selected_models){
-                        Model* parent = model->get_parent();
-                        for (Model* child : parent->get_children()){
-                            if (!Utils::contains(selected_models_reversed, child) && !Utils::contains(selected_models, child)){
-                                selected_models_reversed.push_back(child);
-                            }
-                        }
-                    }
-                    selected_models.clear();
-                    selected_models.splice(selected_models.end(), selected_models_reversed);
-                } else if (!selected_meshes.empty()){
-                    if (!selected_meshes.empty()){
-                        std::list<CSGNode*> selected_meshes_reversed;
-                        for (CSGNode* model : selected_meshes){
-                            CSGNode* parent = model->get_parent();
-                            for (CSGNode* child : parent->get_children()){
-                                if (!Utils::contains(selected_meshes_reversed, child) && !Utils::contains(selected_meshes, child)){
-                                    selected_meshes_reversed.push_back(child);
-                                }
-                            }
-                        }
-                        selected_meshes.clear();
-                        selected_meshes.splice(selected_meshes.end(), selected_meshes_reversed);
-                    }
-                }
-            }
-            // if (ImGui::MenuItem("Filter Selection")){}
-            // TODO : 옵션 추가
-            ImGui::EndMenu();
-        }
-        ImGui::Separator();
         // 우클릭도 선택가능.
         // TODO : if 선택된 모델이 있는경우 클릭하면 add child model
         // TODO : if 선택된 메쉬가 있는경우 add mesh_union, add mesh intersention, add mesh difference(제한적으로 활성화)
@@ -483,8 +467,8 @@ void WorkSpace::render_popup_menu_view(){
             if (ImGui::MenuItem("Torus")){}*/
             ImGui::EndMenu();
         }
-        if (ImGui::MenuItem("Load Model")){}
         ImGui::Separator();
+        if (ImGui::MenuItem("Load Model")){}
 
         // TODO : 메쉬 정제(csg가능하게) 연산들 - cgal 라이브러리 내에 다양한 알고리즘들 제공
         ImGui::EndPopup();

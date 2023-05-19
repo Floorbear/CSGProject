@@ -122,14 +122,16 @@ MultiTransactionTask::MultiTransactionTask(std::string detail_) : TransactionTas
         task->work();
     }
 }, [this](){
-    for (TransactionTask* task : tasks){
+    std::list<TransactionTask*> tasks_rev = tasks;
+    tasks_rev.reverse();
+    for (TransactionTask* task : tasks_rev){
         task->work_undo();
     }
 }){
 }
 
 MultiTransactionTask::~MultiTransactionTask(){
-    for(TransactionTask* task : tasks){
+    for (TransactionTask* task : tasks){
         delete task;
     }
 }

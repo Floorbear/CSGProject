@@ -7,33 +7,28 @@
 WorkSpace_Actions::WorkSpace_Actions(WorkSpace* workspace_) : workspace(workspace_){
 }
 
-void WorkSpace_Actions::delete_selected(){
-    if (!workspace->selected_models.empty()){
-        MultiTransactionTask* task_multi = new MultiTransactionTask(Utils::format("delete %1% objects", (int)workspace->selected_models.size()));
-        for (Model* model : workspace->selected_models){
-            task_multi->add_task(new TransactionTask(std::string("delete ") + model->name, [this, model](){ // TODO : 구현 ㅠㅠㅠ
-                //model->remove_self();
-                //DeleteData = (model, index)
-            }, [this](){
-                //workspace->models.push_back(new Model(model_data)); 트리형태에서 인덱스까지 고려해야함
-            }));
-        }
-        workspace->transaction_manager.add(task_multi);
+void WorkSpace_Actions::delete_selected_models(){
+    MultiTransactionTask* task_multi = new MultiTransactionTask(Utils::format("Delete %1% Model(s)", (int)workspace->selected_models.size()));
+    for (Model* model : workspace->selected_models){
+        task_multi->add_task(new TreeModifyTask("Delete Model", model->get_parent(), [this, model](){
+            model->remove_self();
+        }));
     }
+    workspace->transaction_manager.add(task_multi);
 }
 
 void WorkSpace_Actions::add_cube_new(){
     static int count = 0;
     Model* model = new Model(Utils::format("Cube%1%", count).c_str());
     model->set_new(Mesh::Cube);
-    workspace->root_model->add_child(model);
 
     // TEST
     Transform* newMesh = model->get_transform();
     newMesh->set_position(vec3(-count * 2.5, 0, 0)); // TODO : I believe it places objects in the center of the active viewport
     ++count;
-    workspace->transaction_manager.add("add cube", [this](){
-    }, [this](){ /*actions.delete_model();*/ });
+    workspace->transaction_manager.add(new TreeModifyTask("Add Cube", workspace->root_model, [this, model](){
+        workspace->root_model->add_child(model);
+    }));
 }
 
 void WorkSpace_Actions::reorder_mesh_up(CSGNode* mesh){
@@ -98,6 +93,12 @@ void WorkSpace_Actions::reorder_model_down(Model* model){
             model->get_parent()->swap_child(*std::prev(it), *it);
         }
     });
+}
+
+void WorkSpace_Actions::move_model_to_parent(Model* model){
+    workspace->transaction_manager.add(new TreeModifyTask("Model Tree Edit", model->get_parent()->get_parent(), [=](){
+        model->get_parent()->get_parent()->set_child(model, model->get_parent());
+    }));
 }
 
 GUI_Actions::GUI_Actions(GUI* parent_) : parent(parent_){
