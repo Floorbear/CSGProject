@@ -51,6 +51,13 @@ protected:
     Shader* screenShader = nullptr;
     FragmentShaderType fragmentShaderType = FragmentShaderType::Color;
 
+    // ===== OutlineShader =====
+protected:
+    Shader* outlineShader = nullptr;
+public:
+    void apply_outline();
+
+
     // ====== Light ===== //
 public:
     const std::list<PointLight*>* get_uniform_lights();

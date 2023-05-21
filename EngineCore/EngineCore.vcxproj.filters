@@ -55,6 +55,9 @@
     <Filter Include="ThirdParty\etc">
       <UniqueIdentifier>{95c67e6a-bca0-44b8-9e7d-fb68edb0b4d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{d841f94d-3b89-42ff-bc22-52c37c653786}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core.h" />
@@ -45063,6 +45066,18 @@
     </None>
     <None Include="..\Thirdparty\glm\gtx\wrap.inl">
       <Filter>ThirdParty\glm</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\DefaultVertexShader.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\OutlineFragementShader.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\SelectionFragmentShader.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\DefaultFragmentShader.glsl">
+      <Filter>Shader</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

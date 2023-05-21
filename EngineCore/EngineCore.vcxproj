@@ -15022,6 +15022,10 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\EngineResource\Shader\DefaultFragmentShader.glsl" />
+    <None Include="..\EngineResource\Shader\DefaultVertexShader.glsl" />
+    <None Include="..\EngineResource\Shader\OutlineFragementShader.glsl" />
+    <None Include="..\EngineResource\Shader\SelectionFragmentShader.glsl" />
     <None Include="..\Thirdparty\Eigen\AccelerateSupport" />
     <None Include="..\Thirdparty\Eigen\Cholesky" />
     <None Include="..\Thirdparty\Eigen\CholmodSupport" />

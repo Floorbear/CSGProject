@@ -7,6 +7,7 @@
 Material::Material() : Component("Material"){
     screenShader = new Shader();
     selectionShader = new Shader("DefaultVertexShader.glsl", "SelectionFragmentShader.glsl");
+    outlineShader = new Shader("DefaultVertexShader.glsl", "OutlineFragementShader.glsl");
 }
 
 Material::~Material(){
@@ -24,6 +25,15 @@ Transform* Material::get_uniform_model_transform(){
 
 Camera* Material::get_uniform_camera(){
     return uniform_camera;
+}
+
+void Material::apply_outline()
+{
+    outlineShader->use();
+
+    outlineShader->set_mat4("world", *uniform_model_transform->get_matrix());
+    outlineShader->set_mat4("view", uniform_camera->get_view());
+    outlineShader->set_mat4("projection", uniform_camera->get_projection());
 }
 
 const std::list<PointLight*>* Material::get_uniform_lights(){

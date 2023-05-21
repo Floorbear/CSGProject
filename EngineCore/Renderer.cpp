@@ -46,7 +46,7 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
 
     ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     camera->calculate_view();
 
@@ -114,10 +114,32 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
         }
     }
 
+
     for (Model* model : models){
+        //윤곽선을 그리기 위해 Stencil 셋팅
+        //스크린에 그려지는 모델의 픽셀들은 스텐실 값이 1로 초기화 됩니다. 그 외에는 0입니다.
+        {
+            glEnable(GL_DEPTH_TEST);
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+        }
         model->get_material()->set_uniform_camera(camera);
         model->get_material()->set_uniform_lights(lights);
         model->render();
+
+        //조금 더 큰 모델을 윤곽선 쉐이더로 그립니다.
+        //이때 스텐실이 1인 픽셀에는 그리지 않습니다.
+        //{
+        //    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        //    glStencilMask(0x00);
+        //    glDisable(GL_DEPTH_TEST);
+        //    model->get_material()->set_uniform_camera(camera);
+        //    model->render_outline();
+
+        //    glStencilMask(0xFF);
+        //    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        //    glEnable(GL_DEPTH_TEST);
+        //}
     }
 }
 
@@ -131,7 +153,8 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
     // 셀렉션 버퍼에 렌더링
     {
         framebuffer_selection->enable();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glStencilMask(0x00);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         uint32_t selection_id_model_acc = 1;
         for (Model* model : models){
             model->get_material()->set_uniform_camera(camera);

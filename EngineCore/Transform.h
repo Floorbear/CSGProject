@@ -17,6 +17,12 @@ public:
 	Transform(const vec4& _Vec4);
 	~Transform();
 
+	Transform(const Transform& _ref);
+	//Transform(const Transform& _Other) = delete;
+//	Transform(Transform&& _Other) noexcept = delete;
+	Transform& operator=(const Transform& _Other) = delete;
+	Transform& operator=(Transform&& _Other) noexcept = delete;
+
 	vec3 get_position();
 	vec3 get_rotation();
 	vec3 get_scale();
@@ -57,4 +63,11 @@ private:
 
 	//Transform* parent; 굳이 필요??
 };
+
+//class TransformComponent : public Transform, public Component
+//{
+//public:
+//	TransformComponent();
+//	~TransformComponent();
+//};
 

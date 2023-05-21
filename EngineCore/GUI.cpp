@@ -148,7 +148,10 @@ void GUI::init_glfw(){
 
     glViewport(0, 0, (int)window_size.x, (int)window_size.y);
     glEnable(GL_DEPTH_TEST);
-
+    glDepthFunc(GL_LESS);
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     // TODO : resize handler
 }
 
@@ -295,7 +298,7 @@ void GUI::render_end(){
 
     glViewport(0, 0, display_w, display_h);
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable){

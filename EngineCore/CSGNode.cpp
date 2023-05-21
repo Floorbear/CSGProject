@@ -141,6 +141,22 @@ Transform* CSGNode::get_transform(){
     return (Transform*)&transform;
 }
 
+Transform CSGNode::get_transform_copy()
+{
+    return transform;
+}
+
+Transform CSGNode::get_transform_scaleUp_copy(const vec3& _scaleAcc)
+{
+    Transform newTransform = get_transform_copy();
+    vec3 newScale = newTransform.get_scale();
+    newScale.x *= _scaleAcc.x;
+    newScale.y *= _scaleAcc.y;
+    newScale.z *= _scaleAcc.z;
+    newTransform.set_scale(newScale);
+    return newTransform;
+}
+
 void CSGNode::render(){
     if (!is_result_valid){
         if (type == Type::Union){

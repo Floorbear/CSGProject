@@ -64,6 +64,8 @@ public:
 
     CSGNode* main_child();
     Transform* get_transform();
+    Transform get_transform_copy();
+    Transform get_transform_scaleUp_copy(const vec3& _scaleAcc); //_scaleAcc : 스케일 커질 배율
 
     void render();
     void render_selection_id(Material* material, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc);

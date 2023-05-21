@@ -58,6 +58,18 @@ Transform* Model::get_transform(){
     return csgmesh->get_transform();
 }
 
+Transform Model::get_transform_copy()
+{
+    assert(csgmesh != nullptr);
+    return csgmesh->get_transform_copy();
+}
+
+Transform Model::get_transform_scaleUp_copy(const vec3& _scaleAcc)
+{
+    assert(csgmesh != nullptr);
+    return csgmesh->get_transform_scaleUp_copy(_scaleAcc);
+}
+
 Material* Model::get_material(){
     return material_ptr;
 }
@@ -84,6 +96,22 @@ void Model::render(){
         child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
         child->material_ptr->set_uniform_lights(material_ptr->get_uniform_lights());
         child->render();
+    }
+}
+
+void Model::render_outline()
+{
+    //조금더 큰 모델을 렌더링 합니다.
+    if (csgmesh != nullptr) {
+        //Transform biggerTransform = get_transform_scaleUp_copy({0.9f,0.9f,0.9f });
+        //material_ptr->set_uniform_model_transform(&biggerTransform);
+        material_ptr->apply_outline();
+        csgmesh->render();
+    }
+
+    for (Model* child : children) {
+        child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
+        child->render_outline();
     }
 }
 
