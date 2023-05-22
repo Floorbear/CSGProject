@@ -129,17 +129,17 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
 
         //조금 더 큰 모델을 윤곽선 쉐이더로 그립니다.
         //이때 스텐실이 1인 픽셀에는 그리지 않습니다.
-        //{
-        //    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        //    glStencilMask(0x00);
-        //    glDisable(GL_DEPTH_TEST);
-        //    model->get_material()->set_uniform_camera(camera);
-        //    model->render_outline();
+        {
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilMask(0x00);
+            glDisable(GL_DEPTH_TEST);
+            model->get_material()->set_uniform_camera(camera);
+            model->render_outline({1.1f,1.1f,1.1f});
 
-        //    glStencilMask(0xFF);
-        //    glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        //    glEnable(GL_DEPTH_TEST);
-        //}
+            glStencilMask(0xFF);
+            glStencilFunc(GL_ALWAYS, 0, 0xFF);
+            glEnable(GL_DEPTH_TEST);
+        }
     }
 }
 

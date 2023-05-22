@@ -99,19 +99,25 @@ void Model::render(){
     }
 }
 
-void Model::render_outline()
+void Model::render_outline(const vec3& _scaleAcc)
 {
     //조금더 큰 모델을 렌더링 합니다.
     if (csgmesh != nullptr) {
-        //Transform biggerTransform = get_transform_scaleUp_copy({0.9f,0.9f,0.9f });
-        //material_ptr->set_uniform_model_transform(&biggerTransform);
+        Transform newTransform = get_transform()->get_value();
+        vec3 newScale = newTransform.get_scale();
+        newScale.x *= _scaleAcc.x;
+        newScale.y *= _scaleAcc.y;
+        newScale.z *= _scaleAcc.z;
+        newTransform.set_scale(newScale);
+        material_ptr->set_uniform_model_transform(&newTransform);
         material_ptr->apply_outline();
+
         csgmesh->render();
     }
 
     for (Model* child : children) {
         child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
-        child->render_outline();
+        child->render_outline(_scaleAcc);
     }
 }
 

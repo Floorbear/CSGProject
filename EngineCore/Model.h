@@ -35,7 +35,7 @@ public:
 
     bool is_renderable();
     void render();
-    void render_outline();
+    void render_outline(const vec3& _scaleAcc);
 
     void render_selection_id(uint32_t* selection_id_model_acc);
     SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, uint32_t* selection_id_model_acc);
