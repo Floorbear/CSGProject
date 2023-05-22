@@ -29,7 +29,7 @@ void Model::set_csg_mesh(CSGNode* csgmesh_){
     }
     csgmesh = csgmesh_;
     if(csgmesh != nullptr){
-        components.push_back(csgmesh->get_transform());
+        components.push_front(csgmesh->get_transform());
         csgmesh->model = this;
     }
 }
@@ -51,24 +51,24 @@ Model* Model::find_model(std::string_view name_){
     return nullptr;
 }
 
-Transform* Model::get_transform(){
+TransformComponent* Model::get_transform(){
     if (csgmesh == nullptr){
         return nullptr;
     }
     return csgmesh->get_transform();
 }
 
-Transform Model::get_transform_copy()
+/*Transform Model::get_transform_copy()
 {
     assert(csgmesh != nullptr);
     return csgmesh->get_transform_copy();
-}
+}*/
 
-Transform Model::get_transform_scaleUp_copy(const vec3& _scaleAcc)
+/*Transform Model::get_transform_scaleUp_copy(const vec3& _scaleAcc)
 {
     assert(csgmesh != nullptr);
     return csgmesh->get_transform_scaleUp_copy(_scaleAcc);
-}
+}*/
 
 Material* Model::get_material(){
     return material_ptr;

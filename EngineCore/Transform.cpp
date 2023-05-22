@@ -4,32 +4,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-Transform::Transform() : Transform(vec4(0.f, 0.f, 0.f, 1.f)){ // ??
-}
-
-Transform::Transform(const vec4& _Vec4) : Component("Transform") {
-    vector = _Vec4; // ??
-    matrix = glm::mat4(1.0f);
-
+Transform::Transform(){
     position = vec3(0.f, 0.f, 0.f);
     rotation = vec3(0.f, 0.f, 0.f);
     scale3d = vec3(1.f, 1.f, 1.f);
 
-        parameters.push_back(new Vec3Parameter("position", "x", "y", "z", [this]() {
-        return get_position();
-        }, [this](vec3 value) {
-            set_position(value);
-        }));
-    parameters.push_back(new Vec3Parameter("rotation", "x", "y", "z", [this]() {
-        return get_rotation();
-        }, [this](vec3 value) {
-            set_rotation(value);
-        }));
-    parameters.push_back(new Vec3Parameter("scale", "x", "y", "z", [this]() {
-        return get_scale();
-        }, [this](vec3 value) {
-            set_scale(value);
-        }));
+    matrix = glm::mat4(1.0f);
 }
 
 Transform::~Transform(){
@@ -37,34 +17,6 @@ Transform::~Transform(){
 
 vec3 Transform::get_position(){
     return position;
-}
-
-Transform::Transform(const Transform& _ref) : Component("Transform")
-{
-     matrix=               _ref.matrix;
-     position=             _ref.position;
-     rotation = _ref.rotation;
-         scale3d = _ref.scale3d;
-     vector = _ref.vector;
-     worldPosition = _ref.worldPosition;
-     worldScale = _ref.worldScale;
-     worldRotation = _ref.worldRotation;
-
-     parameters.push_back(new Vec3Parameter("position", "x", "y", "z", [this]() {
-         return get_position();
-         }, [this](vec3 value) {
-             set_position(value);
-         }));
-     parameters.push_back(new Vec3Parameter("rotation", "x", "y", "z", [this]() {
-         return get_rotation();
-         }, [this](vec3 value) {
-             set_rotation(value);
-         }));
-     parameters.push_back(new Vec3Parameter("scale", "x", "y", "z", [this]() {
-         return get_scale();
-         }, [this](vec3 value) {
-             set_scale(value);
-         }));
 }
 
 vec3 Transform::get_rotation(){
@@ -162,20 +114,28 @@ vec3 Transform::get_up_dir(){
     return normalize(cross(get_right_dir(), get_forward_dir()));
 }
 
-//TransformComponent::TransformComponent() : Component("Transform") { 
-//    parameters.push_back(new Vec3Parameter("position", "x", "y", "z", [this]() {
-//        return get_position();
-//        }, [this](vec3 value) {
-//            set_position(value);
-//        }));
-//    parameters.push_back(new Vec3Parameter("rotation", "x", "y", "z", [this]() {
-//        return get_rotation();
-//        }, [this](vec3 value) {
-//            set_rotation(value);
-//        }));
-//    parameters.push_back(new Vec3Parameter("scale", "x", "y", "z", [this]() {
-//        return get_scale();
-//        }, [this](vec3 value) {
-//            set_scale(value);
-//        }));
-//}
+TransformComponent::TransformComponent() : TransformComponent(Transform()){
+}
+
+TransformComponent::TransformComponent(Transform transform) : Component("Transform"), Transform(){
+    parameters.push_back(new Vec3Parameter("position", "x", "y", "z", [this](){
+        return get_position();
+    }, [this](vec3 value){
+        set_position(value);
+    }));
+    parameters.push_back(new Vec3Parameter("rotation", "x", "y", "z", [this](){
+        return get_rotation();
+    }, [this](vec3 value){
+        set_rotation(value);
+    }));
+    parameters.push_back(new Vec3Parameter("scale", "x", "y", "z", [this](){
+        return get_scale();
+    }, [this](vec3 value){
+        set_scale(value);
+    }));
+}
+
+Transform TransformComponent::get_value(){
+    Transform ret = *this;
+    return ret;
+}

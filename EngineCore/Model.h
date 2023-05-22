@@ -26,9 +26,10 @@ public:
     void set_csg_mesh_new(const Mesh& mesh);
     Model* find_model(std::string_view name_);
 
-    Transform* get_transform(); // 필수적인 컴포넌트들 get set
-    Transform get_transform_copy();
-    Transform get_transform_scaleUp_copy(const vec3& _scaleAcc);
+    // 필수적인 컴포넌트들 get set
+    TransformComponent* get_transform();
+    //Transform get_transform_copy();
+    //Transform get_transform_scaleUp_copy(const vec3& _scaleAcc);
     Material* get_material();
     void set_material(Material* material_);
 

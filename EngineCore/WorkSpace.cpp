@@ -22,6 +22,7 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     renderer_focused->init();
 
     root_model = new Model("Root");
+    //TODO : root_model.remove_component<Material>();
     root_model->add_component(new PointLight(this, vec3(42, 0, 42))); // TODO : value 바꿔!
     // light->set_position(vec3(50 * sin(Utils::time_acc()), 0, 50 * sin(Utils::time_acc())));
 }

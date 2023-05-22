@@ -134,19 +134,19 @@ CSGNode* CSGNode::main_child(){
     return children.front();
 }
 
-Transform* CSGNode::get_transform(){
+TransformComponent* CSGNode::get_transform(){
     if (!children.empty()){
         return main_child()->get_transform();
     }
-    return (Transform*)&transform;
+    return (TransformComponent*)&transform;
 }
 
-Transform CSGNode::get_transform_copy()
+/*Transform CSGNode::get_transform_copy()
 {
     return transform;
-}
+}*/
 
-Transform CSGNode::get_transform_scaleUp_copy(const vec3& _scaleAcc)
+/*Transform CSGNode::get_transform_scaleUp_copy(const vec3& _scaleAcc)
 {
     Transform newTransform = get_transform_copy();
     vec3 newScale = newTransform.get_scale();
@@ -155,7 +155,7 @@ Transform CSGNode::get_transform_scaleUp_copy(const vec3& _scaleAcc)
     newScale.z *= _scaleAcc.z;
     newTransform.set_scale(newScale);
     return newTransform;
-}
+}*/
 
 void CSGNode::render(){
     if (!is_result_valid){
@@ -215,7 +215,7 @@ SelectionPixelObjectInfo CSGNode::from_selection_id(SelectionPixelIdInfo selecti
     return SelectionPixelObjectInfo(); // null
 }
 
-CSGNode::CSGNodeTransform::CSGNodeTransform(CSGNode* parent_) : Transform(), parent(parent_){
+CSGNode::CSGNodeTransform::CSGNodeTransform(CSGNode* parent_) : TransformComponent(), parent(parent_){
 }
 // TODO : gui 조작을 위한 특정시점 값 저장 후 차이값 적용 기능 추가
 

@@ -23,7 +23,7 @@ public:
 private:
     static const char* type_string_values[];
 
-    class CSGNodeTransform : public Transform{ // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
+    class CSGNodeTransform : public TransformComponent{ // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
         CSGNode* parent; // 값 타입으로 전달할땐 슬라이싱 되어도 무관, Transform*으로 전달할땐 접근 못해도 무관
 
     public:
@@ -63,9 +63,9 @@ public:
     void set_type(Type type_);
 
     CSGNode* main_child();
-    Transform* get_transform();
-    Transform get_transform_copy();
-    Transform get_transform_scaleUp_copy(const vec3& _scaleAcc); //_scaleAcc : 스케일 커질 배율
+    TransformComponent* get_transform();
+    // Transform get_transform_copy();
+    // Transform get_transform_scaleUp_copy(const vec3& _scaleAcc); //_scaleAcc : 스케일 커질 배율
 
     void render();
     void render_selection_id(Material* material, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc);

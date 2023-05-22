@@ -383,6 +383,10 @@ void GUI::init_shortcut(){
             printf("save");
         }));
         shortcuts.push_back(Shortcut("paste", true, false, false, ImGuiKey_V, [this](){
+            if (!active_workspace->selected_models.empty()){// TEST
+                Transform t = active_workspace->selected_models.back()->get_transform()->get_value();
+                printf("%f %f %f\n", t.get_position().x, t.get_position().y, t.get_position().z);
+            }
         }));
         shortcuts.push_back(Shortcut("undo", true, false, false, ImGuiKey_Z, [this](){
             active_workspace->transaction_manager.undo();

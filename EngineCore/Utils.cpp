@@ -55,3 +55,10 @@ glm::vec3 Utils::get_vecFromPitchYaw(float pitch_, float yaw_){
 
     return newVec;
 }
+
+
+// Transform(const Transform& _ref);
+// Transform(const Transform& _Other) = delete;
+// Transform(Transform&& _Other) noexcept = delete;
+// Transform& operator=(const Transform& _Other) = delete;
+// Transform& operator=(Transform&& _Other) noexcept = delete;
