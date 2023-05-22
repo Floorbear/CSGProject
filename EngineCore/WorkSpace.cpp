@@ -479,6 +479,18 @@ void WorkSpace::render_popup_menu_view(){
                     }
                 }
             }
+            ImGui::Separator();
+            if (selection_mode == SelectionMode::Mesh){
+                if (ImGui::MenuItem("Switch To Model Picking")){
+                    selected_meshes.clear();
+                    selection_mode = SelectionMode::Model;
+                }
+            } else if (selection_mode == SelectionMode::Model){
+                if (ImGui::MenuItem("Switch To Mesh Picking")){
+                    selected_models.clear();
+                    selection_mode = SelectionMode::Mesh;
+                }
+            }
             // if (ImGui::MenuItem("Filter Selection")){}
             ImGui::EndMenu();
         }

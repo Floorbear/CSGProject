@@ -2,12 +2,13 @@
 in vec3 normal;
 in vec3 fragPos;
 
-uniform uint objectID;
+uniform uint modelID;
+uniform uint meshID;
 out uvec3 FragColor;
 
 
 
 void main()
 {             
-    FragColor = uvec3(objectID, 0, 0);
+    FragColor = uvec3(modelID, meshID, 0);
 }

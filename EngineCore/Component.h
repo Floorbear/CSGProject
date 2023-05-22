@@ -76,6 +76,7 @@ public:
     ~Component();
 
     void render();
+    void set_label(std::string label_);
 };
 
 class Entity{

@@ -424,25 +424,25 @@ void GUI::init_shortcut(){
         }));
 
         shortcuts.push_back(Shortcut("camera move fast right", true, false, false, GLFW_KEY_D, [this](){
-            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_right_dir() * Camera::speed_move_fast;
+            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_right_dir() * Camera::speed_move_default * Camera::speed_move_fast_multiplier;
             active_workspace->get_main_camera()->get_transform()->add_position(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move fast left", true, false, false, GLFW_KEY_A, [this](){
-            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_right_dir() * -Camera::speed_move_fast;
+            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_right_dir() * -Camera::speed_move_default * Camera::speed_move_fast_multiplier;
             active_workspace->get_main_camera()->get_transform()->add_position(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move fast up", true, false, false, GLFW_KEY_Q, [this](){
-            active_workspace->get_main_camera()->get_transform()->add_position({0.f,Camera::speed_move_fast * Utils::time_delta(), 0});
+            active_workspace->get_main_camera()->get_transform()->add_position({0.f, Camera::speed_move_default * Camera::speed_move_fast_multiplier * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move fast down", true, false, false, GLFW_KEY_E, [this](){
-            active_workspace->get_main_camera()->get_transform()->add_position({0.f,-Camera::speed_move_fast * Utils::time_delta(), 0});
+            active_workspace->get_main_camera()->get_transform()->add_position({0.f, -Camera::speed_move_default * Camera::speed_move_fast_multiplier * Utils::time_delta(), 0});
         }));
         shortcuts.push_back(Shortcut("camera move fast forward", true, false, false, GLFW_KEY_W, [this](){
-            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_forward_dir() * Camera::speed_move_fast;
+            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_forward_dir() * Camera::speed_move_default * Camera::speed_move_fast_multiplier;
             active_workspace->get_main_camera()->get_transform()->add_position(Dir * Utils::time_delta());
         }));
         shortcuts.push_back(Shortcut("camera move fast back", true, false, false, GLFW_KEY_S, [this](){
-            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_forward_dir() * -Camera::speed_move_fast;
+            vec3 Dir = active_workspace->get_main_camera()->get_transform()->get_forward_dir() * -Camera::speed_move_default * Camera::speed_move_fast_multiplier;
             active_workspace->get_main_camera()->get_transform()->add_position(Dir * Utils::time_delta());
         }));
 

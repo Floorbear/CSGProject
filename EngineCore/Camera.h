@@ -8,12 +8,11 @@
 
 #include <list>
 
-class Camera
-{
+class Camera : public Entity, Component{
 public:
 	static float speed_move_default;
 	static float speed_rotate_default;
-	static float speed_move_fast;
+	static float speed_move_fast_multiplier;
 
 	Camera(float width_, float height_, float fov = 45.f);
 	~Camera();
@@ -33,13 +32,13 @@ public:
 		return projection;
 	}
 
-	inline Transform* get_transform()
+	inline TransformComponent* get_transform()
 	{
 		return &transform;
 	}
 
 private:
-	Transform transform;
+	TransformComponent transform;
 
 	float width = 0.f;
 	float height = 0.f;

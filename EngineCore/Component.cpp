@@ -129,6 +129,11 @@ void Component::render(){
     }
 }
 
+void Component::set_label(std::string label_){
+    label = label_;
+    
+}
+
 Entity::~Entity(){
     for (Component* component : components){
         delete component;

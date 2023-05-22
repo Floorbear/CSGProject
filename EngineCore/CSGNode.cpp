@@ -185,16 +185,16 @@ void CSGNode::render_selection_id(Material* material, uint32_t selection_id_mode
 }
 
 SelectionPixelObjectInfo CSGNode::from_selection_id(SelectionPixelIdInfo selection_id, Model* model, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc){
-    SelectionPixelObjectInfo info;
+    /*SelectionPixelObjectInfo info;
     if (selection_id.model_id == selection_id_model_acc){ // TEST
         info = SelectionPixelObjectInfo(model, this);
         if (!info.empty()){
             return info;
         }
     }
-    return SelectionPixelObjectInfo(); // TODO : info가 다 채워지고나면 이 위를 지우고 밑을 사용.
+    return SelectionPixelObjectInfo();*/
 
-    //SelectionPixelObjectInfo info;
+    SelectionPixelObjectInfo info;
     if (selection_id.model_id == selection_id_model_acc && selection_id.mesh_id == *selection_id_mesh_acc){
         info = SelectionPixelObjectInfo(model, this);
     }

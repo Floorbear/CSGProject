@@ -1,19 +1,44 @@
 #include "Camera.h"
 #include "Utils.h"
 
+
 using namespace glm;
 
-float Camera::speed_move_default = 5.f;
+float Camera::speed_move_default = 7.f;
 float Camera::speed_rotate_default = 55.f;
-float Camera::speed_move_fast = 10.0f;
+float Camera::speed_move_fast_multiplier = 2.0f;
 
-Camera::Camera(float width_, float height_, float fov_):
+Camera::Camera(float width_, float height_, float fov_) : Component("Camera"),
     width(width_),
     height(height_),
-    fov(fov_)
-{
+    fov(fov_){
     view = mat4(1.0f);
     projection = mat4(1.0f);
+
+    components.push_back(&transform);
+    components.push_back(this);
+
+    parameters.push_back(new FloatParameter("Near", [this](){
+        return near;
+    }, [this](float value){
+        near = value;
+    }));
+    parameters.push_back(new FloatParameter("Far", [this](){
+        return far;
+    }, [this](float value){
+        far = value;
+    }));
+    // TODO : add separator
+    parameters.push_back(new FloatParameter("Keyboard Move Speed", [this](){
+        return speed_move_default;
+    }, [this](float value){
+        speed_move_default = value;
+    }));
+    parameters.push_back(new FloatParameter("Keyboard Rotate Speed", [this](){
+        return speed_rotate_default;
+    }, [this](float value){
+        speed_rotate_default = value;
+    }));
 }
 
 Camera::~Camera()

@@ -28,7 +28,7 @@ void Model::set_csg_mesh(CSGNode* csgmesh_){
         components.remove(csgmesh->get_transform());
     }
     csgmesh = csgmesh_;
-    if(csgmesh != nullptr){
+    if (csgmesh != nullptr){
         components.push_front(csgmesh->get_transform());
         csgmesh->model = this;
     }
@@ -99,10 +99,9 @@ void Model::render(){
     }
 }
 
-void Model::render_outline(const vec3& _scaleAcc)
-{
+void Model::render_outline(const vec3& _scaleAcc){
     //조금더 큰 모델을 렌더링 합니다.
-    if (csgmesh != nullptr) {
+    if (csgmesh != nullptr){
         Transform newTransform = get_transform()->get_value();
         vec3 newScale = newTransform.get_scale();
         newScale.x *= _scaleAcc.x;
@@ -115,7 +114,7 @@ void Model::render_outline(const vec3& _scaleAcc)
         csgmesh->render();
     }
 
-    for (Model* child : children) {
+    for (Model* child : children){
         child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
         child->render_outline(_scaleAcc);
     }
@@ -124,9 +123,11 @@ void Model::render_outline(const vec3& _scaleAcc)
 void Model::render_selection_id(uint32_t* selection_id_model_acc){
     uint32_t selection_id_mesh_acc = 1;
 
-    material_ptr->set_uniform_model_transform(get_transform());
-    material_ptr->apply_selection_id();
-    csgmesh->render_selection_id(material_ptr, *selection_id_model_acc, &selection_id_mesh_acc);
+    if (csgmesh != nullptr){
+        material_ptr->set_uniform_model_transform(get_transform());
+        material_ptr->apply_selection_id();
+        csgmesh->render_selection_id(material_ptr, *selection_id_model_acc, &selection_id_mesh_acc);
+    }
     (*selection_id_model_acc)++;
 
     for (Model* child : children){
@@ -137,10 +138,13 @@ void Model::render_selection_id(uint32_t* selection_id_model_acc){
 
 SelectionPixelObjectInfo Model::from_selection_id(SelectionPixelIdInfo selection_id, uint32_t* selection_id_model_acc){
     uint32_t selection_id_mesh_acc = 1;
+    SelectionPixelObjectInfo info;
 
-    SelectionPixelObjectInfo info = csgmesh->from_selection_id(selection_id, this, *selection_id_model_acc, &selection_id_mesh_acc);
-    if (!info.empty()){
-        return info;
+    if (csgmesh != nullptr){
+        info = csgmesh->from_selection_id(selection_id, this, *selection_id_model_acc, &selection_id_mesh_acc);
+        if (!info.empty()){
+            return info;
+        }
     }
     (*selection_id_model_acc)++;
 
