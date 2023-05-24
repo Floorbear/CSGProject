@@ -116,31 +116,41 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
 
 
     for (Model* model : models){
+        glEnable(GL_DEPTH_TEST);
+        bool isSelected = Utils::contains(parent->active_workspace->selected_models, model);
         //윤곽선을 그리기 위해 Stencil 셋팅
-        //스크린에 그려지는 모델의 픽셀들은 스텐실 값이 1로 초기화 됩니다. 그 외에는 0입니다.
+        //Selected Model의 모델의 픽셀들은 스텐실 값이 1로 초기화 됩니다. 그 외에는 0입니다.
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        if(isSelected)
         {
-            glEnable(GL_DEPTH_TEST);
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
             glStencilMask(0xFF);
+        }
+        else
+        {
+            glStencilMask(0x00);
         }
         model->get_material()->set_uniform_camera(camera);
         model->get_material()->set_uniform_lights(lights);
         model->render();
 
-        //조금 더 큰 모델을 윤곽선 쉐이더로 그립니다.
-        //이때 스텐실이 1인 픽셀에는 그리지 않습니다.
-        {
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-            glStencilMask(0x00);
-            glDisable(GL_DEPTH_TEST);
-            model->get_material()->set_uniform_camera(camera);
-            model->render_outline({1.1f,1.1f,1.1f});
 
-            glStencilMask(0xFF);
-            glStencilFunc(GL_ALWAYS, 0, 0xFF);
-            glEnable(GL_DEPTH_TEST);
-        }
     }
+
+    //조금 더 큰 모델을 윤곽선 쉐이더로 그립니다.
+    //이때 스텐실이 1인 픽셀에는 그리지 않습니다.
+    for (Model* model : parent->active_workspace->selected_models) {
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+        glDisable(GL_DEPTH_TEST);
+        model->get_material()->set_uniform_camera(camera);
+        model->render_outline({ 1.1f,1.1f,1.1f });
+        //parent->active_workspace->selected_models
+
+        glStencilMask(0xFF);
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        glEnable(GL_DEPTH_TEST);
+    }
+
 }
 
 SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& models, vec2 mouse_position){

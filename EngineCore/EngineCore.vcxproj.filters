@@ -45079,6 +45079,9 @@
     <None Include="..\EngineResource\Shader\DefaultFragmentShader.glsl">
       <Filter>Shader</Filter>
     </None>
+    <None Include="..\EngineResource\Shader\OutlineVertexShader.glsl">
+      <Filter>Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Thirdparty\glm\CMakeLists.txt">

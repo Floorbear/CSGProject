@@ -7,7 +7,7 @@
 Material::Material() : Component("Material"){
     screenShader = new Shader();
     selectionShader = new Shader("DefaultVertexShader.glsl", "SelectionFragmentShader.glsl");
-    outlineShader = new Shader("DefaultVertexShader.glsl", "OutlineFragementShader.glsl");
+    outlineShader = new Shader("OutlineVertexShader.glsl", "OutlineFragementShader.glsl");
 }
 
 Material::~Material(){

@@ -3,6 +3,7 @@
 #include "Material.h"
 #include "Utils.h"
 #include "Leaked_Pointers.h"
+#include "GUI.h"
 
 Model::Model(std::string name_) : name(name_){
     components.push_back(material_ptr = new ColorMaterial());
@@ -119,6 +120,7 @@ void Model::render_outline(const vec3& _scaleAcc){
         child->render_outline(_scaleAcc);
     }
 }
+
 
 void Model::render_selection_id(uint32_t* selection_id_model_acc){
     uint32_t selection_id_mesh_acc = 1;

@@ -35,10 +35,12 @@ public:
 
     bool is_renderable();
     void render();
-    void render_outline(const vec3& _scaleAcc);
 
     void render_selection_id(uint32_t* selection_id_model_acc);
     SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, uint32_t* selection_id_model_acc);
 
+    // ===== Outline 관련 =====
+    void render_outline(const vec3& _scaleAcc);
+    //bool is_selected();
     //Transform get_world_position();
 };
