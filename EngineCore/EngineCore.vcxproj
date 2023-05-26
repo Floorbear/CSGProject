@@ -14951,6 +14951,7 @@
     <ClInclude Include="EnumParameter.hpp" />
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="FrameBuffer.h" />
+    <ClInclude Include="Gizmo.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="EngineMinimal.h" />
     <ClInclude Include="GUI_Actions.h" />
@@ -14986,6 +14987,7 @@
     <ClCompile Include="CSGNode.cpp" />
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="FrameBuffer.cpp" />
+    <ClCompile Include="Gizmo.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="GUI_Actions.cpp" />
     <ClCompile Include="Leaked_Pointers.cpp" />
@@ -15024,6 +15026,7 @@
   <ItemGroup>
     <None Include="..\EngineResource\Shader\DefaultFragmentShader.glsl" />
     <None Include="..\EngineResource\Shader\DefaultVertexShader.glsl" />
+    <None Include="..\EngineResource\Shader\GizmoFragmentShader.glsl" />
     <None Include="..\EngineResource\Shader\OutlineFragementShader.glsl" />
     <None Include="..\EngineResource\Shader\OutlineVertexShader.glsl" />
     <None Include="..\EngineResource\Shader\SelectionFragmentShader.glsl" />

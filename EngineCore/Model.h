@@ -4,7 +4,7 @@
 #include "SelectionPixelInfo.h"
 #include "Component.h"
 #include "TreeNode.hpp"
-
+#include "Gizmo.h"
 #include <glm/glm.hpp>
 
 #include <list>
@@ -41,6 +41,11 @@ public:
 
     // ===== Outline 관련 =====
     void render_outline(const vec3& _scaleAcc);
-    //bool is_selected();
-    //Transform get_world_position();
+
+    // ===== Gizmo ======
+private:
+    Gizmo* gizmo = nullptr;
+public:
+    void render_gizmo();
+
 };

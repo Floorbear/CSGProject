@@ -5,6 +5,7 @@
 #include "Leaked_Pointers.h"
 #include "GUI.h"
 
+
 Model::Model(std::string name_) : name(name_){
     components.push_back(material_ptr = new ColorMaterial());
 }
@@ -17,6 +18,10 @@ Model::~Model(){
     Entity::~Entity();
     if (csgmesh != nullptr){
         delete csgmesh;
+    }
+    if (gizmo != nullptr)
+    {
+        delete gizmo;
     }
 }
 
@@ -119,6 +124,16 @@ void Model::render_outline(const vec3& _scaleAcc){
         child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
         child->render_outline(_scaleAcc);
     }
+}
+
+void Model::render_gizmo()
+{
+    //지연 초기화
+    if (gizmo == nullptr)
+    {
+        gizmo = new Gizmo(get_transform());
+    }
+    gizmo->render(material_ptr->get_uniform_camera());
 }
 
 

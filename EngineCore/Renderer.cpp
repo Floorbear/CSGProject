@@ -151,6 +151,12 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
         glEnable(GL_DEPTH_TEST);
     }
 
+    //기즈모 렌더링
+    for (Model* model : parent->active_workspace->selected_models)
+    {
+        model->render_gizmo();
+    }
+
 }
 
 SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& models, vec2 mouse_position){

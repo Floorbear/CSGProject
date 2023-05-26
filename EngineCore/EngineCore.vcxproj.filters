@@ -44452,6 +44452,9 @@
     <ClInclude Include="Material.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="Gizmo.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44541,6 +44544,9 @@
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Leaked_Pointers.cpp" />
+    <ClCompile Include="Gizmo.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Thirdparty\GLFW\Debug\glfw3.lib">
@@ -45080,6 +45086,9 @@
       <Filter>Shader</Filter>
     </None>
     <None Include="..\EngineResource\Shader\OutlineVertexShader.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\GizmoFragmentShader.glsl">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>
