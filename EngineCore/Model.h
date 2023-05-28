@@ -47,5 +47,9 @@ private:
     Gizmo* gizmo = nullptr;
 public:
     void render_gizmo();
+    inline Gizmo* get_gizmo()
+    {
+        return gizmo;
+    }
 
 };

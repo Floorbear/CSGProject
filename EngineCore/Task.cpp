@@ -45,6 +45,7 @@ void TaskManager::execute_all(){
     }
 }
 
+
 TransactionTaskManager::TransactionTaskManager(){
     option_undo_max_cnt = 10;
 }

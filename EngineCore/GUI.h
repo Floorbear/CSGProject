@@ -60,6 +60,8 @@ public:
     std::list<WorkSpace*> workspaces;
     WorkSpace* active_workspace;
 
+    
+
     GUI();
     void init();
     void render();

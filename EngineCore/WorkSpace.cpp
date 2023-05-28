@@ -57,6 +57,7 @@ std::list<PointLight*>* WorkSpace::get_lights(){
 }
 
 void WorkSpace::render_view(Renderer* renderer){
+    main_renderer = renderer;
     // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin(Utils::format("View##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
@@ -394,11 +395,25 @@ void WorkSpace::process_input(){
 void WorkSpace::on_mouse_press_left(){
     prevPos = mouse_pos_left_press_raw;
     // camera_transform_saved = camera.transform;
+
+    if (main_renderer != nullptr)
+    {
+        main_renderer->find_selection(root_model->get_children(), mouse_pos_left_current_view);
+    }
 }
 
 void WorkSpace::on_mouse_drag_left(){
     float sensitivity = 15.f;
     vec2 moveDir = mouse_pos_left_current_raw - prevPos;
+    
+    //기즈모용 델리게이트 
+    if (dragDelegate != nullptr)
+    {
+        dragDelegate(mouse_pos_left_current_raw, prevPos);
+
+    }
+
+
     // printf("%lf \n", abs(length(mouse_pos_left_current_raw) - length(prevPos)));
     if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
         prevPos = mouse_pos_left_current_raw;
@@ -412,6 +427,7 @@ void WorkSpace::on_mouse_release_left(){
     // 아니면 관성 추가!
     // vec2 mouse_inertia = mouse_pos_left_current_raw - mouse_pos_left_press_raw;
     //
+    dragDelegate = nullptr;
 }
 
 //  WorkSpace::update (){

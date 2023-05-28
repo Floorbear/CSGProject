@@ -41,5 +41,7 @@ public:
     vec2 get_viewport_size();
 
     SelectionPixelObjectInfo find_selection(const std::list<Model*>& models, vec2 mouse_position);
+
+    std::list<Model*> get_selected_models();
 };
 

@@ -12,6 +12,7 @@ Gizmo::Gizmo(TransformComponent* _parentTransform)
 	}
 
 	shader = new Shader("DefaultVertexShader.glsl", "GizmoFragmentShader.glsl");
+	selectionShader = new Shader("DefaultVertexShader.glsl", "SelectionFragmentShader.glsl");
 
 	{
 		float valueBig = 1.2f;
@@ -76,5 +77,34 @@ void Gizmo::render(Camera* _camera)
 		uiMesh[i]->render();
 	}
 	glEnable(GL_DEPTH_TEST);
+}
 
+void Gizmo::render_selectionBuffer(Camera* _camera)
+{
+	apply(_camera);
+	selectionShader->use();
+
+	glDisable(GL_DEPTH_TEST);
+	for (int i = 0; i < uiMesh.size(); i++)
+	{
+		Transform newTransform = parentTransform->get_value();
+		newTransform.set_scale(uiMesh_scale[i]);
+		newTransform.add_position(uiMesh_position[i]);
+		selectionShader->set_mat4("world", *(newTransform.get_matrix()));
+		selectionShader->set_mat4("view", _camera->get_view());
+		selectionShader->set_mat4("projection", _camera->get_projection());
+
+		selectionShader->set_uint("objectType", 1);
+		selectionShader->set_uint("modelID", i); // 0 : x , 1 : y , 2: z , 3 : mainDot
+		selectionShader->set_uint("meshID", 0);
+		uiMesh[i]->render();
+	}
+	glEnable(GL_DEPTH_TEST);
+}
+
+void Gizmo::move(vec2 _curPos, vec2 _prevPos, int _axis)
+{
+	printf("curPos : %f, %f \n", _curPos.x, _curPos.y);
+	printf("_prevPos : %f, %f \n", _prevPos.x, _prevPos.y);
+	printf("_axis : %d \n", _axis);
 }

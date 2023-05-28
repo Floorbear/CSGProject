@@ -26,6 +26,7 @@ class WorkSpace {
 
     std::list<PointLight*> lights;
 
+    Renderer* main_renderer = nullptr;
     void render_view(Renderer* renderer);
     void render_hierarchy();
     void render_inspector();
@@ -75,7 +76,10 @@ public:
     void process_input();
 
     void on_mouse_press_left();
+
     void on_mouse_drag_left();
+    std::function<void(vec2,vec2)> dragDelegate;
+
     void on_mouse_release_left();
     vec2 prevPos;
 
