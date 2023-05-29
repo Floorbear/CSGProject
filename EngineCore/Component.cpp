@@ -35,6 +35,7 @@ FloatParameter::FloatParameter(std::string label_, std::function<float()> get_, 
             if (set != nullptr){
                 set(temp);
             }
+            is_edited = false;
         }
     };
 }
@@ -46,7 +47,12 @@ BoolParameter::BoolParameter(std::string label_, std::function<bool()> get_, std
         bool temp = get();
         if (ImGui::Checkbox((label + Utils::format("##CheckBox%1%", parameter_count)).c_str(), &temp)){
             printf("aa");
-            set(temp);
+            if (is_edited){ // TODO : 리팩토링
+                if (set != nullptr){
+                    set(temp);
+                }
+                is_edited = false;
+            }
         }
     };
 }
@@ -81,6 +87,7 @@ Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::stri
             if (set != nullptr){
                 set(temp);
             }
+            is_edited = false;
         }
     };
 }
@@ -98,10 +105,11 @@ ColorParameter::ColorParameter(std::string label_, std::function<vec4()> get_, s
         // ImGuiColorEditFlags_PickerHueWheel
         ImGui::ColorEdit4(Utils::format("##ColorEdit%1%", parameter_count).c_str(), temp, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_NoOptions);
         is_edited = true;
-        if (is_edited){
+        if (is_edited){ // TODO : 리팩토링
             if (set != nullptr){
                 set(vec4(temp[0], temp[1], temp[2], temp[3]));
             }
+            is_edited = false;
         }
     };
 }
@@ -146,6 +154,10 @@ void Entity::add_component(Component* component){
 
 std::list<Component*> Entity::get_components(){
     return components;
+}
+
+void Entity::clear_components(){
+    components.clear();
 }
 
 /*

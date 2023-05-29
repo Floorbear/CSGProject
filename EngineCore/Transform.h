@@ -7,13 +7,20 @@ using namespace glm;
 
 class Transform{
 protected:
-    mat4 matrix;
+    Transform* parent = nullptr;
+    mat4 matrix_local = glm::mat4(1.0f);
+    mat4 matrix_world = glm::mat4(1.0f);
 
-    vec3 position;
-    vec3 rotation;
-    vec3 scale3d;
+    vec3 position = vec3(0.f, 0.f, 0.f);
+    vec3 rotation = vec3(0.f, 0.f, 0.f);
+    vec3 scale3d = vec3(1.f, 1.f, 1.f); // w : Radian;
 
+    bool is_modified_local = true;
+
+    virtual void on_local_modify();
 public:
+    const static Transform identity;
+
     Transform();
     ~Transform();
 
@@ -21,41 +28,34 @@ public:
     vec3 get_rotation();
     vec3 get_scale();
 
-    virtual void set_position(const vec3& value);
-    virtual void set_rotation(const vec3& value);
-    virtual void set_scale(const vec3& value);
+    vec3 get_world_position();
+    vec3 get_world_rotation();
 
-    virtual void translate(const vec3& value);
-    virtual void rotate(const vec3& value);
-    virtual void scale(const vec3& value);
-    virtual void add_position(const vec3& value);
+    void set_parent(Transform* parent_, bool calculate_local);
 
-    inline vec3 get_worldPosition()	{
-        return worldPosition;
-    }
-    inline vec3 get_worldRotation()	{
-        return worldRotation;
-    }
+    void set_position(const vec3& value);
+    void set_rotation(const vec3& value);
+    void set_scale(const vec3& value);
 
+    void translate(const vec3& value);
+    void rotate(const vec3& value);
+    void scale(const vec3& value);
+    void add_position(const vec3& value);
 
     void calculate_matrix();
-    mat4* get_matrix();
+    mat4 get_local_matrix();
+    mat4 get_world_matrix();
 
     vec3 get_forward_dir();
     vec3 get_right_dir();
     vec3 get_up_dir();
-
-protected:
-    vec3 worldPosition = vec3(0.f, 0.f, 0.f);
-    vec3 worldScale = vec3(1.f, 1.f, 1.f);
-    vec3 worldRotation = vec3(0.f, 0.f, 0.f); // w : Radian
 };
 
 class TransformComponent : public Transform, public Component{
 public:
     TransformComponent();
     TransformComponent(Transform transform);
-    
+
     Transform get_value();
 };
 

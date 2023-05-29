@@ -53,34 +53,10 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
     // TEST
     if (parent->active_workspace != nullptr){
         static Model* newModel = nullptr;
-        static Model* newModel3 = nullptr;
         if (newModel == nullptr){
             newModel = new Model("MyModel");
-            newModel3 = new Model("MyModel3");
 
-            //<<<<<<< HEAD
-                        //newModel3->set_csg_mesh_new(Mesh::Cube2);
-                        //newModel3->set_csg_mesh_new(Mesh::compute_difference(Mesh::t_Cube2, Mesh::Cube2));
-            //newModel3->set_csg_mesh_new(Mesh::compute_union(Mesh::Cube2, Mesh::Sphere));
-            //newModel3->set_csg_mesh_new(Mesh::compute_intersection(Mesh::Cube2, Mesh::Sphere));
-            //newModel3->set_csg_mesh_new(Mesh::compute_difference(Mesh::Cube2, Mesh::Sphere));
-            //newModel3->set_csg_mesh_new(Mesh::compute_difference2(Mesh::Cube2, Mesh::Sphere));
-            //newModel3->set_csg_mesh_new(Mesh::compute_intersection(Mesh::Sphere, Mesh::t_Cube2));  ///union
-
-            newModel->set_csg_mesh_new(Mesh::cgal_mesh_to_mesh(Mesh::mesh_to_cgal_mesh(Mesh::Cube)));
-            //newModel->set_csg_mesh_new(Mesh::Cube);
-
-            //Model* newModel2 = new Model("MyModel2");
-
-            //newModel->add_child(newModel2);
-            //newModel2->set_csg_mesh_new(Mesh::Cube);
-            //newModel2->get_transform()->set_position(vec3(0, 2, 2));
-            //newModel->set_csg_mesh_new(Mesh::compute_intersection(Mesh::Cube2,Mesh::Cube));
-//>>>>>>> 8407016d5fc7ef8bcead817904e5711cc6024d43
-            //newModel->set_csg_mesh_new(Mesh::Sphere);
-
-            parent->active_workspace->root_model->add_child(newModel);
-            //parent->active_workspace->root_model->add_child(newModel3);
+            //parent->active_workspace->root_model->add_child(newModel);
             camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
             camera->get_transform()->set_rotation({0,-90,0});
         }
@@ -93,25 +69,25 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
             Transform* newMesh = model->get_transform();
             newMesh->set_position(vec3(0, 0, 2));
             newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
+
+            static bool TextureTest = true;
+            static bool TextureTest2 = true;
+            if (TextureTest)        {
+                TextureTest = false;
+                EnginePath newPath = FileSystem::GetProjectPath();
+                newPath.Move("EngineResource");
+                newPath.Move("Texture");
+                newPath.Move("rockTexture.jpg");
+                Texture* newTexture = Texture::create_texture(newPath);
+
+                model->set_material(new TextureMaterial(newTexture));
+            }
+            if (TextureTest2 && Utils::time_acc() > 5.0f)        {
+                TextureTest2 = false;
+                model->set_material(new ColorMaterial());
+            }
         }
 
-
-        static bool TextureTest = true;
-        static bool TextureTest2 = true;
-        if (TextureTest)        {
-            TextureTest = false;
-            EnginePath newPath = FileSystem::GetProjectPath();
-            newPath.Move("EngineResource");
-            newPath.Move("Texture");
-            newPath.Move("rockTexture.jpg");
-            Texture* newTexture = Texture::create_texture(newPath);
-
-            model->set_material(new TextureMaterial(newTexture));
-        }
-        if (TextureTest2 && Utils::time_acc() > 5.0f)        {
-            TextureTest2 = false;
-            model->set_material(new ColorMaterial());
-        }
     }
 
 

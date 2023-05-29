@@ -13,16 +13,19 @@ class CSGNode;
 class Material;
 class Model : public Entity, public TreeNode<Model>{
     CSGNode* csgmesh = nullptr; // root node
-    Material* material_ptr = nullptr;
+    TransformComponent* transform = nullptr;
+    Material* material = nullptr;
 
 public:
     std::string name;
 
     Model(std::string name_);
     ~Model();
+
+    void set_parent(Model* parent_) override;
     
     CSGNode* get_csg_mesh();
-    void set_csg_mesh(CSGNode* csgmesh_);
+    void set_csg_mesh(CSGNode* csgmesh_, bool calculate_local = false);
     void set_csg_mesh_new(const Mesh& mesh);
     Model* find_model(std::string_view name_);
 

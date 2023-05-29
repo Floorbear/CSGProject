@@ -6,7 +6,7 @@
 
 const char* CSGNode::type_string_values[] = {"None", "Union", "Intersection", "Difference"};
 
-CSGNode::CSGNode(const Mesh& mesh) : Component("CSG Params"), result(mesh), transform(CSGNodeTransform(this)){
+CSGNode::CSGNode(const Mesh& mesh) : Component("CSG Params"), result(mesh){
     type = Type::Operand;
     is_result_valid = true;
 
@@ -28,7 +28,7 @@ CSGNode::CSGNode(const Mesh& mesh) : Component("CSG Params"), result(mesh), tran
     }));
 }
 
-CSGNode::CSGNode(Type type_, CSGNode* node1, CSGNode* node2) : Component("CSG Params"), transform(CSGNodeTransform(this)){
+CSGNode::CSGNode(Type type_, CSGNode* node1, CSGNode* node2) : Component("CSG Params"){
     type = type_;
     assert(type != Type::Operand);
     children.push_back(node1);
@@ -60,6 +60,13 @@ CSGNode::~CSGNode(){
     Entity::~Entity();
 }
 
+void CSGNode::set_parent(CSGNode* parent_){
+    TreeNode::set_parent(parent_);
+    if (parent != nullptr){
+        transform.set_parent(parent->get_transform(), true);
+    }
+}
+
 bool CSGNode::add_child(CSGNode* node){
     assert(type != Type::Operand);
     if (type == Type::Difference){
@@ -84,14 +91,15 @@ bool CSGNode::reparent_child(CSGNode* node, CSGNode* after){
         } else{
             parent->children.insert(std::find(parent->children.begin(), parent->children.end(), this), union_node);
             parent->children.remove(this);
+            union_node->set_parent(parent);
         }
-        if(node->parent == nullptr){
+        if (node->parent == nullptr){
             node->model->set_csg_mesh(nullptr);
-        }else{
+        } else{
             node->parent->children.remove(node);
         }
-        parent = union_node;
-        node->parent = union_node;
+        set_parent(union_node);
+        node->set_parent(union_node);
     } else{
         if (type == Type::Difference && children.size() >= 2){ // 더이상 자식 추가 불가
             return false;
@@ -127,18 +135,8 @@ void CSGNode::set_type(Type type_){
     type = type_;
 }
 
-CSGNode* CSGNode::main_child(){
-    if (children.empty()){
-        return nullptr;
-    }
-    return children.front();
-}
-
 TransformComponent* CSGNode::get_transform(){
-    if (!children.empty()){
-        return main_child()->get_transform();
-    }
-    return (TransformComponent*)&transform;
+    return &transform;
 }
 
 /*Transform CSGNode::get_transform_copy()
@@ -159,14 +157,19 @@ TransformComponent* CSGNode::get_transform(){
 
 void CSGNode::render(){
     if (!is_result_valid){
-        if (type == Type::Union){
-            result = children.back()->result;//TODO : Mesh::compute_union(children.front()->result, children.back()->result);
-        } else if (type == Type::Intersection){
-            result = Mesh::compute_intersection(children.front()->result, children.back()->result);
+        bool is_result_valid_ = true;
+        if (type == Type::Union){ // TODO : n진 가능하게
+            //result = children.back()->result;
+            is_result_valid_ = Mesh::compute_union(children.front()->result, children.front()->get_transform(),
+                                                   children.back()->result, children.back()->get_transform(), result);
+        } else if (type == Type::Intersection){ // TODO : n진 가능하게
+            is_result_valid_ = Mesh::compute_intersection(children.front()->result, children.front()->get_transform(),
+                                                   children.back()->result, children.back()->get_transform(), result);
         } else if (type == Type::Difference){
-            result = Mesh::compute_difference(children.front()->result, children.back()->result);
+            is_result_valid_ = Mesh::compute_difference(children.front()->result, children.front()->get_transform(),
+                                                   children.back()->result, children.back()->get_transform(), result);
         }
-        is_result_valid = true;
+        is_result_valid = is_result_valid_;
     }
     result.render();
 }
@@ -213,49 +216,4 @@ SelectionPixelObjectInfo CSGNode::from_selection_id(SelectionPixelIdInfo selecti
         }
     }
     return SelectionPixelObjectInfo(); // null
-}
-
-CSGNode::CSGNodeTransform::CSGNodeTransform(CSGNode* parent_) : TransformComponent(), parent(parent_){
-}
-// TODO : gui 조작을 위한 특정시점 값 저장 후 차이값 적용 기능 추가
-
-void CSGNode::CSGNodeTransform::set_position(const vec3& value){
-    vec3 delta = value - get_position();
-    Transform::set_position(value);
-    for (CSGNode* node : parent->children){
-        node->transform.add_position(delta);
-    }
-}
-
-void CSGNode::CSGNodeTransform::set_rotation(const vec3& value){
-    vec3 delta = value - get_rotation();
-    Transform::set_rotation(value);
-    for (CSGNode* node : parent->children){
-        node->transform.rotate(delta);
-    }
-}
-
-void CSGNode::CSGNodeTransform::set_scale(const vec3& value){
-    vec3 ratio = value / get_scale();
-    Transform::set_scale(value);
-    for (CSGNode* node : parent->children){
-        node->transform.scale(ratio);
-    }
-}
-
-void CSGNode::CSGNodeTransform::translate(const vec3& value){
-
-}
-
-void CSGNode::CSGNodeTransform::rotate(const vec3& value){
-}
-
-void CSGNode::CSGNodeTransform::scale(const vec3& value){
-}
-
-void CSGNode::CSGNodeTransform::add_position(const vec3& value){
-    parent->transform.add_position(value);
-    for (CSGNode* node : parent->children){
-        node->transform.add_position(value);
-    }
 }

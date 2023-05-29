@@ -7,15 +7,17 @@
 
 
 Model::Model(std::string name_) : name(name_){
-    components.push_back(material_ptr = new ColorMaterial());
+    components.push_back(transform = new TransformComponent());
+    components.push_back(material = new ColorMaterial());
 }
 
 Model::~Model(){
     for (Model* child : children){
         delete child;
     }
-    components.remove(get_transform()); // Transform만은 미리 삭제하면 안됨!
+
     Entity::~Entity();
+
     if (csgmesh != nullptr){
         delete csgmesh;
     }
@@ -25,18 +27,20 @@ Model::~Model(){
     }
 }
 
+void Model::set_parent(Model* parent_){
+    TreeNode::set_parent(parent_);
+    transform->set_parent(parent->get_transform(), true);
+}
+
 CSGNode* Model::get_csg_mesh(){
     return csgmesh;
 }
 
-void Model::set_csg_mesh(CSGNode* csgmesh_){
-    if (csgmesh != nullptr){
-        components.remove(csgmesh->get_transform());
-    }
+void Model::set_csg_mesh(CSGNode* csgmesh_, bool calculate_local){
     csgmesh = csgmesh_;
     if (csgmesh != nullptr){
-        components.push_front(csgmesh->get_transform());
         csgmesh->model = this;
+        csgmesh->get_transform()->set_parent(transform, calculate_local);
     }
 }
 
@@ -58,33 +62,18 @@ Model* Model::find_model(std::string_view name_){
 }
 
 TransformComponent* Model::get_transform(){
-    if (csgmesh == nullptr){
-        return nullptr;
-    }
-    return csgmesh->get_transform();
+    return transform;
 }
 
-/*Transform Model::get_transform_copy()
-{
-    assert(csgmesh != nullptr);
-    return csgmesh->get_transform_copy();
-}*/
-
-/*Transform Model::get_transform_scaleUp_copy(const vec3& _scaleAcc)
-{
-    assert(csgmesh != nullptr);
-    return csgmesh->get_transform_scaleUp_copy(_scaleAcc);
-}*/
-
 Material* Model::get_material(){
-    return material_ptr;
+    return material;
 }
 
 void Model::set_material(Material* material_){
-    components.remove(material_ptr);
-    Leaked_Pointers::add(material_ptr);
+    components.remove(material);
+    Leaked_Pointers::add(material);
     components.push_back(material_);
-    material_ptr = material_;
+    material = material_;
 }
 
 bool Model::is_renderable(){
@@ -92,15 +81,17 @@ bool Model::is_renderable(){
 }
 
 void Model::render(){
+    transform->calculate_matrix();
     if (csgmesh != nullptr){
-        material_ptr->set_uniform_model_transform(get_transform());
-        material_ptr->apply();
+        csgmesh->get_transform()->calculate_matrix();
+        material->set_uniform_model_transform(csgmesh->get_transform());
+        material->apply();
         csgmesh->render();
     }
 
     for (Model* child : children){
-        child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
-        child->material_ptr->set_uniform_lights(material_ptr->get_uniform_lights());
+        child->material->set_uniform_camera(material->get_uniform_camera());
+        child->material->set_uniform_lights(material->get_uniform_lights());
         child->render();
     }
 }
@@ -108,20 +99,20 @@ void Model::render(){
 void Model::render_outline(const vec3& _scaleAcc){
     //조금더 큰 모델을 렌더링 합니다.
     if (csgmesh != nullptr){
-        Transform newTransform = get_transform()->get_value();
+        Transform newTransform = csgmesh->get_transform()->get_value();
         vec3 newScale = newTransform.get_scale();
         newScale.x *= _scaleAcc.x;
         newScale.y *= _scaleAcc.y;
         newScale.z *= _scaleAcc.z;
         newTransform.set_scale(newScale);
-        material_ptr->set_uniform_model_transform(&newTransform);
-        material_ptr->apply_outline();
+        material->set_uniform_model_transform(&newTransform);
+        material->apply_outline();
 
         csgmesh->render();
     }
 
     for (Model* child : children){
-        child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
+        child->material->set_uniform_camera(material->get_uniform_camera());
         child->render_outline(_scaleAcc);
     }
 }
@@ -141,14 +132,14 @@ void Model::render_selection_id(uint32_t* selection_id_model_acc){
     uint32_t selection_id_mesh_acc = 1;
 
     if (csgmesh != nullptr){
-        material_ptr->set_uniform_model_transform(get_transform());
-        material_ptr->apply_selection_id();
-        csgmesh->render_selection_id(material_ptr, *selection_id_model_acc, &selection_id_mesh_acc);
+        material->set_uniform_model_transform(csgmesh->get_transform());
+        material->apply_selection_id();
+        csgmesh->render_selection_id(material, *selection_id_model_acc, &selection_id_mesh_acc);
     }
     (*selection_id_model_acc)++;
 
     for (Model* child : children){
-        child->material_ptr->set_uniform_camera(material_ptr->get_uniform_camera());
+        child->material->set_uniform_camera(material->get_uniform_camera());
         child->render_selection_id(selection_id_model_acc);
     }
 }

@@ -51,7 +51,7 @@ public:
         return parent;
     }
 
-    void set_parent(T* parent_){
+    virtual void set_parent(T* parent_){
         parent = parent_;
     }
 
@@ -63,7 +63,7 @@ public:
         if (is_descendant_of(item)){
             return false;
         }
-        item->parent = static_cast<T*>(this);
+        item->set_parent(static_cast<T*>(this));
         children.push_back(item);
         return true;
     }
@@ -75,7 +75,7 @@ public:
         if (item->parent != nullptr){
             item->parent->children.remove(item);
         }
-        item->parent = static_cast<T*>(this);
+        item->set_parent(static_cast<T*>(this));
         if (after != nullptr){
             children.insert(std::next(std::find(children.begin(), children.end(), after)), item);
         } else{
@@ -162,14 +162,14 @@ public:
         if (snapshot2 != nullptr){
             snapshot2->recover();
         }
-        set_root1(static_cast<T*>(root_old1));
-        set_root2(static_cast<T*>(root_old2));
         if (root_old1 != nullptr){
             root_old1->set_parent(nullptr);
         }
         if (root_old2 != nullptr){
             root_old2->set_parent(nullptr);
         }
+        set_root1(static_cast<T*>(root_old1));
+        set_root2(static_cast<T*>(root_old2));
     }){
     }
 

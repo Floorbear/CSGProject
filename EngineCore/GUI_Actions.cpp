@@ -21,11 +21,11 @@ void WorkSpace_Actions::delete_selected_models(){
 void WorkSpace_Actions::add_cube_new(){
     static int count = 0;
     Model* model = new Model(Utils::format("Cube%1%", count).c_str());
-    model->set_csg_mesh_new(Mesh::Cube);
+    model->set_csg_mesh_new(Mesh::cube(1.0f));
 
     // TEST
     Transform* newMesh = model->get_transform();
-    newMesh->set_position(vec3(-count * 2.5, 0, 0)); // TODO : I believe it places objects in the center of the active viewport
+    newMesh->set_position(vec3(count * 0.7, count * 0.7, count * 0.7)); // TODO : I believe it places objects in the center of the active viewport
     ++count;
     workspace->transaction_manager.add(new TreeModifyTask("Add Cube", workspace->root_model, [this, model](){
         return workspace->root_model->add_child(model);

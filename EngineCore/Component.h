@@ -88,6 +88,7 @@ public:
 
     void add_component(Component* component);
     std::list<Component*> get_components();
+    void clear_components();
     // TODO : add_component();
     // TODO : get_component(type);
 };

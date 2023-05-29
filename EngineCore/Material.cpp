@@ -27,15 +27,6 @@ Camera* Material::get_uniform_camera(){
     return uniform_camera;
 }
 
-void Material::apply_outline()
-{
-    outlineShader->use();
-
-    outlineShader->set_mat4("world", *uniform_model_transform->get_matrix());
-    outlineShader->set_mat4("view", uniform_camera->get_view());
-    outlineShader->set_mat4("projection", uniform_camera->get_projection());
-}
-
 const std::list<PointLight*>* Material::get_uniform_lights(){
     return uniform_lights;
 }
@@ -64,7 +55,7 @@ void Material::set_uniform_selection_id(SelectionPixelIdInfo selection_id){
 void Material::apply(){
     screenShader->use();
 
-    screenShader->set_mat4("world", *uniform_model_transform->get_matrix());
+    screenShader->set_mat4("world", uniform_model_transform->get_world_matrix());
     screenShader->set_mat4("view", uniform_camera->get_view());
     screenShader->set_mat4("projection", uniform_camera->get_projection());
 
@@ -79,7 +70,7 @@ void Material::apply(){
 void Material::apply_selection_id(){
     selectionShader->use();
 
-    selectionShader->set_mat4("world", *uniform_model_transform->get_matrix());
+    selectionShader->set_mat4("world", uniform_model_transform->get_world_matrix());
     selectionShader->set_mat4("view", uniform_camera->get_view());
     selectionShader->set_mat4("projection", uniform_camera->get_projection());
 
@@ -88,7 +79,13 @@ void Material::apply_selection_id(){
     selectionShader->set_uint("meshID", uniform_selection_id.mesh_id);
 }
 
+void Material::apply_outline(){
+    outlineShader->use();
 
+    outlineShader->set_mat4("world", uniform_model_transform->get_world_matrix());
+    outlineShader->set_mat4("view", uniform_camera->get_view());
+    outlineShader->set_mat4("projection", uniform_camera->get_projection());
+}
 
 ColorMaterial::ColorMaterial()
 {

@@ -22,8 +22,8 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     renderer_focused->init();
 
     root_model = new Model("Root");
-    //TODO : root_model.remove_component<Material>();
-    root_model->add_component(new PointLight(this, vec3(42, 0, 42))); // TODO : value 바꿔!
+    root_model->clear_components();
+    root_model->add_component(new PointLight(this, vec3(12, -10, -22))); // TODO : value 바꿔!
     // light->set_position(vec3(50 * sin(Utils::time_acc()), 0, 50 * sin(Utils::time_acc())));
 }
 
@@ -80,12 +80,15 @@ void WorkSpace::render_view(Renderer* renderer){
         mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
     }
 
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && ImGui::IsWindowHovered()){
         mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
 
         // selection 처리
         SelectionPixelObjectInfo info = renderer->find_selection(root_model->get_children(), mouse_pos_left_current_view);
-        if (!info.empty()){
+        if (info.empty()){
+            selected_models.clear();
+            selected_meshes.clear();
+        } else{
             if (selection_mode == SelectionMode::Model){
                 if (ImGui::GetIO().KeyCtrl){
                     if (Utils::contains(selected_models, info.model)){
@@ -192,9 +195,9 @@ void WorkSpace::render_hierarchy(){
                 transaction_manager.add(new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){ // TODO : payload_node와 node의 공통조상으로 바꾸기
                     return node->reparent_child(payload_node);
                 }, node->model->get_csg_mesh(), [=](CSGNode* root){
-                    node->model->set_csg_mesh((CSGNode*)root);
+                    node->model->set_csg_mesh((CSGNode*)root, true);
                 }, payload_node->model->get_csg_mesh(), [=](CSGNode* root){
-                    payload_node->model->set_csg_mesh((CSGNode*)root);
+                    payload_node->model->set_csg_mesh((CSGNode*)root, true);
                 }));
                 /*transaction_manager->add(new TreeModifyTask("Delete Model", model->get_parent(), [this, model](){ // TODO : 연계작업으로 변경
                     model->remove_self();

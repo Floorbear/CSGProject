@@ -23,26 +23,10 @@ public:
 private:
     static const char* type_string_values[];
 
-    class CSGNodeTransform : public TransformComponent{ // 트리 구조에서 자식들을 모두 함께 움직여야하기 때문에 필요
-        CSGNode* parent; // 값 타입으로 전달할땐 슬라이싱 되어도 무관, Transform*으로 전달할땐 접근 못해도 무관
-
-    public:
-        CSGNodeTransform(CSGNode* parent_);
-
-        void set_position(const vec3& value) override;
-        void set_rotation(const vec3& value) override;
-        void set_scale(const vec3& value) override;
-
-        void translate(const vec3& value) override;
-        void rotate(const vec3& value) override;
-        void scale(const vec3& value) override;
-        void add_position(const vec3& value) override;
-    };
-
     Mesh result;
     bool is_result_valid = false;
 
-    CSGNodeTransform transform;
+    TransformComponent transform; //  TODO : 포인터로 변경?
     Type type;
 
 public:
@@ -54,6 +38,7 @@ public:
     CSGNode(Type type_, CSGNode* node1, CSGNode* node2);
     ~CSGNode();
 
+    void set_parent(CSGNode* parent_) override;
     bool add_child(CSGNode* node) override;
     bool reparent_child(CSGNode* node, CSGNode* after = nullptr) override;
     void swap_child(CSGNode* child1, CSGNode* child2) override;

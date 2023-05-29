@@ -9,32 +9,18 @@
 #include <math.h>
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Surface_mesh.h>
-#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
-#include <CGAL/Polygon_mesh_processing/corefinement.h>
-#include <CGAL/Polygon_mesh_processing/transform.h>
-#include <CGAL/Aff_transformation_3.h>
-#include <CGAL/Polygon_mesh_processing/compute_normal.h>
 
-typedef CGAL::Simple_cartesian<float>                       Kernel;
-typedef Kernel::Point_3                                      Point;
-typedef Kernel::Vector_3                                     Vector;
-typedef CGAL::Surface_mesh<Point>                            cgal_Mesh;
-typedef cgal_Mesh::Vertex_index vertex_descriptor;
-typedef cgal_Mesh::Face_index face_descriptor;
-typedef CGAL::Simple_cartesian<float> K;
+typedef CGAL::Simple_cartesian<float> Kernel;
+typedef CGAL::Surface_mesh<Kernel::Point_3> CGAL_Mesh;
 
 using namespace glm;
 
-struct Vertex{
+struct Vertex_Rendering{
     vec3 position;
     vec3 normal;
-    vec2 texCoord;
-    //vec2 texcoords
+    vec2 texcoord;
 
-    Vertex(const vec3& position_);
-    Vertex(float x, float y, float z);
-    Vertex(float x, float y, float z, float normal_x_, float normal_y_, float normal_z_);
-    Vertex(float x, float y, float z,float normal_x_, float normal_y_, float normal_z_,float _tex_x,float _tex_y);
+    Vertex_Rendering(float x, float y, float z,float normal_x, float normal_y, float normal_z, float tex_x, float tex_y);
 };
 
 class Mesh{
@@ -42,53 +28,40 @@ class Mesh{
     unsigned int VBO = 0;
     unsigned int EBO = 0;
 
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
+    CGAL_Mesh cgal_mesh;
 
-    bool is_buffer_created;
+    std::vector<Vertex_Rendering> vertices_rendering;
+    std::vector<unsigned int> indices_rendering;
+
+    bool is_buffer_created = false;
+    bool is_buffer_valid = false;
+
+    void calculate_rendering_data();
 
     void buffers_bind() const;
     void buffers_unbind() const;
     void buffers_update() const;
 
 public:
-    static Mesh Triangle;
-    static Mesh Square;
-    static Mesh Cube;
-    static Mesh Cube2;
-    static Mesh t_Cube2;
-    static Mesh Sphere;
-    static Mesh t_Sphere;
-
     Mesh();
-    Mesh(const Mesh& ref);
+    Mesh(const Mesh& mesh);
     Mesh(const Mesh* mesh);
-    Mesh(std::vector<Vertex> vertices_, std::vector<unsigned int> indices_);
+    Mesh(CGAL_Mesh cgal_mesh_);
     ~Mesh();
-
-    void set(const Mesh* mesh);
-    void set(std::vector<Vertex> vertices_, std::vector<unsigned int> indices_);
-    Mesh* clone_new() const;
 
     void render();
 
-    static cgal_Mesh create_cgal_cube(float size);
-    static cgal_Mesh create_cgal_t_cube(float size, float x, float y, float z);
-    static cgal_Mesh create_cgal_sphere(int radius, int stackCount, int sectorCount);
+    static Mesh load(std::string path);
+    static Mesh triangle();
+    static Mesh square();
+    static Mesh cube(float size);
+    static Mesh sphere();
 
-    static Mesh cgal_mesh_to_mesh(cgal_Mesh cg_Mesh);
-    static cgal_Mesh mesh_to_cgal_mesh(Mesh m);
-
-    static cgal_Mesh _cgal_Cube;
-    static cgal_Mesh _cgal_Cube2;
-    static cgal_Mesh _cgal_Sphere;
-    static cgal_Mesh t_cgal_Sphere;
-    static cgal_Mesh t_cgal_Cube2;
-
-    static Mesh compute_intersection(Mesh m1, Mesh m2);
-    static Mesh compute_union(Mesh m1, Mesh m2);
-    static Mesh compute_difference(Mesh m1, Mesh m2);
-    static Mesh compute_difference2(Mesh m1, Mesh m2);
-
+    static bool compute_union(const Mesh& mesh1, Transform* transform1,
+                              const Mesh& mesh2, Transform* transform2, Mesh& result);
+    static bool compute_intersection(const Mesh& mesh1, Transform* transform1,
+                                     const Mesh& mesh2, Transform* transform2, Mesh& result);
+    static bool compute_difference(const Mesh& mesh1, Transform* transform1,
+                                   const Mesh& mesh2, Transform* transform2, Mesh& result);
 };
 
