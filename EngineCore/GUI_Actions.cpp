@@ -10,12 +10,13 @@ WorkSpace_Actions::WorkSpace_Actions(WorkSpace* workspace_) : workspace(workspac
 void WorkSpace_Actions::delete_selected_models(){
     MultiTransactionTask* task_multi = new MultiTransactionTask(Utils::format("Delete %1% Model(s)", (int)workspace->selected_models.size()));
     for (Model* model : workspace->selected_models){
-        task_multi->add_task(new TreeModifyTask("Delete Model", model->get_parent(), [this, model](){
+        task_multi->add_task(new TreeModifyTask("Delete Model", model->get_parent(), [=](){
             model->remove_self();
             return true;
-        }));
+        })); // TODO : undo에 선택 복구
     }
-    workspace->transaction_manager.add(task_multi);
+    workspace->selected_meshes.clear();
+    workspace->selected_models.clear();
 }
 
 void WorkSpace_Actions::add_cube_new(){

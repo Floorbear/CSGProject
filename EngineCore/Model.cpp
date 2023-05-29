@@ -9,6 +9,8 @@
 Model::Model(std::string name_) : name(name_){
     components.push_back(transform = new TransformComponent());
     components.push_back(material = new ColorMaterial());
+
+    gizmo = new Gizmo(get_transform()); // TODO : 씬당 하나만있음 되는거아님?
 }
 
 Model::~Model(){
@@ -21,8 +23,7 @@ Model::~Model(){
     if (csgmesh != nullptr){
         delete csgmesh;
     }
-    if (gizmo != nullptr)
-    {
+    if (gizmo != nullptr){
         delete gizmo;
     }
 }
@@ -117,14 +118,8 @@ void Model::render_outline(const vec3& _scaleAcc){
     }
 }
 
-void Model::render_gizmo()
-{
-    //지연 초기화
-    if (gizmo == nullptr)
-    {
-        gizmo = new Gizmo(get_transform());
-    }
-    gizmo->render(material_ptr->get_uniform_camera());
+void Model::render_gizmo(){
+    gizmo->render(material->get_uniform_camera());
 }
 
 

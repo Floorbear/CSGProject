@@ -192,12 +192,13 @@ void WorkSpace::render_hierarchy(){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){
                 IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
                 CSGNode* payload_node = *(CSGNode**)payload->Data;
-                transaction_manager.add(new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){ // TODO : payload_node와 node의 공통조상으로 바꾸기
+                // TODO : payload_node와 node의 공통조상으로 바꾸기
+                transaction_manager.add(new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){
                     return node->reparent_child(payload_node);
                 }, node->model->get_csg_mesh(), [=](CSGNode* root){
-                    node->model->set_csg_mesh((CSGNode*)root, true);
+                    node->model->set_csg_mesh(root, true);
                 }, payload_node->model->get_csg_mesh(), [=](CSGNode* root){
-                    payload_node->model->set_csg_mesh((CSGNode*)root, true);
+                    payload_node->model->set_csg_mesh(root, true);
                 }));
                 /*transaction_manager->add(new TreeModifyTask("Delete Model", model->get_parent(), [this, model](){ // TODO : 연계작업으로 변경
                     model->remove_self();
@@ -293,7 +294,8 @@ void WorkSpace::render_hierarchy(){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
                 MultiTransactionTask* task_multi = new MultiTransactionTask(Utils::format("Reparent %1% Model(s)", (int)selected_models.size()));
                 for (Model* selected_model : selected_models){
-                    task_multi->add_task(new TreeModifyTask("Reparent Model", root_model, [=](){ // TODO : root_model을 selected_model과 model 의 공통조상으로 변경
+                    // TODO : root_model을 selected_model과 model 의 공통조상으로 변경
+                    task_multi->add_task(new TreeModifyTask("Reparent Model", root_model, [=](){
                         return model->reparent_child(selected_model);
                     }));
                 }
@@ -399,8 +401,7 @@ void WorkSpace::on_mouse_press_left(){
     prevPos = mouse_pos_left_press_raw;
     // camera_transform_saved = camera.transform;
 
-    if (main_renderer != nullptr)
-    {
+    if (main_renderer != nullptr)    {
         main_renderer->find_selection(root_model->get_children(), mouse_pos_left_current_view);
     }
 }
@@ -408,10 +409,9 @@ void WorkSpace::on_mouse_press_left(){
 void WorkSpace::on_mouse_drag_left(){
     float sensitivity = 15.f;
     vec2 moveDir = mouse_pos_left_current_raw - prevPos;
-    
+
     //기즈모용 델리게이트 
-    if (dragDelegate != nullptr)
-    {
+    if (dragDelegate != nullptr)    {
         dragDelegate(mouse_pos_left_current_raw, prevPos);
 
     }

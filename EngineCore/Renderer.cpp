@@ -156,10 +156,10 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
         }
 
         //기즈모 정보 렌더링
-        for (Model* model : get_selected_models())
-        {
+        for (Model* model : get_selected_models()){
             model->get_gizmo()->render_selectionBuffer(camera);
         }
+
         framebuffer_selection->disable();
     }
 

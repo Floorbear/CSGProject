@@ -7,7 +7,7 @@ Gizmo::Gizmo(TransformComponent* _parentTransform)
 	parentTransform = _parentTransform;
 	for(int i = 0 ; i<4; i++)
 	{
-		Mesh* newMesh = Mesh::Cube.clone_new();
+		Mesh* newMesh = new Mesh(Mesh::cube(1));
 		uiMesh.push_back(newMesh);
 	}
 
@@ -69,7 +69,7 @@ void Gizmo::render(Camera* _camera)
 		Transform newTransform = parentTransform->get_value();
 		newTransform.set_scale(uiMesh_scale[i]);
 		newTransform.add_position(uiMesh_position[i]);
-		shader->set_mat4("world", *(newTransform.get_matrix()));
+		shader->set_mat4("world", newTransform.get_world_matrix());
 		shader->set_mat4("view", _camera->get_view());
 		shader->set_mat4("projection", _camera->get_projection());
 		shader->set_vec3("gizmoColor", uiMesh_color[i]);
@@ -90,7 +90,7 @@ void Gizmo::render_selectionBuffer(Camera* _camera)
 		Transform newTransform = parentTransform->get_value();
 		newTransform.set_scale(uiMesh_scale[i]);
 		newTransform.add_position(uiMesh_position[i]);
-		selectionShader->set_mat4("world", *(newTransform.get_matrix()));
+		selectionShader->set_mat4("world", newTransform.get_world_matrix());
 		selectionShader->set_mat4("view", _camera->get_view());
 		selectionShader->set_mat4("projection", _camera->get_projection());
 

@@ -1,13 +1,10 @@
 #include "Mesh.h"
 #include "Shader.h"
 
-#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
 #include <CGAL/Polygon_mesh_processing/transform.h>
 #include <CGAL/Aff_transformation_3.h>
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
-#include <CGAL/boost/graph/selection.h>
-#include <CGAL/Polygon_mesh_processing/remesh.h>
 
 // ===== Vertex ===== //
 
