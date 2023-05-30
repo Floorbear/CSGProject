@@ -93,7 +93,7 @@ void Model::render(){
     for (Model* child : children){
         child->material->set_uniform_camera(material->get_uniform_camera());
         child->material->set_uniform_lights(material->get_uniform_lights());
-        child->render();
+        //child->render();
     }
 }
 

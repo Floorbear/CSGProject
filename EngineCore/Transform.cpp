@@ -9,6 +9,7 @@ const Transform Transform::identity = Transform();
 
 void Transform::on_local_modify(){
     is_modified_local = true;
+    calculate_matrix();
 }
 
 Transform::Transform(){

@@ -97,19 +97,15 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
         //윤곽선을 그리기 위해 Stencil 셋팅
         //Selected Model의 모델의 픽셀들은 스텐실 값이 1로 초기화 됩니다. 그 외에는 0입니다.
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        if(isSelected)
-        {
+        if(isSelected){
             glStencilMask(0xFF);
         }
-        else
-        {
+        else{
             glStencilMask(0x00);
         }
         model->get_material()->set_uniform_camera(camera);
         model->get_material()->set_uniform_lights(lights);
         model->render();
-
-
     }
 
     //조금 더 큰 모델을 윤곽선 쉐이더로 그립니다.

@@ -1,5 +1,6 @@
 #include "Mesh.h"
 #include "Shader.h"
+#include "Utils.h"
 
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
 #include <CGAL/Polygon_mesh_processing/transform.h>
@@ -121,14 +122,14 @@ Mesh Mesh::cube(float size){
     CGAL_Mesh cgal_result;
 
     std::vector<Vertex_index> vd;
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(0.0f, 0.0f, 0.0f)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(0.0f, size, 0.0f)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size, size, 0.0f)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size, 0.0f, 0.0f)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(0.0f, 0.0f, size)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(0.0f, size, size)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size, size, size)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size, 0.0f, size)));
+    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(-size/2, -size/2, -size/2)));
+    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(-size/2, size/2, -size/2)));
+    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size/2, size/2, -size/2)));
+    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size/2, -size/2, -size/2)));
+    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(-size/2, -size/2, size/2)));
+    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(-size/2, size/2, size/2)));
+    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size/2, size/2, size/2)));
+    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size/2, -size/2, size/2)));
 
 
     Face_index f1 = cgal_result.add_face(vd[0], vd[3], vd[2]);
@@ -204,6 +205,58 @@ CGAL::Aff_transformation_3<Kernel> mat4_to_cgal_transform(const mat4& matrix){
                                               matrix[0][2], matrix[1][2], matrix[2][2], matrix[3][2]);
 }
 
+
+struct Visitor : public CGAL::Polygon_mesh_processing::Corefinement::Default_visitor<CGAL_Mesh>{
+    std::map<const CGAL_Mesh*, std::vector<Vertex_index>> new_vertices_src;
+    std::vector<Vertex_index> new_vertices_tgt;
+
+    //std::map<Vertex_index, std::tuple<Vertex_index, Vertex_index>> edge_split; // 
+
+    void after_subface_created(Face_index f_new, const CGAL_Mesh& tm){
+        printf("subface_created in %d\n", &tm);
+        //called after creating a new triangle face f_new in tm to triangulate the face passed to before_subface_creations().More...
+    }
+    Vertex_index edge_vd1;
+    Vertex_index edge_vd2;
+    void before_edge_split(Halfedge_index h, const CGAL_Mesh& tm){
+        edge_vd1 = *tm.vertices_around_target(h).first;
+        edge_vd2 = *tm.vertices_around_target(h).second;
+    }
+    void edge_split(Halfedge_index hnew, const CGAL_Mesh& tm){
+        printf("edge split of %d\n", &tm); // src1의 엣지를 스플릿하는거라서 
+        Vertex_index edge_vd1_new = *tm.vertices_around_target(hnew).first;
+        Vertex_index edge_vd2_new = *tm.vertices_around_target(hnew).second;
+        if (edge_vd1 == edge_vd2_new || edge_vd2 == edge_vd2_new){ // vd2_new를 새 정점으로 정하기 위함.
+            Vertex_index temp = edge_vd1_new;
+            edge_vd1_new = edge_vd2_new;
+            edge_vd2_new = temp;
+        }
+        //auto tex_coord_map = tm.property_map<Face_index, std::map<Vertex_index, vec3>>("f:texcoords").first;
+        // edge_v1, edge_v2를 포함하는 면을 스플릿 할때  
+        //for(Face_index fd : tm.halfedge(
+    }
+
+    void new_vertex_added(std::size_t i_id, vertex_descriptor v, const CGAL_Mesh& tm){
+        printf("newv vertex of %d\n", &tm);
+        new_vertices_src[&tm].push_back(v);
+    }
+
+    // 모든 연산이 끝난뒤 copy가 수행. face카피할때 정보 베껴오기만하면 될듯.
+
+    void after_face_copy(face_descriptor f_src, const CGAL_Mesh& tm_src, face_descriptor f_tgt, const CGAL_Mesh& tm_tgt){
+        printf("copy face of %d\n", &tm_src);
+        //called after importing the face f_src of tm_src in tm_tgt.More...
+    }
+
+    void after_vertex_copy(Vertex_index v_src, const CGAL_Mesh& tm_src, Vertex_index v_tgt, const CGAL_Mesh& tm_tgt){
+        printf("vertex copy of %d\n", &tm_src);
+        // src1->tgt, src2->tgt 버텍스 카피 맵을 만들어야겠음. 그래서  face카피에서 맵의 값들ㅇ르 치환가능하게
+        if (Utils::contains(new_vertices_src[&tm_src], v_src)){
+            new_vertices_tgt.push_back(v_tgt);
+        }
+    }
+};
+
 // TODO : union 함수처럼 수정
 bool Mesh::compute_difference(const Mesh& mesh1, Transform* transform1,
                               const Mesh& mesh2, Transform* transform2, Mesh& result){
@@ -263,12 +316,12 @@ bool Mesh::compute_union(const Mesh& mesh1, Transform* transform1,
         cgal_result.add_property_map<Edge_index, bool>("e:is_constrained", false).first;
 
     bool result_valid = CGAL::Polygon_mesh_processing::corefine_and_compute_difference(cgal_mesh1, cgal_mesh2, cgal_result,
-                                                                                       CGAL::parameters::default_values(),
+                                                                                       CGAL::parameters::visitor(Visitor()),
                                                                                        CGAL::parameters::default_values(),
                                                                                        CGAL::parameters::edge_is_constrained_map(is_constrained_map));
 
-    printf("%zd %zd %zd\n", cgal_mesh1.vertices().size(), cgal_mesh1.edges().size(), cgal_mesh1.faces().size());
-    printf("%zd %zd %zd\n", cgal_mesh2.vertices().size(), cgal_mesh2.edges().size(), cgal_mesh2.faces().size());
+    printf("%d %zd %zd %zd\n", &cgal_mesh1, cgal_mesh1.vertices().size(), cgal_mesh1.edges().size(), cgal_mesh1.faces().size());
+    printf("%d %zd %zd %zd\n", &cgal_mesh2, cgal_mesh2.vertices().size(), cgal_mesh2.edges().size(), cgal_mesh2.faces().size());
     printf("%zd %zd %zd\n\n", cgal_result.vertices().size(), cgal_mesh2.edges().size(), cgal_result.faces().size());
 
     auto tex_coord_map = cgal_result.add_property_map<Face_index, std::map<Vertex_index, vec3>>("f:texcoords", std::map<Vertex_index, vec3>()).first;
