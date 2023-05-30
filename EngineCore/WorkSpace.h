@@ -78,7 +78,7 @@ public:
     void on_mouse_press_left();
 
     void on_mouse_drag_left();
-    std::function<void(vec2,vec2)> dragDelegate;
+    std::function<void(Camera*,vec2,vec2)> dragDelegate;
 
     void on_mouse_release_left();
     vec2 prevPos;

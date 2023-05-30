@@ -69,6 +69,29 @@ void Camera::calculate_view(){
 }
 
 
+vec2 Camera::worldPosition_to_screenPosition(const vec3& _worldPosition) 
+{
+
+    // Calculate the screen-space position
+    vec4 screenPosition = get_projection() * get_view() * glm::vec4(_worldPosition, 1.0f);
+
+    // Normalize the coordinates
+    glm::vec3 normalizedScreenPosition = glm::vec3(
+        screenPosition.x / screenPosition.w,
+        screenPosition.y / screenPosition.w,
+        screenPosition.z / screenPosition.w
+    );
+
+    // Convert to screen-space position
+    glm::vec2 screenSpacePosition = glm::vec2(
+        (normalizedScreenPosition.x + 1.0f) / 2.0f * width,
+        (1.0f - normalizedScreenPosition.y) / 2.0f * height
+    );
+   
+    return screenSpacePosition;
+}
+
+
 void Camera::resize(float viewport_width, float viewport_height){
     width = viewport_width;
     height = viewport_height;

@@ -32,6 +32,21 @@ public:
 
 	// ===== Move 조작 관련 =====
 public:
-	void move(vec2 _curPos, vec2 _prevPos, int _axis);
+	void move(Camera* _camera,vec2 _curPos, vec2 _prevPos, int _axis);
+
+	void move_dot(Camera* _camera, glm::vec2& _curPos, glm::vec2& _prevPos);
+
+
+	// ===== ZSort =====
+private:
+	struct zSortStruct
+	{
+		int renderOrder = 0;
+		float length = 0;
+	};
+
+	std::vector<int> zSort(std::vector<zSortStruct> _vector);
+	std::vector<int> get_renderOrder(Camera* _camera);
+
 };
 

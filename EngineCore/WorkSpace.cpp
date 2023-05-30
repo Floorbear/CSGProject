@@ -406,13 +406,13 @@ void WorkSpace::on_mouse_press_left(){
 }
 
 void WorkSpace::on_mouse_drag_left(){
-    float sensitivity = 15.f;
+    float sensitivity = 22.f;
     vec2 moveDir = mouse_pos_left_current_raw - prevPos;
 
     //기즈모용 델리게이트 
     if (dragDelegate != nullptr){
-        dragDelegate(mouse_pos_left_current_raw, prevPos);
-
+        dragDelegate(get_main_camera(), mouse_pos_left_current_raw, prevPos);
+        prevPos = mouse_pos_left_current_raw;
     }
     else
     {

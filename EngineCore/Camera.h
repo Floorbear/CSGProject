@@ -37,6 +37,10 @@ public:
 		return &transform;
 	}
 
+	//Screen 좌표계 왼쪽 아래가 중점...  y증가하면 위로
+	//Imgui 포지션 : y증가하면 아래로
+	vec2 worldPosition_to_screenPosition(const vec3& _worldPosition);
+
 private:
 	TransformComponent transform;
 
