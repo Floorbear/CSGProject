@@ -6,47 +6,76 @@
 Gizmo::Gizmo(TransformComponent* _parentTransform)
 {
 	parentTransform = _parentTransform;
-	for(int i = 0 ; i<4; i++)
-	{
-		Mesh* newMesh = new Mesh(Mesh::cube(1));
-		uiMesh.push_back(newMesh);
-	}
+
 
 	shader = new Shader("DefaultVertexShader.glsl", "GizmoFragmentShader.glsl");
 	selectionShader = new Shader("DefaultVertexShader.glsl", "SelectionFragmentShader.glsl");
 
+
+	//트랜스폼 메쉬 초기화
 	{
+		for (int i = 0; i < 4; i++)
+		{
+			Mesh* newMesh = new Mesh(Mesh::cube(1));
+			transformMesh.push_back(newMesh);
+		}
+
 		float valueBig = 1.2f;
 		float valueSmall = 0.13f;
-		uiMesh_scale.push_back({ valueBig,valueSmall,valueSmall });
-		uiMesh_scale.push_back({valueSmall,valueBig,valueSmall });
-		uiMesh_scale.push_back({ valueSmall,valueSmall,valueBig });
-		uiMesh_scale.push_back({valueSmall,valueSmall,valueSmall });
+		transformMesh_scale.push_back({ valueBig,valueSmall,valueSmall });
+		transformMesh_scale.push_back({valueSmall,valueBig,valueSmall });
+		transformMesh_scale.push_back({ valueSmall,valueSmall,valueBig });
+		transformMesh_scale.push_back({valueSmall,valueSmall,valueSmall });
 	}
 
 	{
-		uiMesh_color.push_back({ 1,0,0 });
-		uiMesh_color.push_back({ 0,1,0 });
-		uiMesh_color.push_back({ 0,0,1 });
-		uiMesh_color.push_back({ 1,1,1 });
+		mesh_color.push_back({ 1,0,0 });
+		mesh_color.push_back({ 0,1,0 });
+		mesh_color.push_back({ 0,0,1 });
+		mesh_color.push_back({ 1,1,1 });
 	}
 
 	{
 		float valueBig = 0.63f;
 		float valueSmall = 0.f;
-		uiMesh_position.push_back({ valueBig,valueSmall,valueSmall });
-		uiMesh_position.push_back({ valueSmall,valueBig,valueSmall });
-		uiMesh_position.push_back({ valueSmall,valueSmall,valueBig });
-		uiMesh_position.push_back({ valueSmall,valueSmall,valueSmall });
+		transformMesh_position.push_back({ valueBig,valueSmall,valueSmall });
+		transformMesh_position.push_back({ valueSmall,valueBig,valueSmall });
+		transformMesh_position.push_back({ valueSmall,valueSmall,valueBig });
+		transformMesh_position.push_back({ valueSmall,valueSmall,valueSmall });
+	}
+
+	//스케일 메쉬 초기화
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			Mesh* newMesh = new Mesh(Mesh::cube(1));
+			scaleMesh.push_back(newMesh);
+		}
+
+		float valueBig = 0.5f;
+		float valueSmall = 0.5f;
+		scaleMesh_scale.push_back({ valueBig,valueSmall,valueSmall });
+		scaleMesh_scale.push_back({ valueSmall,valueBig,valueSmall });
+		scaleMesh_scale.push_back({ valueSmall,valueSmall,valueBig });
+		scaleMesh_scale.push_back({ valueSmall,valueSmall,valueSmall });
+	}
+
+	{
+		float valueBig = 1.63f;
+		float valueSmall = 0.f;
+		scaleMesh_position.push_back({ valueBig,valueSmall,valueSmall });
+		scaleMesh_position.push_back({ valueSmall,valueBig,valueSmall });
+		scaleMesh_position.push_back({ valueSmall,valueSmall,valueBig });
+		scaleMesh_position.push_back({ valueSmall,valueSmall,valueSmall });
 	}
 
 }
 
 Gizmo::~Gizmo()
 {
-	for (int i = 0; i < uiMesh.size(); i++)
+	for (int i = 0; i < transformMesh.size(); i++)
 	{
-		delete uiMesh[i];
+		delete transformMesh[i];
 	}
 	if (shader != nullptr)
 	{
@@ -70,14 +99,13 @@ void Gizmo::render(Camera* _camera)
 	for (int i = 0; i < renderOrder.size(); i++)
 	{
 		Transform newTransform = parentTransform->get_value();
-		newTransform.set_scale(uiMesh_scale[renderOrder[i]]);
-		newTransform.add_position(uiMesh_position[renderOrder[i]]);
+		newTransform.set_scale(transformMesh_scale[renderOrder[i]]);
+		newTransform.add_position(transformMesh_position[renderOrder[i]]);
 		shader->set_mat4("world", newTransform.get_world_matrix());
 		shader->set_mat4("view", _camera->get_view());
 		shader->set_mat4("projection", _camera->get_projection());
-		shader->set_vec3("gizmoColor", uiMesh_color[renderOrder[i]]);
-
-		uiMesh[renderOrder[i]]->render();
+		shader->set_vec3("gizmoColor", mesh_color[renderOrder[i]]);
+		transformMesh[renderOrder[i]]->render();
 	}
 	glEnable(GL_DEPTH_TEST);
 }
@@ -90,11 +118,11 @@ void Gizmo::render_selectionBuffer(Camera* _camera)
 	glDisable(GL_DEPTH_TEST);
 
 	std::vector<int> renderOrder = get_renderOrder(_camera);
-	for (int i = 0; i < uiMesh.size(); i++)
+	for (int i = 0; i < transformMesh.size(); i++)
 	{
 		Transform newTransform = parentTransform->get_value();
-		newTransform.set_scale(uiMesh_scale[renderOrder[i]]);
-		newTransform.add_position(uiMesh_position[renderOrder[i]]);
+		newTransform.set_scale(transformMesh_scale[renderOrder[i]]);
+		newTransform.add_position(transformMesh_position[renderOrder[i]]);
 		selectionShader->set_mat4("world", newTransform.get_world_matrix());
 		selectionShader->set_mat4("view", _camera->get_view());
 		selectionShader->set_mat4("projection", _camera->get_projection());
@@ -102,7 +130,7 @@ void Gizmo::render_selectionBuffer(Camera* _camera)
 		selectionShader->set_uint("objectType", 1);
 		selectionShader->set_uint("modelID", renderOrder[i]); // 0 : x , 1 : y , 2: z , 3 : mainDot
 		selectionShader->set_uint("meshID", 0);
-		uiMesh[renderOrder[i]]->render();
+		transformMesh[renderOrder[i]]->render();
 	}
 	glEnable(GL_DEPTH_TEST);
 }
@@ -123,7 +151,7 @@ void Gizmo::move(Camera* _camera,vec2 _curPos, vec2 _prevPos, int _axis)
 	//Screen좌표계 : 
 	vec2 parentScreenPositon = _camera->worldPosition_to_screenPosition(parentTransform->get_position());
 	//parentScreenPositon.y *= -1;
-	vec2 axisScreenPosition = _camera->worldPosition_to_screenPosition(parentTransform->get_position() + uiMesh_position[_axis]);
+	vec2 axisScreenPosition = _camera->worldPosition_to_screenPosition(parentTransform->get_position() + transformMesh_position[_axis]);
 	//axisScreenPosition.y *= -1;
 
 	vec2 screenVector = axisScreenPosition - parentScreenPositon;
@@ -139,7 +167,7 @@ void Gizmo::move(Camera* _camera,vec2 _curPos, vec2 _prevPos, int _axis)
 	//printf("ImguiPos : %f, %f \n", _curPos.x, _curPos.y);
 
 	float speed = 5.f;
-	parentTransform->add_position(speed * Utils::time_delta() * uiMesh_color[_axis] * moveForce); // Color는 축역활도 함
+	parentTransform->add_position(speed * Utils::time_delta() * mesh_color[_axis] * moveForce); // Color는 축역활도 함
 
 
 }
@@ -183,7 +211,7 @@ std::vector<int> Gizmo::get_renderOrder(Camera* _camera)
 	for (int i = 0; i < 3; i++)
 	{
 		zSortStruct newZSortStruct;
-		newZSortStruct.length = length(uiMesh_position[i] - _camera->get_transform()->get_position());
+		newZSortStruct.length = length(transformMesh_position[i] - _camera->get_transform()->get_position());
 		newZSortStruct.renderOrder = i;
 		newZSortStructVector.push_back(newZSortStruct);
 	}

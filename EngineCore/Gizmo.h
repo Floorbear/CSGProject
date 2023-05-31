@@ -11,11 +11,23 @@ public:
 	~Gizmo();
 
 	// ===== 기즈모 외관 관련 =====
+	enum class GizmoMode
+	{
+		Transform,
+		Scale
+	};
 private:
-	std::vector<Mesh*> uiMesh; // 0 : x , 1 : y , 2: z , 3 : mainDot
-	std::vector<vec3> uiMesh_scale;
-	std::vector<vec3> uiMesh_position;
-	std::vector<vec3> uiMesh_color;
+	// ===== Transform Mesh =====
+	std::vector<Mesh*> transformMesh; // 0 : x , 1 : y , 2: z , 3 : mainDot
+	std::vector<vec3> transformMesh_scale;
+	std::vector<vec3> transformMesh_position;
+
+	// ===== Scale Mesh =====
+	std::vector<Mesh*> scaleMesh;
+	std::vector<vec3> scaleMesh_scale;
+	std::vector<vec3> scaleMesh_position;
+
+	std::vector<vec3> mesh_color;
 	TransformComponent* parentTransform;
 	Shader* shader;
 public:
