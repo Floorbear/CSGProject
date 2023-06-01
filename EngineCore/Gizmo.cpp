@@ -3,6 +3,8 @@
 #include "Camera.h"
 #include <algorithm>
 
+GizmoMode Gizmo::gizmoMode = GizmoMode::Scale;
+
 Gizmo::Gizmo(TransformComponent* _parentTransform)
 {
 	parentTransform = _parentTransform;
@@ -11,7 +13,7 @@ Gizmo::Gizmo(TransformComponent* _parentTransform)
 	shader = new Shader("DefaultVertexShader.glsl", "GizmoFragmentShader.glsl");
 	selectionShader = new Shader("DefaultVertexShader.glsl", "SelectionFragmentShader.glsl");
 
-
+	float dotScale = 0.13f;
 	//트랜스폼 메쉬 초기화
 	{
 		for (int i = 0; i < 4; i++)
@@ -25,7 +27,7 @@ Gizmo::Gizmo(TransformComponent* _parentTransform)
 		transformMesh_scale.push_back({ valueBig,valueSmall,valueSmall });
 		transformMesh_scale.push_back({valueSmall,valueBig,valueSmall });
 		transformMesh_scale.push_back({ valueSmall,valueSmall,valueBig });
-		transformMesh_scale.push_back({valueSmall,valueSmall,valueSmall });
+		transformMesh_scale.push_back({ dotScale,dotScale,dotScale });
 	}
 
 	{
@@ -52,16 +54,16 @@ Gizmo::Gizmo(TransformComponent* _parentTransform)
 			scaleMesh.push_back(newMesh);
 		}
 
-		float valueBig = 0.5f;
-		float valueSmall = 0.5f;
+		float valueBig = 0.3f;
+		float valueSmall = 0.3f;
 		scaleMesh_scale.push_back({ valueBig,valueSmall,valueSmall });
 		scaleMesh_scale.push_back({ valueSmall,valueBig,valueSmall });
 		scaleMesh_scale.push_back({ valueSmall,valueSmall,valueBig });
-		scaleMesh_scale.push_back({ valueSmall,valueSmall,valueSmall });
+		scaleMesh_scale.push_back({ dotScale,dotScale,dotScale });
 	}
 
 	{
-		float valueBig = 1.63f;
+		float valueBig = 1.2f;
 		float valueSmall = 0.f;
 		scaleMesh_position.push_back({ valueBig,valueSmall,valueSmall });
 		scaleMesh_position.push_back({ valueSmall,valueBig,valueSmall });
@@ -69,6 +71,14 @@ Gizmo::Gizmo(TransformComponent* _parentTransform)
 		scaleMesh_position.push_back({ valueSmall,valueSmall,valueSmall });
 	}
 
+	//렌더 함수 초기화
+	renderColorFunc.resize(static_cast<int>(GizmoMode::Max));
+	renderColorFunc[static_cast<int>(GizmoMode::Transform)] = std::bind(&Gizmo::render_transformMesh, this, std::placeholders::_1);
+	renderColorFunc[static_cast<int>(GizmoMode::Scale)] = std::bind(&Gizmo::render_scaleMesh, this,std::placeholders::_1);
+
+	renderSelectionFunc.resize(static_cast<int>(GizmoMode::Max));
+	renderSelectionFunc[static_cast<int>(GizmoMode::Transform)] = std::bind(&Gizmo::render_transformMesh_selection, this, std::placeholders::_1);
+	renderSelectionFunc[static_cast<int>(GizmoMode::Scale)] = std::bind(&Gizmo::render_scaleMesh_selection, this, std::placeholders::_1);
 }
 
 Gizmo::~Gizmo()
@@ -83,56 +93,81 @@ Gizmo::~Gizmo()
 	}
 }
 
-void Gizmo::apply(Camera* _camera)
-{
-
-}
 
 void Gizmo::render(Camera* _camera)
 {
-	apply(_camera);
 	shader->use();
 
 	glDisable(GL_DEPTH_TEST);
+	renderColorFunc[static_cast<int>(gizmoMode)](_camera);
+	glEnable(GL_DEPTH_TEST);
+}
 
-	std::vector<int> renderOrder = get_renderOrder(_camera);
+void Gizmo::render_color(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position, std::vector<vec3> _mesh_color)
+{ 
+	std::vector<int> renderOrder = get_renderOrder(_camera, _mesh_position);
 	for (int i = 0; i < renderOrder.size(); i++)
 	{
-		Transform newTransform = parentTransform->get_value();
+		Transform newTransform = _parentTransform->get_value();
 		newTransform.set_rotation({ 0,0,0 });
-		newTransform.set_scale(transformMesh_scale[renderOrder[i]]);
-		newTransform.add_position(transformMesh_position[renderOrder[i]]);
-		shader->set_mat4("world", newTransform.get_world_matrix());
-		shader->set_mat4("view", _camera->get_view());
-		shader->set_mat4("projection", _camera->get_projection());
-		shader->set_vec3("gizmoColor", mesh_color[renderOrder[i]]);
-		transformMesh[renderOrder[i]]->render();
+		newTransform.set_scale(_mesh_scale[renderOrder[i]]);
+		newTransform.add_position(_mesh_position[renderOrder[i]]);
+		_shader->set_mat4("world", newTransform.get_world_matrix());
+		_shader->set_mat4("view", _camera->get_view());
+		_shader->set_mat4("projection", _camera->get_projection());
+		_shader->set_vec3("gizmoColor", _mesh_color[renderOrder[i]]);
+		_mesh[renderOrder[i]]->render();
 	}
-	glEnable(GL_DEPTH_TEST);
+}
+
+void Gizmo::render_transformMesh(Camera* _camera)
+{
+	render_color(_camera, parentTransform, transformMesh, shader, transformMesh_scale, transformMesh_position, mesh_color);
+}
+
+void Gizmo::render_scaleMesh(Camera* _camera)
+{
+	render_color(_camera, parentTransform, transformMesh, shader, transformMesh_scale, transformMesh_position, mesh_color);
+	render_color(_camera, parentTransform, scaleMesh, shader, scaleMesh_scale, scaleMesh_position, mesh_color);
+}
+
+void Gizmo::render_selection(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position)
+{
+	std::vector<int> renderOrder = get_renderOrder(_camera, _mesh_position);
+	for (int i = 0; i < renderOrder.size(); i++)
+	{
+		Transform newTransform = _parentTransform->get_value();
+		newTransform.set_rotation({ 0,0,0 });
+		newTransform.set_scale(_mesh_scale[renderOrder[i]]);
+		newTransform.add_position(_mesh_position[renderOrder[i]]);
+		_shader->set_mat4("world", newTransform.get_world_matrix());
+		_shader->set_mat4("view", _camera->get_view());
+		_shader->set_mat4("projection", _camera->get_projection());
+		
+		_shader->set_uint("objectType", 1);
+		_shader->set_uint("modelID", renderOrder[i]); // 0 : x , 1 : y , 2: z , 3 : mainDot
+		_shader->set_uint("meshID", 0);
+		_mesh[renderOrder[i]]->render();
+	}
+}
+
+void Gizmo::render_transformMesh_selection(Camera* _camera)
+{
+	render_selection(_camera, parentTransform, transformMesh, selectionShader, transformMesh_scale, transformMesh_position);
+}
+
+void Gizmo::render_scaleMesh_selection(Camera* _camera)
+{
+	render_selection(_camera, parentTransform, transformMesh, selectionShader, transformMesh_scale, transformMesh_position);
+	render_selection(_camera, parentTransform, scaleMesh, selectionShader, scaleMesh_scale, scaleMesh_position);
 }
 
 void Gizmo::render_selectionBuffer(Camera* _camera)
 {
-	apply(_camera);
 	selectionShader->use();
 
 	glDisable(GL_DEPTH_TEST);
-
-	std::vector<int> renderOrder = get_renderOrder(_camera);
-	for (int i = 0; i < transformMesh.size(); i++)
-	{
-		Transform newTransform = parentTransform->get_value();
-		newTransform.set_scale(transformMesh_scale[renderOrder[i]]);
-		newTransform.add_position(transformMesh_position[renderOrder[i]]);
-		selectionShader->set_mat4("world", newTransform.get_world_matrix());
-		selectionShader->set_mat4("view", _camera->get_view());
-		selectionShader->set_mat4("projection", _camera->get_projection());
-
-		selectionShader->set_uint("objectType", 1);
-		selectionShader->set_uint("modelID", renderOrder[i]); // 0 : x , 1 : y , 2: z , 3 : mainDot
-		selectionShader->set_uint("meshID", 0);
-		transformMesh[renderOrder[i]]->render();
-	}
+	renderSelectionFunc[static_cast<int>(gizmoMode)](_camera);
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -151,9 +186,7 @@ void Gizmo::move(Camera* _camera,vec2 _curPos, vec2 _prevPos, int _axis)
 	}
 	//Screen좌표계 : 
 	vec2 parentScreenPositon = _camera->worldPosition_to_screenPosition(parentTransform->get_position());
-	//parentScreenPositon.y *= -1;
 	vec2 axisScreenPosition = _camera->worldPosition_to_screenPosition(parentTransform->get_position() + transformMesh_position[_axis]);
-	//axisScreenPosition.y *= -1;
 
 	vec2 screenVector = axisScreenPosition - parentScreenPositon;
 	screenVector = normalize(screenVector);
@@ -164,11 +197,21 @@ void Gizmo::move(Camera* _camera,vec2 _curPos, vec2 _prevPos, int _axis)
 
 
 
-	//printf("ScreenPos : %f, %f \n", screenPos.x, screenPos.y);
-	//printf("ImguiPos : %f, %f \n", _curPos.x, _curPos.y);
 
 	float speed = 5.f;
-	parentTransform->add_position(speed * Utils::time_delta() * mesh_color[_axis] * moveForce); // Color는 축역활도 함
+	switch (gizmoMode)
+	{
+	case GizmoMode::Transform:
+		parentTransform->add_position(speed * Utils::time_delta() * mesh_color[_axis] * moveForce); // Color는 축역활도 함
+		break;
+	case GizmoMode::Scale:
+		parentTransform->scale(speed * Utils::time_delta() * mesh_color[_axis] * moveForce); // Color는 축역활도 함
+		break;
+	case GizmoMode::Max:
+		break;
+	default:
+		break;
+	}
 
 
 }
@@ -205,14 +248,14 @@ std::vector<int> Gizmo::zSort(std::vector<zSortStruct> _vector)
 	return result;
 }
 
-std::vector<int> Gizmo::get_renderOrder(Camera* _camera)
+std::vector<int> Gizmo::get_renderOrder(Camera* _camera, std::vector<vec3> _positionVector)
 {
 	//Set ZOrder
 	std::vector<zSortStruct> newZSortStructVector;
 	for (int i = 0; i < 3; i++)
 	{
 		zSortStruct newZSortStruct;
-		newZSortStruct.length = length(transformMesh_position[i] - _camera->get_transform()->get_position());
+		newZSortStruct.length = length(_positionVector[i] - _camera->get_transform()->get_position());
 		newZSortStruct.renderOrder = i;
 		newZSortStructVector.push_back(newZSortStruct);
 	}

@@ -2,6 +2,14 @@
 #include "Utils.h"
 #include "Mesh.h"
 
+// ===== 기즈모 외관 관련 =====
+enum class GizmoMode
+{
+	Transform,
+	Scale,
+	Max
+};
+
 class Shader;
 class Camera;
 class Gizmo
@@ -10,12 +18,7 @@ public:
 	Gizmo(TransformComponent* _parentTransform);
 	~Gizmo();
 
-	// ===== 기즈모 외관 관련 =====
-	enum class GizmoMode
-	{
-		Transform,
-		Scale
-	};
+
 private:
 	// ===== Transform Mesh =====
 	std::vector<Mesh*> transformMesh; // 0 : x , 1 : y , 2: z , 3 : mainDot
@@ -27,25 +30,38 @@ private:
 	std::vector<vec3> scaleMesh_scale;
 	std::vector<vec3> scaleMesh_position;
 
+	// ===== 컬러 렌더링 관련 ======
 	std::vector<vec3> mesh_color;
 	TransformComponent* parentTransform;
 	Shader* shader;
 public:
-	void apply(Camera* _camera); 
 	void render(Camera* _camera);
-
-
-	// ===== 셀렉션 관련 =====
 private:
-	Shader* selectionShader;
+	void render_color(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader
+		, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position,
+		std::vector<vec3> _mesh_color);
+
+	void render_transformMesh(Camera* _camera);
+	void render_scaleMesh(Camera* _camera);
+
+
+
+	// ===== 셀렉션 렌더링 관련 =====
 public:
 	void render_selectionBuffer(Camera* _camera);
-	//void render()
+
+private:
+	Shader* selectionShader;
+	void render_selection(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader
+		, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position
+	);
+	void render_transformMesh_selection(Camera* _camera);
+	void render_scaleMesh_selection(Camera* _camera);
+
 
 	// ===== Move 조작 관련 =====
 public:
 	void move(Camera* _camera,vec2 _curPos, vec2 _prevPos, int _axis);
-
 	void move_dot(Camera* _camera, glm::vec2& _curPos, glm::vec2& _prevPos);
 
 
@@ -58,7 +74,16 @@ private:
 	};
 
 	std::vector<int> zSort(std::vector<zSortStruct> _vector);
-	std::vector<int> get_renderOrder(Camera* _camera);
+	std::vector<int> get_renderOrder(Camera* _camera, std::vector<vec3> _positionVector);
 
+	// ===== 렌더 모드 관련 ======
+	static GizmoMode gizmoMode;
+	std::vector<std::function<void(Camera* _camera)>> renderColorFunc;
+	std::vector<std::function<void(Camera* _camera)>> renderSelectionFunc;
+public:
+	inline static void set_gizmoMode(GizmoMode _mode)
+	{
+		gizmoMode = _mode;
+	}
 };
 

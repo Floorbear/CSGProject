@@ -176,7 +176,6 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
             firstSelectedModel = model;
             break;
         }
-
         int axis = Pixel.model_id; // 0 : x , 1 : y , 2 : z, 3 : mainDot
         parent->active_workspace->dragDelegate =
             std::bind(&Gizmo::move, firstSelectedModel->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,axis);
