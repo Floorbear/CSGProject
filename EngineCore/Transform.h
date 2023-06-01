@@ -19,7 +19,7 @@ protected:
 
     virtual void on_local_modify();
 public:
-    const static Transform identity;
+    static Transform identity; // const
 
     Transform();
     ~Transform();

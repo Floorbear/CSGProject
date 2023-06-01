@@ -60,13 +60,13 @@ public:
     std::list<WorkSpace*> workspaces;
     WorkSpace* active_workspace;
 
-    
-
     GUI();
     void init();
     void render();
     void update();
     void process_input();
     void dispose();
+
+    static void log(std::string text);
 };
 

@@ -115,7 +115,8 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
         glStencilMask(0x00);
         glDisable(GL_DEPTH_TEST);
         model->get_material()->set_uniform_camera(camera);
-        model->render_outline({ 1.1f,1.1f,1.1f });
+        float ff = 1.05f;
+        model->render_outline({ ff, ff, ff });
         //parent->active_workspace->selected_models
 
         glStencilMask(0xFF);

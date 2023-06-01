@@ -2,10 +2,15 @@
 #include "Shader.h"
 #include "Utils.h"
 
+#include <CGAL/Mesh_criteria_3.h>
+#include <CGAL/Labeled_mesh_domain_3.h>
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
 #include <CGAL/Polygon_mesh_processing/transform.h>
 #include <CGAL/Aff_transformation_3.h>
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
+#include <CGAL/Mesh_triangulation_3.h>
+#include <CGAL/Mesh_complex_3_in_triangulation_3.h>
+#include <CGAL/make_mesh_3.h>
 
 // ===== Vertex ===== //
 
@@ -30,13 +35,13 @@ void Mesh::calculate_rendering_data(){
     int vertex_cnt = 0;
     for (Face_index fd : cgal_mesh.faces()){
         CGAL_Mesh::Property_map<Face_index, Kernel::Vector_3> fnormals = cgal_mesh.property_map<Face_index, Kernel::Vector_3>("f:normals").first;
-        CGAL_Mesh::Property_map<Face_index, std::map<Vertex_index, vec2>> ftexcoords = cgal_mesh.property_map<Face_index, std::map<Vertex_index, vec2>>("f:texcoords").first;
+        // CGAL_Mesh::Property_map<Face_index, std::map<Vertex_index, vec2>> ftexcoords = cgal_mesh.property_map<Face_index, std::map<Vertex_index, vec2>>("f:texcoords").first;
         for (Vertex_index vd : cgal_mesh.vertices_around_face(cgal_mesh.halfedge(fd))){
             vertices_rendering.push_back(Vertex_Rendering(
                 cgal_mesh.point(vd).x(), cgal_mesh.point(vd).y(), cgal_mesh.point(vd).z(), // position
                 fnormals[fd].x(), fnormals[fd].y(), fnormals[fd].z(), // normal
                 0, 0));
-            //               ftexcoords[fd][vd].x, ftexcoords[fd][vd].y)); // TODO : texcoord
+            // ftexcoords[fd][vd].x, ftexcoords[fd][vd].y)); // texcoord
             indices_rendering.push_back(vertex_cnt++);
         }
     }
@@ -61,15 +66,17 @@ void Mesh::buffers_update() const{
 }
 
 Mesh::Mesh(){
+    // empty mesh
 }
 
-Mesh::Mesh(const Mesh& mesh) : cgal_mesh(mesh.cgal_mesh){
+Mesh::Mesh(const Mesh& mesh) : name(mesh.name), cgal_mesh(mesh.cgal_mesh){
 }
 
-Mesh::Mesh(const Mesh* mesh) : cgal_mesh(mesh->cgal_mesh){
+Mesh::Mesh(const Mesh* mesh) : name(mesh->name), cgal_mesh(mesh->cgal_mesh){
 }
 
-Mesh::Mesh(CGAL_Mesh cgal_mesh_){
+Mesh::Mesh(std::string name_, CGAL_Mesh cgal_mesh_){
+    name = name_;
     cgal_mesh = cgal_mesh_;
 }
 
@@ -85,22 +92,23 @@ Mesh::~Mesh(){
     }
 }
 
-// TODO : vertex, index 하나만 변경되어도 is_buffer_valid = false 해야한다!
 
+void Mesh::mark_edited(){
+    is_buffer_valid = false;
+}
 
 void Mesh::render(){
-    if (!is_buffer_valid){
-        calculate_rendering_data();
-        is_buffer_valid = true;
-    }
     if (!is_buffer_created){ // 버퍼 지연 초기화
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glGenBuffers(1, &EBO);
         is_buffer_created = true;
+    }
+    if (!is_buffer_valid){
+        calculate_rendering_data();
+        is_buffer_valid = true;
 
         buffers_bind();
-
         glBufferData(GL_ARRAY_BUFFER, vertices_rendering.size() * sizeof(Vertex_Rendering), vertices_rendering.data(), GL_STATIC_DRAW);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices_rendering.size(), indices_rendering.data(), GL_STATIC_DRAW);
 
@@ -117,87 +125,132 @@ void Mesh::render(){
     glDrawElements(GL_TRIANGLES, (int)indices_rendering.size(), GL_UNSIGNED_INT, 0);
 }
 
+std::string Mesh::get_name() const{
+    return name;
+}
+
+void Mesh::save(std::string path){
+    CGAL::IO::write_polygon_mesh(path, cgal_mesh, CGAL::parameters::stream_precision(17));
+    // TODO : 로그창에 추가
+}
+
+Mesh Mesh::load(std::string path){
+    CGAL_Mesh cgal_result;
+    if (!CGAL::IO::read_polygon_mesh(CGAL::data_file_path(path), cgal_result)){
+        // TODO : 로그창에 추가
+        return Mesh();
+    }
+    size_t path_filename_index = path.find("/");
+    return Mesh(path.substr(path_filename_index == std::string::npos ? 0 : path_filename_index + 1, path.length()), cgal_result);
+}
 
 Mesh Mesh::cube(float size){
     CGAL_Mesh cgal_result;
+    float r = size / 2;
 
-    std::vector<Vertex_index> vd;
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(-size/2, -size/2, -size/2)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(-size/2, size/2, -size/2)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size/2, size/2, -size/2)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size/2, -size/2, -size/2)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(-size/2, -size/2, size/2)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(-size/2, size/2, size/2)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size/2, size/2, size/2)));
-    vd.push_back(cgal_result.add_vertex(Kernel::Point_3(size/2, -size/2, size/2)));
+    Vertex_index v0 = cgal_result.add_vertex(Kernel::Point_3(-r, -r, r)); // cgal 순서
+    Vertex_index v1 = cgal_result.add_vertex(Kernel::Point_3(r, -r, r));
+    Vertex_index v2 = cgal_result.add_vertex(Kernel::Point_3(r, -r, -r));
+    Vertex_index v3 = cgal_result.add_vertex(Kernel::Point_3(-r, -r, -r));
+    Vertex_index v4 = cgal_result.add_vertex(Kernel::Point_3(-r, r, -r));
+    Vertex_index v5 = cgal_result.add_vertex(Kernel::Point_3(-r, r, r));
+    Vertex_index v6 = cgal_result.add_vertex(Kernel::Point_3(r, r, r));
+    Vertex_index v7 = cgal_result.add_vertex(Kernel::Point_3(r, r, -r));
 
+    // auto tex_coord_map = cgal_result.add_property_map<Face_index, std::map<Vertex_index, vec2>>("f:texcoords", std::map<Vertex_index, vec2>()).first;
 
-    Face_index f1 = cgal_result.add_face(vd[0], vd[3], vd[2]);
-    Face_index f2 = cgal_result.add_face(vd[1], vd[0], vd[2]);
-    Face_index f3 = cgal_result.add_face(vd[3], vd[0], vd[4]);
-    Face_index f4 = cgal_result.add_face(vd[3], vd[4], vd[7]);
-    Face_index f5 = cgal_result.add_face(vd[1], vd[2], vd[5]);
-    Face_index f6 = cgal_result.add_face(vd[5], vd[2], vd[6]);
-    Face_index f7 = cgal_result.add_face(vd[5], vd[6], vd[7]);
-    Face_index f8 = cgal_result.add_face(vd[5], vd[7], vd[4]);
-    Face_index f9 = cgal_result.add_face(vd[2], vd[3], vd[7]);
-    Face_index f10 = cgal_result.add_face(vd[2], vd[7], vd[6]);
-    Face_index f11 = cgal_result.add_face(vd[0], vd[1], vd[4]);
-    Face_index f12 = cgal_result.add_face(vd[4], vd[1], vd[5]);
+    Face_index f1 = cgal_result.add_face(v0, v3, v2);
+    // tex_coord_map[f1][v0] = vec2(1, 0);
+    // tex_coord_map[f1][v3] = vec2(1, 1);
+    // tex_coord_map[f1][v2] = vec2(0, 1);
+    Face_index f2 = cgal_result.add_face(v0, v2, v1);
+    // tex_coord_map[f2][v0] = vec2(1, 0);
+    // tex_coord_map[f2][v2] = vec2(0, 1);
+    // tex_coord_map[f2][v1] = vec2(0, 0);
 
-    auto tex_coord_map = cgal_result.add_property_map<Face_index, std::map<Vertex_index, vec3>>("f:texcoords", std::map<Vertex_index, vec3>()).first;
-    // TODO : texcoord 채우기
-    /*Vertex(-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f ,  0.0f, 0.0f                          ),
-        Vertex(0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f  ,  1.0f, 0.0f                          ),
-        Vertex(0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f  ,  1.0f, 1.0f                          ),
-        Vertex(0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f  ,  1.0f, 1.0f                          ),
-        Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f ,  0.0f, 1.0f                          ),
-        Vertex(-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f ,  0.0f, 0.0f                          ),
+    Face_index f3 = cgal_result.add_face(v0, v1, v6);
+    // tex_coord_map[f3][v0] = vec2(0, 0);
+    // tex_coord_map[f3][v1] = vec2(0, 1);
+    // tex_coord_map[f3][v6] = vec2(1, 1);
+    Face_index f4 = cgal_result.add_face(v0, v6, v5);
+    // tex_coord_map[f4][v0] = vec2(0, 0);
+    // tex_coord_map[f4][v6] = vec2(1, 1);
+    // tex_coord_map[f4][v5] = vec2(1, 0);
 
-        Vertex(-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f  ,  0.0f, 0.0f                          ),
-        Vertex(0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f   ,  1.0f, 0.0f                          ),
-        Vertex(0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f   ,  1.0f, 1.0f                          ),
-        Vertex(0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f   ,  1.0f, 1.0f                          ),
-        Vertex(-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f  ,  0.0f, 1.0f                          ),
-        Vertex(-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f  ,  0.0f, 0.0f                          ),
+    Face_index f5 = cgal_result.add_face(v0, v5, v4);
+    // tex_coord_map[f5][v0] = vec2(1, 0);
+    // tex_coord_map[f5][v5] = vec2(1, 1);
+    // tex_coord_map[f5][v4] = vec2(0, 1);
+    Face_index f6 = cgal_result.add_face(v0, v4, v3);
+    // tex_coord_map[f6][v0] = vec2(1, 0);
+    // tex_coord_map[f6][v4] = vec2(0, 1);
+    // tex_coord_map[f6][v3] = vec2(0, 0);
 
-        Vertex(-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f ,  1.0f, 0.0f                          ),
-        Vertex(-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f ,  1.0f, 1.0f                          ),
-        Vertex(-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f ,  0.0f, 1.0f                          ),
-        Vertex(-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f ,  0.0f, 1.0f                          ),
-        Vertex(-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f ,  0.0f, 0.0f                          ),
-        Vertex(-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f ,  1.0f, 0.0f                          ),
+    Face_index f7 = cgal_result.add_face(v2, v3, v4);
+    // tex_coord_map[f7][v2] = vec2(0, 0);
+    // tex_coord_map[f7][v3] = vec2(0, 1);
+    // tex_coord_map[f7][v4] = vec2(1, 1);
+    Face_index f8 = cgal_result.add_face(v2, v4, v7);
+    // tex_coord_map[f8][v2] = vec2(0, 0);
+    // tex_coord_map[f8][v4] = vec2(1, 1);
+    // tex_coord_map[f8][v7] = vec2(1, 0);
 
-        Vertex(0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f  ,  1.0f, 0.0f                          ),
-        Vertex(0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f  ,  1.0f, 1.0f                          ),
-        Vertex(0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f  ,  0.0f, 1.0f                          ),
-        Vertex(0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f  ,  0.0f, 1.0f                          ),
-        Vertex(0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f  ,  0.0f, 0.0f                          ),
-        Vertex(0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f  ,  1.0f, 0.0f                          ),
+    Face_index f9 = cgal_result.add_face(v2, v7, v6);
+    // tex_coord_map[f9][v2] = vec2(1, 0);
+    // tex_coord_map[f9][v7] = vec2(1, 1);
+    // tex_coord_map[f9][v6] = vec2(0, 1);
+    Face_index f10 = cgal_result.add_face(v2, v6, v1);
+    // tex_coord_map[f10][v2] = vec2(1, 0);
+    // tex_coord_map[f10][v6] = vec2(0, 1);
+    // tex_coord_map[f10][v1] = vec2(0, 0);
 
-        Vertex(-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f ,  0.0f, 1.0f                          ),
-        Vertex(0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f  ,  1.0f, 1.0f                          ),
-        Vertex(0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f  ,  1.0f, 0.0f                          ),
-        Vertex(0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f  ,  1.0f, 0.0f                          ),
-        Vertex(-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f ,  0.0f, 0.0f                          ),
-        Vertex(-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f ,  0.0f, 1.0f                          ),
+    Face_index f11 = cgal_result.add_face(v4, v5, v6);
+    // tex_coord_map[f11][v4] = vec2(1, 0);
+    // tex_coord_map[f11][v5] = vec2(1, 1);
+    // tex_coord_map[f11][v6] = vec2(0, 1);
+    Face_index f12 = cgal_result.add_face(v4, v6, v7);
+    // tex_coord_map[f12][v4] = vec2(1, 0);
+    // tex_coord_map[f12][v6] = vec2(0, 1);
+    // tex_coord_map[f12][v7] = vec2(0, 0);
 
-        Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f ,  0.0f, 1.0f                          ),
-        Vertex(0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f  ,  1.0f, 1.0f                          ),
-        Vertex(0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f  ,  1.0f, 0.0f                          ),
-        Vertex(0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f  ,  1.0f, 0.0f                          ),
-        Vertex(-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f ,  0.0f, 0.0f                          ),
-        Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f ,  0.0f, 1.0f                          )*/
     auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
     CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
-    return Mesh(cgal_result);
+
+    return Mesh("<Cube>", cgal_result);
 }
 
-/*
-Mesh Mesh::Sphere(){
+
+Mesh Mesh::pyramid(float radius, float height){
+    return Mesh();
 }
 
-*/
+Mesh Mesh::sphere(float radius, float step){
+    /*typedef CGAL::Mesh_triangulation_3<CGAL::Labeled_mesh_domain_3<Kernel>, CGAL::Default, CGAL::Sequential_tag >::type Tr;
+    typedef CGAL::Mesh_criteria_3<Tr> Mesh_criteria;
+    typedef CGAL::Mesh_complex_3_in_triangulation_3<Tr> C3t3;
+    auto sphere_function = [](const Kernel::Point_3& p){
+        return CGAL::squared_distance(p, Kernel::Point_3(CGAL::ORIGIN)) - 1;
+    };
+    CGAL::Labeled_mesh_domain_3<Kernel> domain =
+        CGAL::Labeled_mesh_domain_3<Kernel>::create_implicit_mesh_domain(sphere_function,
+                                                 Kernel::Sphere_3(CGAL::ORIGIN, radius * radius));
+    // facet_angle=30, facet_size = 0.1, facet_distance = 0.025, cell_radius_edge_ratio = 2, cell_size = 0.1;
+    Mesh_criteria criteria(30, 0.1, 0.025, 2, 0.1);
+    C3t3 a = CGAL::make_mesh_3<C3t3>(domain, criteria);*/
+    return Mesh("<Sphere>", CGAL_Mesh());
+}
+
+Mesh Mesh::cylinder(float radius, float height, float step){
+    return Mesh();
+}
+
+Mesh Mesh::cone(float radius, float height, float step){
+    return Mesh();
+}
+
+Mesh Mesh::torus(float radius, float thickness, float step){
+    return Mesh();
+}
 
 CGAL::Aff_transformation_3<Kernel> mat4_to_cgal_transform(const mat4& matrix){
     return CGAL::Aff_transformation_3<Kernel>(matrix[0][0], matrix[1][0], matrix[2][0], matrix[3][0],
@@ -205,92 +258,194 @@ CGAL::Aff_transformation_3<Kernel> mat4_to_cgal_transform(const mat4& matrix){
                                               matrix[0][2], matrix[1][2], matrix[2][2], matrix[3][2]);
 }
 
+vec3 pt3_to_vec3(Kernel::Point_3 point){
+    return vec3(point.x(), point.y(), point.z());
+}
 
-struct Visitor : public CGAL::Polygon_mesh_processing::Corefinement::Default_visitor<CGAL_Mesh>{
+/*struct Visitor : public CGAL::Polygon_mesh_processing::Corefinement::Default_visitor<CGAL_Mesh>{
     std::map<const CGAL_Mesh*, std::vector<Vertex_index>> new_vertices_src;
-    std::vector<Vertex_index> new_vertices_tgt;
+    std::map<std::pair<Vertex_index, const CGAL_Mesh*>, std::pair<Vertex_index, Vertex_index>> edge_split_map; // edge_split[new_vertex] = {old_edge_vertex1, old_edge_vertex2, mesh_containing_edge}
+    std::map<std::pair<Vertex_index, const CGAL_Mesh*>, Vertex_index> vertex_copy_map;
 
-    //std::map<Vertex_index, std::tuple<Vertex_index, Vertex_index>> edge_split; // 
+    Face_index face_old;
+    std::vector<Face_index> faces_new;
+    //std::vector<Face_index> faces_new;
+    const CGAL_Mesh* subface_tm;
+    void before_subface_creations(Face_index f_old, const CGAL_Mesh& tm){
+        face_old = f_old;
+        subface_tm = &tm;
+        faces_new.clear();
+    }
 
-    void after_subface_created(Face_index f_new, const CGAL_Mesh& tm){
-        printf("subface_created in %d\n", &tm);
-        //called after creating a new triangle face f_new in tm to triangulate the face passed to before_subface_creations().More...
-    }
-    Vertex_index edge_vd1;
-    Vertex_index edge_vd2;
-    void before_edge_split(Halfedge_index h, const CGAL_Mesh& tm){
-        edge_vd1 = *tm.vertices_around_target(h).first;
-        edge_vd2 = *tm.vertices_around_target(h).second;
-    }
-    void edge_split(Halfedge_index hnew, const CGAL_Mesh& tm){
-        printf("edge split of %d\n", &tm); // src1의 엣지를 스플릿하는거라서 
-        Vertex_index edge_vd1_new = *tm.vertices_around_target(hnew).first;
-        Vertex_index edge_vd2_new = *tm.vertices_around_target(hnew).second;
-        if (edge_vd1 == edge_vd2_new || edge_vd2 == edge_vd2_new){ // vd2_new를 새 정점으로 정하기 위함.
-            Vertex_index temp = edge_vd1_new;
-            edge_vd1_new = edge_vd2_new;
-            edge_vd2_new = temp;
+    void after_subface_creations(const CGAL_Mesh& tm){
+        auto texcoord_map = tm.property_map<Face_index, std::map<Vertex_index, vec2>>("f:texcoords").first;
+        printf("subface creation - size %d of %d\n", faces_new.size(), &tm);
+        for (Face_index face_new : faces_new){
+            for (Vertex_index vd : tm.vertices_around_face(tm.halfedge(face_new))){
+                if (edge_split_map.contains({vd, &tm})){
+                    Vertex_index edge_v1_old = edge_split_map[{vd, & tm}].first;
+                    Vertex_index edge_v2_old = edge_split_map[{vd, & tm}].second;
+
+                    vec2 texcoord_old_v1 = texcoord_map[face_old][edge_v1_old];
+                    vec2 texcoord_old_v2 = texcoord_map[face_old][edge_v2_old];
+                    vec3 pt_old_v1 = pt3_to_vec3(tm.point(edge_v1_old));
+                    vec3 pt_old_v2 = pt3_to_vec3(tm.point(edge_v2_old));
+                    vec3 pt_new_v = pt3_to_vec3(tm.point(vd));
+                    texcoord_map[face_new][vd] = (texcoord_old_v1 * glm::distance(pt_old_v2, pt_new_v) + texcoord_old_v2 * glm::distance(pt_new_v, pt_old_v1)) / glm::distance(pt_old_v2, pt_old_v1);
+                    printf("texcoord (%f,%f,%f) of %d is (%f,%f)\n",pt_new_v.x,pt_new_v.y,pt_new_v.z,&tm,texcoord_map[face_new][vd].x, texcoord_map[face_new][vd].y);
+                } else{
+                    if(Utils::contains(new_vertices_src[&tm], vd)){
+                        vec3 pt = pt3_to_vec3(tm.point(vd));
+                        texcoord_map[face_new][vd] = vec2(0.5,0.5);
+                        printf("??vertex - %d (%f,%f,%f) of %d\n", vd,pt.x,pt.y,pt.z,&tm);
+                    }else{
+                    texcoord_map[face_new][vd] = texcoord_map[face_old][vd];
+                    }
+                }
+            }
         }
-        //auto tex_coord_map = tm.property_map<Face_index, std::map<Vertex_index, vec3>>("f:texcoords").first;
-        // edge_v1, edge_v2를 포함하는 면을 스플릿 할때  
-        //for(Face_index fd : tm.halfedge(
+    }
+
+    void after_subface_created(Face_index face_new, const CGAL_Mesh& tm){
+        faces_new.push_back(face_new);
+    }
+
+    Vertex_index edge_v1_old;
+    Vertex_index edge_v2_old;
+    void before_edge_split(Halfedge_index h, const CGAL_Mesh& tm){
+        edge_v1_old = tm.source(h);
+        edge_v2_old = tm.target(h);
+    }
+
+    void edge_split(Halfedge_index hnew, const CGAL_Mesh& tm){
+        printf("e");
+        Vertex_index edge_vnew = tm.source(hnew);
+        if (edge_vnew == edge_v1_old || edge_vnew == edge_v2_old){
+            edge_vnew = tm.target(hnew);
+        }
+        edge_split_map[{edge_vnew, & tm}] = {edge_v1_old, edge_v2_old};
+        vec3 pt = pt3_to_vec3(tm.point(edge_vnew));
+        printf("split edge - %d %d split by %d (%f,%f,%f) of %d\n", edge_v1_old,edge_v2_old,edge_vnew,pt.x,pt.y,pt.z, &tm);
     }
 
     void new_vertex_added(std::size_t i_id, vertex_descriptor v, const CGAL_Mesh& tm){
-        printf("newv vertex of %d\n", &tm);
+        printf("new vertex %d of %d - %d\n", v, &tm, i_id);
         new_vertices_src[&tm].push_back(v);
     }
 
-    // 모든 연산이 끝난뒤 copy가 수행. face카피할때 정보 베껴오기만하면 될듯.
+    void add_retriangulation_edge(halfedge_descriptorh, const CGAL_Mesh& tm){
+        printf("r - face %d edge %d %d\n", tm.face(h), tm.source(h), tm.target(h));
+    }
 
-    void after_face_copy(face_descriptor f_src, const CGAL_Mesh& tm_src, face_descriptor f_tgt, const CGAL_Mesh& tm_tgt){
-        printf("copy face of %d\n", &tm_src);
-        //called after importing the face f_src of tm_src in tm_tgt.More...
+    void start_triangulating_faces (std::size_t n){
+        printf("t - %d\n",n);
+    }
+
+    void end_triangulating_faces (){
+    }
+
+    void intersection_point_detected(std::size_t i_id,
+                                         int 	sdim,
+                                         halfedge_descriptor 	h_f, // -> 삼각화 대상
+                                         halfedge_descriptor 	h_e,
+                                         const CGAL_Mesh& tm_f,
+                                         const CGAL_Mesh& tm_e,
+                                         bool 	is_target_coplanar,
+                                         bool 	is_source_coplanar){
+        printf("d - face %d / edge %d %d of %d\n", h_f, tm_e.source(h_e), tm_e.target(h_e), &tm_e);
+    }
+
+    void after_face_copy(Face_index f_src, const CGAL_Mesh& tm_src, face_descriptor f_tgt, const CGAL_Mesh& tm_tgt){
+        auto texcoord_map_src = tm_src.property_map<Face_index, std::map<Vertex_index, vec2>>("f:texcoords").first;
+        auto texcoord_map_tgt = tm_tgt.property_map<Face_index, std::map<Vertex_index, vec2>>("f:texcoords").first;
+        for (auto pair : texcoord_map_src[f_src]){
+            texcoord_map_tgt[f_tgt][vertex_copy_map[{pair.first, & tm_src}]] = pair.second;
+        }
     }
 
     void after_vertex_copy(Vertex_index v_src, const CGAL_Mesh& tm_src, Vertex_index v_tgt, const CGAL_Mesh& tm_tgt){
-        printf("vertex copy of %d\n", &tm_src);
-        // src1->tgt, src2->tgt 버텍스 카피 맵을 만들어야겠음. 그래서  face카피에서 맵의 값들ㅇ르 치환가능하게
-        if (Utils::contains(new_vertices_src[&tm_src], v_src)){
-            new_vertices_tgt.push_back(v_tgt);
-        }
+        vertex_copy_map[{v_src, & tm_src}] = v_tgt;
     }
-};
+};*/
 
-// TODO : union 함수처럼 수정
 bool Mesh::compute_difference(const Mesh& mesh1, Transform* transform1,
                               const Mesh& mesh2, Transform* transform2, Mesh& result){
     CGAL_Mesh cgal_mesh1 = mesh1.cgal_mesh;
     CGAL_Mesh cgal_mesh2 = mesh2.cgal_mesh;
+    CGAL_Mesh cgal_result;
 
-    // TODO : log창에 연산 결과 추가
-    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1)){
+    CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform1->get_local_matrix()), cgal_mesh1);
+    CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform2->get_local_matrix()), cgal_mesh2);
+
+    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh1)){
         printf("mesh1 self intersects!\n");
         return false;
     }
-    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2)){
+
+    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh2)){
         printf("mesh2 self intersects!\n");
         return false;
     }
-    return CGAL::Polygon_mesh_processing::corefine_and_compute_union(cgal_mesh1, cgal_mesh2, result.cgal_mesh);
-    // TODO : texcoord 작동됨??
+
+    bool result_valid;
+    try{
+        result_valid = CGAL::Polygon_mesh_processing::corefine_and_compute_difference(cgal_mesh1, cgal_mesh2, cgal_result);
+    } catch (std::exception){
+        result_valid = false;
+    }
+
+    if (!result_valid){
+        printf("boolean operation failed!\n");
+        return false;
+    }
+
+    auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
+    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    result.cgal_mesh = cgal_result;
+    result.name = "[Difference]";
+    result.mark_edited();
+    return true;
 }
 
 bool Mesh::compute_intersection(const Mesh& mesh1, Transform* transform1,
                                 const Mesh& mesh2, Transform* transform2, Mesh& result){
     CGAL_Mesh cgal_mesh1 = mesh1.cgal_mesh;
     CGAL_Mesh cgal_mesh2 = mesh2.cgal_mesh;
+    CGAL_Mesh cgal_result;
 
-    // TODO : log창에 연산 결과 추가
-    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1)){
+    CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform1->get_local_matrix()), cgal_mesh1);
+    CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform2->get_local_matrix()), cgal_mesh2);
+
+    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh1)){
         printf("mesh1 self intersects!\n");
         return false;
     }
-    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2)){
+
+    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh2)){
         printf("mesh2 self intersects!\n");
         return false;
     }
-    return CGAL::Polygon_mesh_processing::corefine_and_compute_intersection(cgal_mesh1, cgal_mesh2, result.cgal_mesh);
+
+    bool result_valid;
+    try{
+        result_valid = CGAL::Polygon_mesh_processing::corefine_and_compute_intersection(cgal_mesh1, cgal_mesh2, cgal_result);
+    } catch (std::exception){
+        result_valid = false;
+    }
+
+    if (!result_valid){
+        printf("boolean operation failed!\n");
+        return false;
+    }
+
+    auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
+    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    result.cgal_mesh = cgal_result;
+    result.name = "[Intersection]";
+    result.mark_edited();
+    return true;
 }
 
 bool Mesh::compute_union(const Mesh& mesh1, Transform* transform1,
@@ -302,51 +457,39 @@ bool Mesh::compute_union(const Mesh& mesh1, Transform* transform1,
     CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform1->get_local_matrix()), cgal_mesh1);
     CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform2->get_local_matrix()), cgal_mesh2);
 
-    // TODO : log창에 연산 결과 추가
-    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1)){
+    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh1)){
         printf("mesh1 self intersects!\n");
         return false;
-    }//CGAL::Polygon_mesh_processing::does_bound_a_volume(tm1)
-    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2)){
+    }
+
+    if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh2)){
         printf("mesh2 self intersects!\n");
         return false;
     }
 
-    CGAL_Mesh::Property_map<Edge_index, bool> is_constrained_map =
-        cgal_result.add_property_map<Edge_index, bool>("e:is_constrained", false).first;
+    // auto is_constrained_map = cgal_result.add_property_map<Edge_index, bool>("e:is_constrained", false).first;
+    //auto texcoord_map = cgal_result.add_property_map<Face_index, std::map<Vertex_index, vec2>>("f:texcoords", std::map<Vertex_index, vec2>()).first;
 
-    bool result_valid = CGAL::Polygon_mesh_processing::corefine_and_compute_difference(cgal_mesh1, cgal_mesh2, cgal_result,
-                                                                                       CGAL::parameters::visitor(Visitor()),
-                                                                                       CGAL::parameters::default_values(),
-                                                                                       CGAL::parameters::edge_is_constrained_map(is_constrained_map));
-
-    printf("%d %zd %zd %zd\n", &cgal_mesh1, cgal_mesh1.vertices().size(), cgal_mesh1.edges().size(), cgal_mesh1.faces().size());
-    printf("%d %zd %zd %zd\n", &cgal_mesh2, cgal_mesh2.vertices().size(), cgal_mesh2.edges().size(), cgal_mesh2.faces().size());
-    printf("%zd %zd %zd\n\n", cgal_result.vertices().size(), cgal_mesh2.edges().size(), cgal_result.faces().size());
-
-    auto tex_coord_map = cgal_result.add_property_map<Face_index, std::map<Vertex_index, vec3>>("f:texcoords", std::map<Vertex_index, vec3>()).first;
-
-    // collect faces incident to a constrained edge (미완성, texcoord 구하기위함)
-    std::vector<Face_index> selected_faces;
-    std::vector<bool> is_selected(num_faces(cgal_result), false);
-    for (Edge_index e : CGAL::edges(cgal_result)){
-        if (is_constrained_map[e]){
-            // insert all faces incident to the target vertex
-            for (Halfedge_index h : cgal_result.halfedges_around_target(cgal_result.halfedge(e))){
-                if (!is_border(h, cgal_result)){
-                    Face_index f = cgal_result.face(h);
-                    if (!is_selected[f]){
-                        selected_faces.push_back(f);
-                        is_selected[f] = true;
-                    }
-                }
-            }
-        }
+    bool result_valid;
+    try{
+        result_valid = CGAL::Polygon_mesh_processing::corefine_and_compute_union(cgal_mesh1, cgal_mesh2, cgal_result); //,
+                                                                                                                            // CGAL::parameters::visitor(Visitor()),
+                                                                                                                            // CGAL::parameters::default_values(),
+                                                                                                                            // CGAL::parameters::edge_is_constrained_map(is_constrained_map));
+    } catch (std::exception){
+        result_valid = false;
     }
 
+    if (!result_valid){
+        printf("boolean operation failed!\n");
+        // TODO : log창에 연산 결과 추가
+        return false;
+    }
     auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
     CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
 
     result.cgal_mesh = cgal_result;
-    return result_valid;
+    result.name = "[Union]";
+    result.mark_edited();
+    return true;
 }

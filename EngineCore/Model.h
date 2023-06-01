@@ -25,7 +25,7 @@ public:
     void set_parent(Model* parent_) override;
     
     CSGNode* get_csg_mesh();
-    void set_csg_mesh(CSGNode* csgmesh_, bool calculate_local = false);
+    void set_csg_mesh(CSGNode* csgmesh_, bool fix_mesh_position = false);
     void set_csg_mesh_new(const Mesh& mesh);
     Model* find_model(std::string_view name_);
 

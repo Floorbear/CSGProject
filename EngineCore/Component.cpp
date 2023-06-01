@@ -30,7 +30,7 @@ FloatParameter::FloatParameter(std::string label_, std::function<float()> get_, 
     render_action = [this, parameter_count](){ // TODO : completion 액션 추가
         temp = get();
         ImGui::Text(label.c_str());
-        ImGui::InputFloat(Utils::format("##InputFloat%1%", parameter_count).c_str(), &temp, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
+        ImGui::DragFloat(Utils::format("##InputFloat%1%", parameter_count).c_str(), &temp, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
         if (is_edited){ // TODO : 리팩토링
             if (set != nullptr){
                 set(temp);
@@ -70,17 +70,17 @@ Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::stri
             ImGui::Text("x");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat(Utils::format("##InputFloat%1%", parameter_count).c_str(), &temp.x, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
+            ImGui::DragFloat(Utils::format("##InputFloat%1%", parameter_count).c_str(), &temp.x, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("y");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat(Utils::format("##InputFloat%1%", parameter_count + 1).c_str(), &temp.y, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
+            ImGui::DragFloat(Utils::format("##InputFloat%1%", parameter_count + 1).c_str(), &temp.y, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
             ImGui::TableSetColumnIndex(2);
             ImGui::Text("z");
             ImGui::SameLine(0, 3);
             ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::InputFloat(Utils::format("##InputFloat%1%", parameter_count + 2).c_str(), &temp.z, 0, 0, "%.3f", ImGuiInputTextFlags_CallbackEdit, edit_callback, (void*)this);
+            ImGui::DragFloat(Utils::format("##InputFloat%1%", parameter_count + 2).c_str(), &temp.z, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
             ImGui::EndTable();
         }
         if (is_edited){ // TODO : 리팩토링

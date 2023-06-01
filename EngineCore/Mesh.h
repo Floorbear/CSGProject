@@ -28,6 +28,7 @@ class Mesh{
     unsigned int VBO = 0;
     unsigned int EBO = 0;
 
+    std::string name = "<Empty>";
     CGAL_Mesh cgal_mesh;
 
     std::vector<Vertex_Rendering> vertices_rendering;
@@ -46,16 +47,22 @@ public:
     Mesh();
     Mesh(const Mesh& mesh);
     Mesh(const Mesh* mesh);
-    Mesh(CGAL_Mesh cgal_mesh_);
+    Mesh(std::string name_, CGAL_Mesh cgal_mesh_);
     ~Mesh();
 
+    void mark_edited();
     void render();
 
+    std::string get_name() const;
+    void save(std::string path);
+
     static Mesh load(std::string path);
-    static Mesh triangle();
-    static Mesh square();
     static Mesh cube(float size);
-    static Mesh sphere();
+    static Mesh pyramid(float radius, float height);
+    static Mesh sphere(float radius, float step);
+    static Mesh cylinder(float radius, float height, float step);
+    static Mesh cone(float radius, float height, float step);
+    static Mesh torus(float radius, float thickness, float step);
 
     static bool compute_union(const Mesh& mesh1, Transform* transform1,
                               const Mesh& mesh2, Transform* transform2, Mesh& result);

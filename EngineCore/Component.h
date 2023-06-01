@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include <list>
+#include <vector>
 #include <functional>
 
 using namespace glm;

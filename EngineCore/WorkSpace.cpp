@@ -23,7 +23,7 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
 
     root_model = new Model("Root");
     root_model->clear_components();
-    root_model->add_component(new PointLight(this, vec3(12, -10, -22))); // TODO : value 바꿔!
+    root_model->add_component(new PointLight(this, vec3(12, -10, 22))); // TODO : value 바꿔!
     // light->set_position(vec3(50 * sin(Utils::time_acc()), 0, 50 * sin(Utils::time_acc())));
 }
 
@@ -141,7 +141,8 @@ void WorkSpace::render_hierarchy(){
         if (node->is_leaf_node()){
             node_flags |= ImGuiTreeNodeFlags_Leaf;
         }
-        bool node_open = ImGui::TreeNodeEx((void*)node, node_flags, "<mesh>", 0);
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        bool node_open = ImGui::TreeNodeEx((void*)node, node_flags, node->get_name().c_str(), 0);
         if ((ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right)) &&
             ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) && !ImGui::IsItemToggledOpen()){
             mesh_clicked = node;
@@ -185,14 +186,14 @@ void WorkSpace::render_hierarchy(){
         // 드래그 드롭
         if (ImGui::BeginDragDropSource()){
             ImGui::SetDragDropPayload("DND_Payload_Mesh", &node, sizeof(CSGNode*), ImGuiCond_Once);
-            ImGui::Text("<mesh>");
+            ImGui::Text(node->get_name().c_str());
             ImGui::EndDragDropSource();
         }
         if (ImGui::BeginDragDropTarget()){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){
                 IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
                 CSGNode* payload_node = *(CSGNode**)payload->Data;
-                // TODO : payload_node와 node의 공통조상으로 바꾸기
+
                 transaction_manager.add(new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){
                     return node->reparent_child(payload_node);
                 }, node->model->get_csg_mesh(), [=](CSGNode* root){
@@ -205,7 +206,7 @@ void WorkSpace::render_hierarchy(){
                     return true;
                 }));*/
             }
-            // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){ empty }
+            // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){ }
             ImGui::EndDragDropTarget();
         }
 
@@ -216,7 +217,6 @@ void WorkSpace::render_hierarchy(){
         //}
 
         // 하위 노드
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (node_open){
             for (CSGNode* child : node->get_children()){
                 draw_mesh_tree(child);
@@ -231,6 +231,7 @@ void WorkSpace::render_hierarchy(){
         if (Utils::contains(selected_models, model)){
             node_flags |= ImGuiTreeNodeFlags_Selected;
         }
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         bool node_open = ImGui::TreeNodeEx((void*)model, node_flags, model->name.c_str(), 0);
         if ((ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right)) &&
             ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) && !ImGui::IsItemToggledOpen()){
@@ -290,11 +291,10 @@ void WorkSpace::render_hierarchy(){
             ImGui::EndDragDropSource();
         }
         if (ImGui::BeginDragDropTarget()){
-            // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){ empty } 
+            // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){} 
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
                 MultiTransactionTask* task_multi = new MultiTransactionTask(Utils::format("Reparent %1% Model(s)", (int)selected_models.size()));
                 for (Model* selected_model : selected_models){
-                    // TODO : root_model을 selected_model과 model 의 공통조상으로 변경
                     task_multi->add_task(new TreeModifyTask("Reparent Model", root_model, [=](){
                         return model->reparent_child(selected_model);
                     }));
@@ -305,7 +305,6 @@ void WorkSpace::render_hierarchy(){
         }
 
         // 하위 노드
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (node_open){
             if (model->get_csg_mesh() != nullptr){
                 draw_mesh_tree(model->get_csg_mesh());
@@ -358,7 +357,12 @@ void WorkSpace::render_inspector(){
 void WorkSpace::render_logs(){
     if (gui_logs){
         ImGui::Begin(Utils::format("Logs##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
-        ImGui::Text(Utils::format("Text%1%", id).c_str()); // TODO
+        for (std::string line : logs){
+            ImGui::Text(line.c_str());
+        }
+        if (logs.size() > 100){
+            logs.pop_front();
+        }
         ImGui::End();
     }
 }
@@ -413,16 +417,13 @@ void WorkSpace::on_mouse_drag_left(){
     if (dragDelegate != nullptr){
         dragDelegate(get_main_camera(), mouse_pos_left_current_raw, prevPos);
         prevPos = mouse_pos_left_current_raw;
-    }
-    else
-    {
+    } else{
         if (is_view_pressed){
             if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
                 prevPos = mouse_pos_left_current_raw;
                 get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta() * sensitivity, 0));
             }
         }
-
     }
 
 
@@ -432,9 +433,6 @@ void WorkSpace::on_mouse_drag_left(){
 
 void WorkSpace::on_mouse_release_left(){
     // camera.transform.set_rotation(Transform(camera_transform_saved).rotate(C * vec3(0, mouse_pos_left_current_raw - mouse_pos_left_press_raw, 0))); 그냥 똑같은짓 하고 끝
-    // 아니면 관성 추가!
-    // vec2 mouse_inertia = mouse_pos_left_current_raw - mouse_pos_left_press_raw;
-    //
     dragDelegate = nullptr;
 }
 
@@ -524,14 +522,19 @@ void WorkSpace::render_popup_menu_view(){
         // TODO : if 선택된 메쉬가 있는경우 add mesh_union, add mesh intersention, add mesh difference(제한적으로 활성화)
         if (ImGui::BeginMenu("Add Model")){
             if (ImGui::MenuItem("Cube")){
-                actions.add_cube_new();
+                actions.add_model_new(Mesh::cube(1.0f));
             }
-            /*if (ImGui::MenuItem("Sphere")){} TODO : 주석해제
-            if (ImGui::MenuItem("Cylinder")){}
-            if (ImGui::MenuItem("Cone")){}
-            if (ImGui::MenuItem("Tetrahedron")){}
-            if (ImGui::MenuItem("Pyramid")){}
-            if (ImGui::MenuItem("Torus")){}*/
+            if (ImGui::MenuItem("Pyramid")){
+            }
+            if (ImGui::MenuItem("Sphere")){
+                actions.add_model_new(Mesh::sphere(1.0f, 0.1f));
+            }
+            if (ImGui::MenuItem("Cylinder")){
+            }
+            if (ImGui::MenuItem("Cone")){
+            }
+            if (ImGui::MenuItem("Torus")){
+            }
             ImGui::EndMenu();
         }
         ImGui::Separator();

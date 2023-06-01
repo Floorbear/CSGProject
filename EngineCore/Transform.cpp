@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-const Transform Transform::identity = Transform();
+Transform Transform::identity = Transform();
 
 void Transform::on_local_modify(){
     is_modified_local = true;

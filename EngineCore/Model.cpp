@@ -4,7 +4,7 @@
 #include "Utils.h"
 #include "Leaked_Pointers.h"
 #include "GUI.h"
-
+#include "Texture.h"
 
 Model::Model(std::string name_) : name(name_){
     components.push_back(transform = new TransformComponent());
@@ -37,11 +37,11 @@ CSGNode* Model::get_csg_mesh(){
     return csgmesh;
 }
 
-void Model::set_csg_mesh(CSGNode* csgmesh_, bool calculate_local){
+void Model::set_csg_mesh(CSGNode* csgmesh_, bool fix_mesh_position){
     csgmesh = csgmesh_;
     if (csgmesh != nullptr){
         csgmesh->model = this;
-        csgmesh->get_transform()->set_parent(transform, calculate_local);
+        csgmesh->get_transform()->set_parent(transform, fix_mesh_position);
     }
 }
 

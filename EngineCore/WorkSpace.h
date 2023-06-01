@@ -49,8 +49,10 @@ public:
     bool gui_csgtree = false;
 
     TransactionTaskManager transaction_manager;
+    std::list<std::string> logs;
 
     std::list<Renderer*> renderers;
+    Renderer* renderer_focused = nullptr;
     Model* root_model = nullptr;
 
     SelectionMode selection_mode = SelectionMode::Model;
@@ -61,7 +63,6 @@ public:
     vec2 mouse_pos_left_press_view = vec2();
     vec2 mouse_pos_left_current_raw = vec2();
     vec2 mouse_pos_left_current_view = vec2();
-    Renderer* renderer_focused = nullptr;
     bool is_view_pressed = false;
     
     WorkSpace(GUI* parent_);
@@ -76,10 +77,8 @@ public:
     void process_input();
 
     void on_mouse_press_left();
-
     void on_mouse_drag_left();
     std::function<void(Camera*,vec2,vec2)> dragDelegate;
-
     void on_mouse_release_left();
     vec2 prevPos;
 

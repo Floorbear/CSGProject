@@ -6,6 +6,7 @@
 #include "WorkSpace.h"
 #include "Core.h"
 #include "FrameBuffer.h"
+
 // ===== Shortcut ===== //
 
 Shortcut::Shortcut(const char* name_, bool ctrl_, bool shift_, bool alt_, ImGuiKey discrete_key_, std::function<void()> callback_) :
@@ -312,6 +313,10 @@ void GUI::render_end(){
     glfwSwapBuffers(glfw_window);
 
     ++frame_count;
+}
+
+void GUI::log(std::string text){
+    Core::get()->gui.active_workspace->logs.push_back(text);
 }
 
 
