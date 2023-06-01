@@ -16,7 +16,11 @@ class Model;
 class Camera;
 class PointLight;
 class Renderer{
+    static int id_counter;
+    static int default_camera_pos_z;
+
     GUI* parent;
+    int id;
 
     vec2 texture_size;
     vec2 viewport_size;
@@ -31,8 +35,8 @@ public:
     Renderer(int viewport_width, int viewport_height);
     ~Renderer();
     void set_parent(GUI* parent_);
+    int get_id();
 
-    void init();
     void render(const std::list<Model*>& models, const std::list<PointLight*>* lights);
     void dispose();
 

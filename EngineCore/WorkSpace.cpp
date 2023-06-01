@@ -15,11 +15,9 @@ WorkSpace::WorkSpace(GUI* parent_) : WorkSpace(parent_, std::string("test")){
 
 WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(title_), actions(WorkSpace_Actions(this)){
     id = id_counter++;
-    //TODO : 여기서 도킹 설정?
 
     renderers.push_back(renderer_focused = new Renderer(512, 512));
     renderer_focused->set_parent(parent);
-    renderer_focused->init();
 
     root_model = new Model("Root");
     root_model->clear_components();
@@ -56,11 +54,16 @@ std::list<PointLight*>* WorkSpace::get_lights(){
     return &lights;
 }
 
+bool is_window_content_hovered(){
+    return ImGui::IsWindowHovered() && (ImGui::IsWindowDocked() || !ImGui::GetCurrentWindow()->TitleBarRect().Contains(ImGui::GetMousePos()));
+}
+
 void WorkSpace::render_view(Renderer* renderer){
     main_renderer = renderer;
     // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    ImGui::Begin(Utils::format("View##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
+    ImGui::SetNextWindowSize(ImVec2(renderer->get_viewport_size().x, renderer->get_viewport_size().y), ImGuiCond_FirstUseEver);
+    ImGui::Begin(Utils::format("View##%1%", renderer->get_id()).c_str(), 0, ImGuiWindowFlags_NoCollapse);
     vec2 p_min = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMin().x,
                       ImGui::GetWindowPos().y + ImGui::GetWindowContentRegionMin().y);
     vec2 p_max = vec2(ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x,
@@ -69,7 +72,7 @@ void WorkSpace::render_view(Renderer* renderer){
     renderer->render(root_model->get_children(), &lights);
 
     // view 마우스 좌표 측정
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
+    if (is_window_content_hovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
         renderer_focused = renderer;
         mouse_pos_left_press_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
         mouse_pos_left_current_view = mouse_pos_left_press_view;
@@ -80,7 +83,7 @@ void WorkSpace::render_view(Renderer* renderer){
         mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
     }
 
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && ImGui::IsWindowHovered()){
+    if (is_window_content_hovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
         mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
 
         // selection 처리
@@ -193,18 +196,21 @@ void WorkSpace::render_hierarchy(){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){
                 IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
                 CSGNode* payload_node = *(CSGNode**)payload->Data;
+                Model* payload_node_model = payload_node->model; // delete model작업에서 이미 model값이 변해있을수도 있기때문에 필요.
 
-                transaction_manager.add(new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){
+                transaction_manager.add((new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){
                     return node->reparent_child(payload_node);
                 }, node->model->get_csg_mesh(), [=](CSGNode* root){
                     node->model->set_csg_mesh(root, true);
                 }, payload_node->model->get_csg_mesh(), [=](CSGNode* root){
                     payload_node->model->set_csg_mesh(root, true);
-                }));
-                /*transaction_manager->add(new TreeModifyTask("Delete Model", model->get_parent(), [this, model](){ // TODO : 연계작업으로 변경
-                    model->remove_self();
+
+                }))->link(new TreeModifyTask("Delete Model", root_model, [=](){
+                    if (payload_node_model->get_csg_mesh() == nullptr){ // empty model
+                        payload_node_model->remove_self();
+                    }
                     return true;
-                }));*/
+                })));
             }
             // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){ }
             ImGui::EndDragDropTarget();
@@ -320,7 +326,7 @@ void WorkSpace::render_hierarchy(){
         draw_model_tree(model);
     }
 
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered(ImGuiHoveredFlags_None)
+    if (is_window_content_hovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)
         && mesh_clicked == nullptr && model_clicked == nullptr){ // 빈칸 선택
         selected_meshes.clear();
         selected_models.clear();
@@ -386,6 +392,29 @@ void WorkSpace::render(){
     }
 }
 
+void WorkSpace::check_init_dockspace(int dockspace_id_, const ImGuiViewport* viewport){
+    if (dockspace_id == -1){ // not initialized
+        // TODO : 도킹도 FirstUseEver일때만 수행
+        dockspace_id = dockspace_id_;
+        ImGui::DockBuilderRemoveNode(dockspace_id);
+        if (ImGui::DockBuilderGetNode(dockspace_id) == NULL){
+            ImGui::DockBuilderAddNode(dockspace_id, 0);
+            ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
+
+            ImGuiID dock_main_id = dockspace_id;
+            ImGuiID dock_id_bottom = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.20f, NULL, &dock_main_id);
+            ImGuiID dock_id_left = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.20f, NULL, &dock_main_id);
+            ImGuiID dock_id_right = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.20f, NULL, &dock_main_id);
+
+            ImGui::DockBuilderDockWindow(Utils::format("View##%1%", renderer_focused->get_id()).c_str(), dock_main_id);
+            ImGui::DockBuilderDockWindow(Utils::format("Hierarchy##%1%", id).c_str(), dock_id_left);
+            ImGui::DockBuilderDockWindow(Utils::format("Inspector##%1%", id).c_str(), dock_id_right);
+            ImGui::DockBuilderDockWindow(Utils::format("Logs##%1%", id).c_str(), dock_id_bottom);
+            ImGui::DockBuilderFinish(dockspace_id);
+        }
+    }
+}
+
 void WorkSpace::process_input(){
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
         mouse_pos_left_press_raw = vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
@@ -413,21 +442,18 @@ void WorkSpace::on_mouse_drag_left(){
     float sensitivity = 22.f;
     vec2 moveDir = mouse_pos_left_current_raw - prevPos;
 
-    if (is_view_pressed)
-    {
+    if (is_view_pressed){
         //기즈모용 델리게이트 
-        if (dragDelegate != nullptr)
-        {
+        if (dragDelegate != nullptr){
             dragDelegate(get_main_camera(), mouse_pos_left_current_raw, prevPos);
             prevPos = mouse_pos_left_current_raw;
 
-        }
-        else if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
+        } else if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
             prevPos = mouse_pos_left_current_raw;
             get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta() * sensitivity, 0));
         }
     }
-    
+
 
 
     // printf("%lf \n", abs(length(mouse_pos_left_current_raw) - length(prevPos)));
@@ -439,15 +465,13 @@ void WorkSpace::on_mouse_release_left(){
     dragDelegate = nullptr;
 }
 
-//  WorkSpace::update (){
-//  ...
-//  while(mouse_inertia.magnitude() < 0.01f){
-//    camera.transform.rotate(vec3(0, mouse_inertia.x * C, 0))); 여기는 누적방식
-//    mouse_inertia *= 0.9;
-//  ...
-
 WorkSpace* WorkSpace::create_new(GUI* parent_, const char* filename){
     return new WorkSpace(parent_, filename);
+}
+
+void WorkSpace::add_view_new(){
+    renderers.push_back(renderer_focused = new Renderer(256, 256));
+    renderer_focused->set_parent(parent);
 }
 
 void WorkSpace::render_popup_menu_view(){

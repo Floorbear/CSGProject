@@ -23,6 +23,7 @@ public:
     TransactionTask(std::string detail_, std::function<bool()> work_, std::function<void()> work_undo_);
     bool execute() const;
     TransactionTask undo_task() const;
+    virtual TransactionTask* link(TransactionTask* task);
 };
 
 class MultiTransactionTask : public TransactionTask{
@@ -31,6 +32,7 @@ public:
     MultiTransactionTask(std::string detail_);
     ~MultiTransactionTask();
     void add_task(TransactionTask* task);
+    TransactionTask* link(TransactionTask* task) override;
 };
 
 class TaskManager{

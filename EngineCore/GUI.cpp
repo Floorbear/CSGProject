@@ -165,6 +165,7 @@ void GUI::init_gui(){
     imgui_io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     imgui_io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     imgui_io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    imgui_io.ConfigWindowsMoveFromTitleBarOnly = true;
 
     ImGui::StyleColorsDark();
 
@@ -179,8 +180,8 @@ void GUI::render_begin(){
 }
 
 void GUI::render_gui(){
-    //bool show_demo_window = true;
-    //ImGui::ShowDemoWindow(&show_demo_window);
+    // bool show_demo_window = true;
+    // ImGui::ShowDemoWindow(&show_demo_window);
 
     static ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar
         | ImGuiWindowFlags_NoDocking
@@ -242,27 +243,7 @@ void GUI::render_gui(){
                 active_workspace = workspace;
 
                 ImGuiID dockspace_id = ImGui::GetID(Utils::format("WorkSpace_DockSpace_%1%", workspace->id).c_str());
-                if (!workspace->gui_initialized){
-                    // TODO : 이거 여깄어도 될까? workspace생성할때 TaskManager통해 한번만 수행하는걸로 변경?
-                    ImGui::DockBuilderRemoveNode(dockspace_id);
-                    if (ImGui::DockBuilderGetNode(dockspace_id) == NULL){
-                        ImGui::DockBuilderAddNode(dockspace_id, 0);
-                        ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
-
-                        ImGuiID dock_main_id = dockspace_id;
-                        ImGuiID dock_id_bottom = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.20f, NULL, &dock_main_id);
-                        ImGuiID dock_id_left = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.20f, NULL, &dock_main_id);
-                        ImGuiID dock_id_right = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.20f, NULL, &dock_main_id);
-
-                        ImGui::DockBuilderDockWindow(Utils::format("View##%1%", workspace->id).c_str(), dock_main_id);// TODO : 여러 view 도킹
-                        ImGui::DockBuilderDockWindow(Utils::format("Hierarchy##%1%", workspace->id).c_str(), dock_id_left);
-                        ImGui::DockBuilderDockWindow(Utils::format("Inspector##%1%", workspace->id).c_str(), dock_id_right);
-                        ImGui::DockBuilderDockWindow(Utils::format("Logs##%1%", workspace->id).c_str(), dock_id_bottom);
-                        ImGui::DockBuilderFinish(dockspace_id);
-                    }
-                    workspace->gui_initialized = true;
-                }
-
+                workspace->check_init_dockspace(dockspace_id, viewport);
                 ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, ImVec4(1, 1, 1, 1));
                 ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
                 ImGui::PopStyleColor();
@@ -346,6 +327,10 @@ void GUI::render_menubar(){
             if (ImGui::MenuItem("Options")){
                 // TODO : 각종 설정 내용 정하기
             }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Cleanup Memory")){
+                // TODO : undo history 삭제, leaked pointers 삭제
+            }
             ImGui::EndMenu();
         }
 
@@ -368,7 +353,9 @@ void GUI::render_menubar(){
         }
 
         if (ImGui::BeginMenu("View")){
-            if (ImGui::MenuItem("Add View Window")){}
+            if (ImGui::MenuItem("Add View Window")){
+                active_workspace->add_view_new();
+            }
             if (ImGui::MenuItem("Hierarchy", NULL, &active_workspace->gui_hierarchy)){}
             if (ImGui::MenuItem("Inspector", NULL, &active_workspace->gui_inspector)){}
             if (ImGui::MenuItem("Logs", NULL, &active_workspace->gui_logs)){}

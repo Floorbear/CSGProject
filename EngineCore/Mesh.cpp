@@ -378,12 +378,12 @@ bool Mesh::compute_difference(const Mesh& mesh1, Transform* transform1,
     CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform2->get_local_matrix()), cgal_mesh2);
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh1)){
-        printf("mesh1 self intersects!\n");
+        // printf("mesh1 self intersects!\n");
         return false;
     }
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh2)){
-        printf("mesh2 self intersects!\n");
+        // printf("mesh2 self intersects!\n");
         return false;
     }
 
@@ -395,7 +395,7 @@ bool Mesh::compute_difference(const Mesh& mesh1, Transform* transform1,
     }
 
     if (!result_valid){
-        printf("boolean operation failed!\n");
+        // printf("boolean operation failed!\n");
         return false;
     }
 
@@ -418,12 +418,12 @@ bool Mesh::compute_intersection(const Mesh& mesh1, Transform* transform1,
     CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform2->get_local_matrix()), cgal_mesh2);
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh1)){
-        printf("mesh1 self intersects!\n");
+        // printf("mesh1 self intersects!\n");
         return false;
     }
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh2)){
-        printf("mesh2 self intersects!\n");
+        // printf("mesh2 self intersects!\n");
         return false;
     }
 
@@ -435,7 +435,7 @@ bool Mesh::compute_intersection(const Mesh& mesh1, Transform* transform1,
     }
 
     if (!result_valid){
-        printf("boolean operation failed!\n");
+        // printf("boolean operation failed!\n");
         return false;
     }
 
@@ -458,12 +458,12 @@ bool Mesh::compute_union(const Mesh& mesh1, Transform* transform1,
     CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform2->get_local_matrix()), cgal_mesh2);
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh1)){
-        printf("mesh1 self intersects!\n");
+        // printf("mesh1 self intersects!\n");
         return false;
     }
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh2)){
-        printf("mesh2 self intersects!\n");
+        // printf("mesh2 self intersects!\n");
         return false;
     }
 
@@ -481,8 +481,7 @@ bool Mesh::compute_union(const Mesh& mesh1, Transform* transform1,
     }
 
     if (!result_valid){
-        printf("boolean operation failed!\n");
-        // TODO : log창에 연산 결과 추가
+        // printf("boolean operation failed!\n");
         return false;
     }
     auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;

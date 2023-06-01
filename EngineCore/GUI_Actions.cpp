@@ -13,8 +13,9 @@ void WorkSpace_Actions::delete_selected_models(){
         task_multi->add_task(new TreeModifyTask("Delete Model", model->get_parent(), [=](){
             model->remove_self();
             return true;
-        })); // TODO : undo에 선택 복구
+        })); // TODO : undo에 선택 복구 (task가 selected_... 들고있어야함)
     }
+    workspace->transaction_manager.add(task_multi);
     workspace->selected_meshes.clear();
     workspace->selected_models.clear();
 }

@@ -181,17 +181,6 @@ TransformComponent* CSGNode::get_transform(){
     return &transform;
 }
 
-/*Transform CSGNode::get_transform_scaleUp_copy(const vec3& _scaleAcc)
-{
-    Transform newTransform = get_transform_copy();
-    vec3 newScale = newTransform.get_scale();
-    newScale.x *= _scaleAcc.x;
-    newScale.y *= _scaleAcc.y;
-    newScale.z *= _scaleAcc.z;
-    newTransform.set_scale(newScale);
-    return newTransform;
-}*/
-
 void CSGNode::calculate_mesh(){
     if (!is_result_valid){
         for (CSGNode* child : children){
@@ -250,15 +239,6 @@ void CSGNode::render_selection_id(Material* material, uint32_t selection_id_mode
 }
 
 SelectionPixelObjectInfo CSGNode::from_selection_id(SelectionPixelIdInfo selection_id, Model* model, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc){
-    /*SelectionPixelObjectInfo info;
-    if (selection_id.model_id == selection_id_model_acc){ // TEST
-        info = SelectionPixelObjectInfo(model, this);
-        if (!info.empty()){
-            return info;
-        }
-    }
-    return SelectionPixelObjectInfo();*/
-
     SelectionPixelObjectInfo info;
     if (selection_id.model_id == selection_id_model_acc && selection_id.mesh_id == *selection_id_mesh_acc){
         info = SelectionPixelObjectInfo(model, this);

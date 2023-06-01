@@ -30,6 +30,42 @@ TransactionTask TransactionTask::undo_task() const{
     }, [=](){ work(); });
 }
 
+TransactionTask* TransactionTask::link(TransactionTask* task){
+    MultiTransactionTask* result = new MultiTransactionTask(detail);
+    result->add_task(new TransactionTask(*this));
+    result->add_task(task);
+    return result;
+}
+
+MultiTransactionTask::MultiTransactionTask(std::string detail_) : TransactionTask(detail_, [this](){
+    for (TransactionTask* task : tasks){
+        task->work();
+    }
+    return true;
+}, [this](){
+    std::list<TransactionTask*> tasks_rev = tasks;
+    tasks_rev.reverse();
+    for (TransactionTask* task : tasks_rev){
+        task->work_undo();
+    }
+}){
+}
+
+MultiTransactionTask::~MultiTransactionTask(){
+    for (TransactionTask* task : tasks){
+        delete task;
+    }
+}
+
+void MultiTransactionTask::add_task(TransactionTask* task){
+    tasks.push_back(task);
+}
+
+TransactionTask* MultiTransactionTask::link(TransactionTask* task){
+    add_task(task);
+    return this;
+}
+
 void TaskManager::add(std::function<void()> work_){
     work_queue.push(Task(work_));
 }
@@ -120,28 +156,4 @@ std::string TransactionTaskManager::redo_detail(){
         return std::string();
     }
     return redo_stack.back()->detail;
-}
-
-MultiTransactionTask::MultiTransactionTask(std::string detail_) : TransactionTask(detail_, [this](){
-    for (TransactionTask* task : tasks){
-        task->work();
-    }
-    return true;
-}, [this](){
-    std::list<TransactionTask*> tasks_rev = tasks;
-    tasks_rev.reverse();
-    for (TransactionTask* task : tasks_rev){
-        task->work_undo();
-    }
-}){
-}
-
-MultiTransactionTask::~MultiTransactionTask(){
-    for (TransactionTask* task : tasks){
-        delete task;
-    }
-}
-
-void MultiTransactionTask::add_task(TransactionTask* task){
-    tasks.push_back(task);
 }

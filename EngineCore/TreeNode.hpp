@@ -59,6 +59,10 @@ public:
         return children;
     }
 
+    size_t children_size(){
+        return children.size();
+    }
+
     virtual bool add_child(T* item){
         if (is_descendant_of(item)){
             return false;

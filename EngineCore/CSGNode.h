@@ -39,7 +39,6 @@ private:
 
 public:
     Model* model = nullptr; // root mesh 조작시 사용
-
     bool selection_group = false;
 
     CSGNode(const Mesh& mesh);
@@ -57,8 +56,6 @@ public:
     void set_type(Type type_);
 
     TransformComponent* get_transform();
-    // Transform get_transform_copy();
-    // Transform get_transform_scaleUp_copy(const vec3& _scaleAcc); //_scaleAcc : 스케일 커질 배율
 
     void calculate_mesh();
     void render();

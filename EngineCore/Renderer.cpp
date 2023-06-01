@@ -16,13 +16,19 @@
 
 #pragma warning(disable : 4717)
 
+int Renderer::id_counter = 1; // 1부터 시작
+int Renderer::default_camera_pos_z = 20.0f;
+
 Renderer::Renderer(int viewport_width, int viewport_height){
+    id = id_counter++;
     parent = nullptr;
     camera = nullptr;
 
     texture_size = vec2(512, 512); // default
     viewport_size = vec2(viewport_width, viewport_height);
     camera = new Camera((float)viewport_width, (float)viewport_height);
+    camera->get_transform()->set_position(vec3(0.0f, 0.0f, default_camera_pos_z));
+    camera->get_transform()->set_rotation({0,-90,0});
 }
 
 Renderer::~Renderer(){
@@ -33,7 +39,8 @@ void Renderer::set_parent(GUI* parent_){
     parent = parent_;
 }
 
-void Renderer::init(){
+int Renderer::get_id(){
+    return id;
 }
 
 void Renderer::render(const std::list<Model*>& models, const std::list<PointLight*>* lights){
@@ -57,8 +64,6 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
             newModel = new Model("MyModel");
 
             //parent->active_workspace->root_model->add_child(newModel);
-            camera->get_transform()->set_position(vec3(0.0f, 0.0f, 20.0f));
-            camera->get_transform()->set_rotation({0,-90,0});
         }
 
 
@@ -72,7 +77,7 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
 
             static bool TextureTest = true;
             static bool TextureTest2 = true;
-            if (TextureTest)        {
+            if (TextureTest){
                 TextureTest = false;
                 EnginePath newPath = FileSystem::GetProjectPath();
                 newPath.Move("EngineResource");
@@ -82,7 +87,7 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
 
                 model->set_material(new TextureMaterial(newTexture));
             }
-            if (TextureTest2 && Utils::time_acc() > 5.0f)        {
+            if (TextureTest2 && Utils::time_acc() > 5.0f){
                 TextureTest2 = false;
                 model->set_material(new ColorMaterial());
             }
@@ -97,10 +102,9 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
         //윤곽선을 그리기 위해 Stencil 셋팅
         //Selected Model의 모델의 픽셀들은 스텐실 값이 1로 초기화 됩니다. 그 외에는 0입니다.
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        if(isSelected){
+        if (isSelected){
             glStencilMask(0xFF);
-        }
-        else{
+        } else{
             glStencilMask(0x00);
         }
         model->get_material()->set_uniform_camera(camera);
@@ -110,13 +114,13 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
 
     //조금 더 큰 모델을 윤곽선 쉐이더로 그립니다.
     //이때 스텐실이 1인 픽셀에는 그리지 않습니다.
-    for (Model* model : get_selected_models()) {
+    for (Model* model : get_selected_models()){
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
         glStencilMask(0x00);
         glDisable(GL_DEPTH_TEST);
         model->get_material()->set_uniform_camera(camera);
         float ff = 1.05f;
-        model->render_outline({ ff, ff, ff });
+        model->render_outline({ff, ff, ff});
         //parent->active_workspace->selected_models
 
         glStencilMask(0xFF);
@@ -125,8 +129,7 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
     }
 
     //기즈모 렌더링
-    for (Model* model : get_selected_models())
-    {
+    for (Model* model : get_selected_models()){
         model->render_gizmo();
     }
 
@@ -168,26 +171,22 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
     framebuffer_selection->disable();
 
     //3번째 픽셀값이 1 == 기즈모 셀렉트
-    if (Pixel.objectType == 1)
-    {
+    if (Pixel.objectType == 1){
         Model* firstSelectedModel = nullptr;
-        for (Model* model : get_selected_models())
-        {
+        for (Model* model : get_selected_models()){
             firstSelectedModel = model;
             break;
         }
         int axis = Pixel.model_id; // 0 : x , 1 : y , 2 : z, 3 : mainDot
         parent->active_workspace->dragDelegate =
-            std::bind(&Gizmo::move, firstSelectedModel->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,axis);
+            std::bind(&Gizmo::move, firstSelectedModel->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, axis);
 
         return SelectionPixelObjectInfo();
-    }
-    else
-    {
+    } else{
         uint32_t selection_id_model_acc = 1;
-        for (Model* model : models) {
+        for (Model* model : models){
             SelectionPixelObjectInfo info = model->from_selection_id(Pixel, &selection_id_model_acc);
-            if (!info.empty()) {
+            if (!info.empty()){
                 return info;
             }
         }
@@ -196,8 +195,7 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
     return SelectionPixelObjectInfo(); // null
 }
 
-std::list<Model*> Renderer::get_selected_models()
-{
+std::list<Model*> Renderer::get_selected_models(){
     return parent->active_workspace->selected_models;
 }
 

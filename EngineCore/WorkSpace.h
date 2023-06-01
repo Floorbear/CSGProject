@@ -23,10 +23,12 @@ class WorkSpace {
 
     GUI* parent; // WorkSpace는 GUI에 종속
     WorkSpace_Actions actions;
+    int dockspace_id = -1;
 
     std::list<PointLight*> lights;
 
     Renderer* main_renderer = nullptr;
+
     void render_view(Renderer* renderer);
     void render_hierarchy();
     void render_inspector();
@@ -42,7 +44,6 @@ public:
     int id;
     std::string title;
 
-    bool gui_initialized = false;
     bool gui_hierarchy = true;
     bool gui_inspector = true;
     bool gui_logs = true;
@@ -74,6 +75,7 @@ public:
     std::list<PointLight*>* get_lights();
 
     void render();
+    void check_init_dockspace(int dockspace_id_, const ImGuiViewport* viewport);
     void process_input();
 
     void on_mouse_press_left();
