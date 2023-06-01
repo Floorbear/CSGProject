@@ -174,6 +174,7 @@ void WorkSpace::render_hierarchy(){
             if (ImGui::MenuItem("Copy", "CTRL+C")){}
             if (ImGui::MenuItem("Paste", "CTRL+V")){}
             if (ImGui::MenuItem("Delete Selection", "Del", false, !selected_meshes.empty())){
+                // TODO
             }
             ImGui::Separator();
 
@@ -528,8 +529,7 @@ void WorkSpace::render_popup_menu_view(){
                     }
                 }
             }
-            ImGui::Separator();
-            if (selection_mode == SelectionMode::Mesh){
+            /*if (selection_mode == SelectionMode::Mesh){ // TODO : 버튼으로 변경!
                 if (ImGui::MenuItem("Switch To Model Picking")){
                     selected_meshes.clear();
                     selection_mode = SelectionMode::Model;
@@ -539,33 +539,52 @@ void WorkSpace::render_popup_menu_view(){
                     selected_models.clear();
                     selection_mode = SelectionMode::Mesh;
                 }
-            }
+            }*/
             // if (ImGui::MenuItem("Filter Selection")){}
             ImGui::EndMenu();
         }
         ImGui::Separator();
-        // 우클릭도 선택가능.
         // TODO : if 선택된 모델이 있는경우 클릭하면 add child model
-        // TODO : if 선택된 메쉬가 있는경우 add mesh_union, add mesh intersention, add mesh difference(제한적으로 활성화)
-        if (ImGui::BeginMenu("Add Model")){
+        // TODO : add mesh 
+        if (ImGui::BeginMenu("Add Basic Model")){
             if (ImGui::MenuItem("Cube")){
                 actions.add_model_new(Mesh::cube(1.0f));
             }
             if (ImGui::MenuItem("Pyramid")){
+                actions.add_model_new(Mesh::pyramid(0.5f, 1.0f));
             }
             if (ImGui::MenuItem("Sphere")){
                 actions.add_model_new(Mesh::sphere(1.0f, 0.1f));
             }
             if (ImGui::MenuItem("Cylinder")){
+                actions.add_model_new(Mesh::cylinder(0.5f, 1.0f, 32));
             }
             if (ImGui::MenuItem("Cone")){
+                actions.add_model_new(Mesh::cone(0.5f, 1.0f, 32));
             }
             if (ImGui::MenuItem("Torus")){
             }
             ImGui::EndMenu();
         }
-        ImGui::Separator();
         if (ImGui::MenuItem("Load Model")){}
+        ImGui::Separator();
+        if (ImGui::BeginMenu("Boolean Operation", selection_mode == SelectionMode::Model)){
+            if (ImGui::MenuItem("Create Union Of Selected Models", NULL, false, selected_models.size() >= 2)){
+            }
+            if (ImGui::MenuItem("Create Intersection Of Selected Models", NULL, false, selected_models.size() >= 2)){
+            }
+            std::string selected_model1_name = "A";
+            std::string selected_model2_name = "B";
+            if (selected_models.size() == 2){
+                selected_model1_name = selected_models.front()->name;
+                selected_model2_name = selected_models.back()->name;
+            }
+            if (ImGui::MenuItem(("Create Difference Of Model " + selected_model1_name + " - " + selected_model2_name).c_str(), NULL, false, selected_models.size() == 2)){
+            }
+            if (ImGui::MenuItem(("Create Difference Of Model " + selected_model2_name + " - " + selected_model1_name).c_str(), NULL, false, selected_models.size() == 2)){
+            }
+            ImGui::EndMenu();
+        }
 
         // TODO : 메쉬 정제(csg가능하게) 연산들 - cgal 라이브러리 내에 다양한 알고리즘들 제공
         ImGui::EndPopup();
@@ -574,9 +593,9 @@ void WorkSpace::render_popup_menu_view(){
 
 void WorkSpace::render_popup_menu_inspector(){
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_None) && ImGui::GetIO().MouseReleased[ImGuiMouseButton_Right]){
-        ImGui::OpenPopup("View_Popup_Hierarchy");
+        ImGui::OpenPopup("View_Popup_Inspector");
     }
-    if (ImGui::BeginPopup("View_Popup_Hierarchy")){
+    if (ImGui::BeginPopup("View_Popup_Inspector")){
         if (ImGui::MenuItem("Add Component", 0, false, selected_models.size() <= 1 && selected_meshes.size() <= 1)){} // TODO : 구현
         if (ImGui::MenuItem("Show Remove Button", 0, &Component::show_remove_button)){}
         ImGui::EndPopup();

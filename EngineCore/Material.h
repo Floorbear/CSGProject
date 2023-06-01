@@ -6,8 +6,7 @@
 
 using namespace glm;
 
-enum class FragmentShaderType
-{
+enum class FragmentShaderType{
     Color,
     Texture,
     None
@@ -70,10 +69,9 @@ protected:
 
 
 
-class ColorMaterial : public Material
-{
-    vec4 color = { 1.0f, 1.0f, 0.0f, 1.0f };
-    float ambient = 0.1f;
+class ColorMaterial : public Material{
+    vec4 color = {1.0f, 1.0f, 0.0f, 1.0f};
+    float ambient = 0.5f;//0.1f;
 public:
     ColorMaterial();
     ~ColorMaterial();
@@ -83,8 +81,7 @@ public:
 
 
 
-class TextureMaterial : public Material
-{
+class TextureMaterial : public Material{
 public:
     TextureMaterial();
     TextureMaterial(Texture* texture_);
@@ -99,7 +96,5 @@ private:
 public:
     Texture* get_texture() const;
     void set_texture(Texture* _texture);
-
-
 };
 

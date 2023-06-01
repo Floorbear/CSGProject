@@ -343,12 +343,6 @@ void GUI::render_menubar(){
                                 active_workspace->transaction_manager.can_redo())){
                 active_workspace->transaction_manager.redo();
             }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Union Selected Objects")){}
-            if (ImGui::MenuItem("Intersect Selected Objects")){}
-            if (ImGui::MenuItem("Difference Selected Objects")){
-                // TODO : selection에 순서가 있어야함
-            }
             ImGui::EndMenu();
         }
 

@@ -220,8 +220,38 @@ Mesh Mesh::cube(float size){
 }
 
 
-Mesh Mesh::pyramid(float radius, float height){
-    return Mesh();
+Mesh Mesh::pyramid(float r, float height){
+    CGAL_Mesh cgal_result;
+
+    Vertex_index v0 = cgal_result.add_vertex(Kernel::Point_3(0, height, 0));
+    Vertex_index v4 = cgal_result.add_vertex(Kernel::Point_3(-r, 0, -r));
+    Vertex_index v5 = cgal_result.add_vertex(Kernel::Point_3(-r, 0, r));
+    Vertex_index v6 = cgal_result.add_vertex(Kernel::Point_3(r, 0, r));
+    Vertex_index v7 = cgal_result.add_vertex(Kernel::Point_3(r, 0, -r));
+
+    Face_index f4 = cgal_result.add_face(v0, v6, v5);
+    Face_index f5 = cgal_result.add_face(v0, v5, v4);
+    Face_index f8 = cgal_result.add_face(v0, v4, v7);
+    Face_index f9 = cgal_result.add_face(v0, v7, v6);
+    Face_index f11 = cgal_result.add_face(v4, v5, v6);
+    Face_index f12 = cgal_result.add_face(v4, v6, v7);
+
+    auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
+    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    return Mesh("<Pyramid>", cgal_result);
+}
+
+std::list<vec2> make_unit_circle(int step){
+    float angle_step = 2 * pi<float>() / step;
+    float angle;  // radian
+
+    std::list<vec2> result;
+    for (int n = 0; n < step; ++n){
+        angle = n * angle_step;
+        result.push_back(vec2(cos(angle), sin(angle)));
+    }
+    return result;
 }
 
 Mesh Mesh::sphere(float radius, float step){
@@ -241,11 +271,69 @@ Mesh Mesh::sphere(float radius, float step){
 }
 
 Mesh Mesh::cylinder(float radius, float height, float step){
-    return Mesh();
+    CGAL_Mesh cgal_result;
+    std::list<vec2> unit_circle = make_unit_circle(step);
+    std::list<Vertex_index> bottom_circle_vertices;
+    std::list<Vertex_index> top_circle_vertices;
+
+    for (vec2 pt : unit_circle){
+        bottom_circle_vertices.push_back(cgal_result.add_vertex(Kernel::Point_3(radius * pt.x, 0, radius * pt.y)));
+        top_circle_vertices.push_back(cgal_result.add_vertex(Kernel::Point_3(radius * pt.x, height, radius * pt.y)));
+    }
+    bottom_circle_vertices.push_back(bottom_circle_vertices.front());
+    top_circle_vertices.push_back(top_circle_vertices.front());
+
+    Vertex_index bottom_vertex = cgal_result.add_vertex(Kernel::Point_3(0, 0, 0));
+    Vertex_index top_vertex = cgal_result.add_vertex(Kernel::Point_3(0, height, 0));
+
+    std::list<Vertex_index>::iterator bottom_iter = bottom_circle_vertices.begin();
+    std::list<Vertex_index>::iterator top_iter = top_circle_vertices.begin();
+
+    Vertex_index bottom_vertex_prev = *bottom_iter;
+    Vertex_index top_vertex_prev = *top_iter;
+    bottom_iter++;
+    top_iter++;
+
+    for (; bottom_iter != bottom_circle_vertices.end(); ++bottom_iter, ++top_iter){
+        cgal_result.add_face(bottom_vertex, bottom_vertex_prev, *bottom_iter); // 아래 원
+        cgal_result.add_face(top_vertex_prev, *bottom_iter, bottom_vertex_prev);
+        cgal_result.add_face(top_vertex, *top_iter, top_vertex_prev); // 위 원
+        cgal_result.add_face(*bottom_iter, top_vertex_prev, *top_iter);
+        bottom_vertex_prev = *bottom_iter;
+        top_vertex_prev = *top_iter;
+    }
+
+    auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
+    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    return Mesh("<Cylinder>", cgal_result);
 }
 
 Mesh Mesh::cone(float radius, float height, float step){
-    return Mesh();
+    CGAL_Mesh cgal_result;
+    std::list<vec2> unit_circle = make_unit_circle(step);
+    std::list<Vertex_index> circle_vertices;
+
+    for (vec2 pt : unit_circle){
+        circle_vertices.push_back(cgal_result.add_vertex(Kernel::Point_3(radius * pt.x, 0, radius * pt.y)));
+    }
+    circle_vertices.push_back(circle_vertices.front());
+    Vertex_index bottom_vertex = cgal_result.add_vertex(Kernel::Point_3(0, 0, 0));
+    Vertex_index top_vertex = cgal_result.add_vertex(Kernel::Point_3(0, height, 0));
+
+    std::list<Vertex_index>::iterator iter = circle_vertices.begin();
+    Vertex_index vertex_prev = *iter;
+    iter++;
+    for (; iter != circle_vertices.end(); ++iter){
+        cgal_result.add_face(bottom_vertex, vertex_prev, *iter);
+        cgal_result.add_face(top_vertex, *iter, vertex_prev);
+        vertex_prev = *iter;
+    }
+
+    auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
+    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    return Mesh("<Cone>", cgal_result);
 }
 
 Mesh Mesh::torus(float radius, float thickness, float step){
@@ -378,12 +466,12 @@ bool Mesh::compute_difference(const Mesh& mesh1, Transform* transform1,
     CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform2->get_local_matrix()), cgal_mesh2);
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh1)){
-        // printf("mesh1 self intersects!\n");
+        printf("mesh1 self intersects!\n");
         return false;
     }
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh2)){
-        // printf("mesh2 self intersects!\n");
+        printf("mesh2 self intersects!\n");
         return false;
     }
 
@@ -418,12 +506,12 @@ bool Mesh::compute_intersection(const Mesh& mesh1, Transform* transform1,
     CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform2->get_local_matrix()), cgal_mesh2);
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh1)){
-        // printf("mesh1 self intersects!\n");
+        printf("mesh1 self intersects!\n");
         return false;
     }
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh2)){
-        // printf("mesh2 self intersects!\n");
+        printf("mesh2 self intersects!\n");
         return false;
     }
 
@@ -458,12 +546,12 @@ bool Mesh::compute_union(const Mesh& mesh1, Transform* transform1,
     CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform2->get_local_matrix()), cgal_mesh2);
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh1) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh1)){
-        // printf("mesh1 self intersects!\n");
+        printf("mesh1 self intersects!\n");
         return false;
     }
 
     if (CGAL::Polygon_mesh_processing::does_self_intersect(cgal_mesh2) && CGAL::Polygon_mesh_processing::does_bound_a_volume(cgal_mesh2)){
-        // printf("mesh2 self intersects!\n");
+        printf("mesh2 self intersects!\n");
         return false;
     }
 
