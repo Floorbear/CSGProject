@@ -99,6 +99,7 @@ void Gizmo::render(Camera* _camera)
 	for (int i = 0; i < renderOrder.size(); i++)
 	{
 		Transform newTransform = parentTransform->get_value();
+		newTransform.set_rotation({ 0,0,0 });
 		newTransform.set_scale(transformMesh_scale[renderOrder[i]]);
 		newTransform.add_position(transformMesh_position[renderOrder[i]]);
 		shader->set_mat4("world", newTransform.get_world_matrix());

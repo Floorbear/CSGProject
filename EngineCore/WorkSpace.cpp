@@ -413,18 +413,21 @@ void WorkSpace::on_mouse_drag_left(){
     float sensitivity = 22.f;
     vec2 moveDir = mouse_pos_left_current_raw - prevPos;
 
-    //기즈모용 델리게이트 
-    if (dragDelegate != nullptr){
-        dragDelegate(get_main_camera(), mouse_pos_left_current_raw, prevPos);
-        prevPos = mouse_pos_left_current_raw;
-    } else{
-        if (is_view_pressed){
-            if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
-                prevPos = mouse_pos_left_current_raw;
-                get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta() * sensitivity, 0));
-            }
+    if (is_view_pressed)
+    {
+        //기즈모용 델리게이트 
+        if (dragDelegate != nullptr)
+        {
+            dragDelegate(get_main_camera(), mouse_pos_left_current_raw, prevPos);
+            prevPos = mouse_pos_left_current_raw;
+
+        }
+        else if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
+            prevPos = mouse_pos_left_current_raw;
+            get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta() * sensitivity, 0));
         }
     }
+    
 
 
     // printf("%lf \n", abs(length(mouse_pos_left_current_raw) - length(prevPos)));
