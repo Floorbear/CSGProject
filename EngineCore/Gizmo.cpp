@@ -183,7 +183,14 @@ void Gizmo::render_selectionBuffer(Camera* _camera)
 
 int Gizmo::get_selectedAxis()
 {
-	return selectedAxis_index;
+	if (selectedAxis_index == -1)
+	{
+		return selectedAxis_index;
+	}
+
+	int CopyValue = selectedAxis_index;
+	selectedAxis_index = -1;
+	return CopyValue;
 }
 
 void Gizmo::set_selectedAxis(int _axis)

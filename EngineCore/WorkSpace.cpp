@@ -77,20 +77,12 @@ void WorkSpace::render_view(Renderer* renderer){
         mouse_pos_left_press_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
         mouse_pos_left_current_view = mouse_pos_left_press_view;
         is_view_pressed = true;
-    }
 
-    if (renderer_focused == renderer && ImGui::IsMouseDragging(ImGuiMouseButton_Left)){
-        mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
-    }
-
-    if (is_window_content_hovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
-        mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
-
-        // selection 처리
+                // selection 처리
         SelectionPixelObjectInfo info = renderer->find_selection(root_model->get_children(), mouse_pos_left_current_view);
         if (info.empty()){
-            //selected_models.clear(); // TODO : 기즈모 등등 선택 확인 이후
-            //selected_meshes.clear();
+            selected_models.clear(); // TODO : 기즈모 등등 선택 확인 이후
+            selected_meshes.clear();
         } else{
             if (selection_mode == SelectionMode::Model){
                 if (ImGui::GetIO().KeyCtrl){
@@ -116,6 +108,16 @@ void WorkSpace::render_view(Renderer* renderer){
                 }
             }
         }
+    }
+
+    if (renderer_focused == renderer && ImGui::IsMouseDragging(ImGuiMouseButton_Left)){
+        mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
+    }
+
+    if (is_window_content_hovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
+        mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
+
+
     }
     vec2 CurMousePos = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
     renderer->render_and_read_specificInfo(root_model->get_children(), CurMousePos);

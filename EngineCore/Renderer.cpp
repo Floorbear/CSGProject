@@ -150,7 +150,10 @@ void Renderer::render_and_read_specificInfo(const std::list<Model*>& models, vec
             break;
         }
         int axis = Pixel.model_id; // 0 : x , 1 : y , 2 : z, 3 : mainDot
-        firstSelectedModel->get_gizmo()->set_selectedAxis(axis);
+        if(firstSelectedModel != nullptr)
+        {
+            firstSelectedModel->get_gizmo()->set_selectedAxis(axis);
+        }
     }
 }
 
@@ -221,10 +224,15 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
             break;
         }
         int axis = Pixel.model_id; // 0 : x , 1 : y , 2 : z, 3 : mainDot
-        parent->active_workspace->dragDelegate =
-            std::bind(&Gizmo::move, firstSelectedModel->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, axis);
-
-        return SelectionPixelObjectInfo();
+        if (firstSelectedModel != nullptr)
+        {
+            parent->active_workspace->dragDelegate =
+                std::bind(&Gizmo::move, firstSelectedModel->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, axis);
+            SelectionPixelObjectInfo info;
+            info.model = firstSelectedModel;
+            info.mesh = firstSelectedModel->get_csg_mesh();
+            return info;
+        }
     } else{
         uint32_t selection_id_model_acc = 1;
         for (Model* model : models){
