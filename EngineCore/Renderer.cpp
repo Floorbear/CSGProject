@@ -112,15 +112,59 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
         model->render();
     }
 
+
+    render_selectedObject(models, lights); //맨 마지막에 호출
+}
+
+void Renderer::render_and_read_specificInfo(const std::list<Model*>& models, vec2 mouse_position)
+{
+    if (framebuffer_selection == nullptr)
+    {
+        return;
+    }
+
+    // 셀렉션 버퍼에 렌더링
+    {
+        framebuffer_selection->enable();
+       // glStencilMask(0x00);
+
+        //기즈모 정보 렌더링
+        for (Model* model : get_selected_models()) {
+            model->get_gizmo()->render_selectionBuffer(camera);
+        }
+
+        framebuffer_selection->disable();
+    }
+    // 셀렉션 렌더링 정보 읽기
+    framebuffer_selection->enable();
+    SelectionPixelIdInfo Pixel = framebuffer_selection->
+        read_pixel((int)(texture_size.x * mouse_position.x / viewport_size.x),
+            (int)(texture_size.y * mouse_position.y / viewport_size.y));
+    framebuffer_selection->disable();
+
+    //3번째 픽셀값이 1 == 기즈모 셀렉트 이펙트
+    if (Pixel.objectType == 1) {
+        Model* firstSelectedModel = nullptr;
+        for (Model* model : get_selected_models()) {
+            firstSelectedModel = model;
+            break;
+        }
+        int axis = Pixel.model_id; // 0 : x , 1 : y , 2 : z, 3 : mainDot
+        firstSelectedModel->get_gizmo()->set_selectedAxis(axis);
+    }
+}
+
+void Renderer::render_selectedObject(const std::list<Model*>& models, const std::list<PointLight*>* lights)
+{
     //조금 더 큰 모델을 윤곽선 쉐이더로 그립니다.
     //이때 스텐실이 1인 픽셀에는 그리지 않습니다.
-    for (Model* model : get_selected_models()){
+    for (Model* model : get_selected_models()) {
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
         glStencilMask(0x00);
         glDisable(GL_DEPTH_TEST);
         model->get_material()->set_uniform_camera(camera);
         float ff = 1.05f;
-        model->render_outline({ff, ff, ff});
+        model->render_outline({ ff, ff, ff });
         //parent->active_workspace->selected_models
 
         glStencilMask(0xFF);
@@ -129,10 +173,9 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
     }
 
     //기즈모 렌더링
-    for (Model* model : get_selected_models()){
+    for (Model* model : get_selected_models()) {
         model->render_gizmo();
     }
-
 }
 
 SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& models, vec2 mouse_position){

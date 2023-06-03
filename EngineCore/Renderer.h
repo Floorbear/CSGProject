@@ -38,6 +38,10 @@ public:
     int get_id();
 
     void render(const std::list<Model*>& models, const std::list<PointLight*>* lights);
+    void render_and_read_specificInfo(const std::list<Model*>& models, vec2 mouse_position);
+private:
+    void render_selectedObject(const std::list<Model*>& models, const std::list<PointLight*>* lights);
+public:
     void dispose();
 
     void resize(vec2 size);

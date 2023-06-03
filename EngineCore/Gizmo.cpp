@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include <algorithm>
 
-GizmoMode Gizmo::gizmoMode = GizmoMode::Scale;
+GizmoMode Gizmo::gizmoMode = GizmoMode::Transform;
 
 Gizmo::Gizmo(TransformComponent* _parentTransform)
 {
@@ -105,6 +105,9 @@ void Gizmo::render(Camera* _camera)
 
 void Gizmo::render_color(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position, std::vector<vec3> _mesh_color)
 { 
+	//선택 이펙트
+	int SelectedAxis_index = get_selectedAxis();
+
 	std::vector<int> renderOrder = get_renderOrder(_camera, _mesh_position);
 	for (int i = 0; i < renderOrder.size(); i++)
 	{
@@ -115,7 +118,14 @@ void Gizmo::render_color(Camera* _camera, TransformComponent* _parentTransform, 
 		_shader->set_mat4("world", newTransform.get_world_matrix());
 		_shader->set_mat4("view", _camera->get_view());
 		_shader->set_mat4("projection", _camera->get_projection());
-		_shader->set_vec3("gizmoColor", _mesh_color[renderOrder[i]]);
+		if (renderOrder[i] == SelectedAxis_index) // 선택된 녀석이면 색깔을 노란색으로
+		{
+			_shader->set_vec3("gizmoColor", selectedAxis_color);
+		}
+		else
+		{
+			_shader->set_vec3("gizmoColor", _mesh_color[renderOrder[i]]);
+		}
 		_mesh[renderOrder[i]]->render();
 	}
 }
@@ -171,9 +181,19 @@ void Gizmo::render_selectionBuffer(Camera* _camera)
 	glEnable(GL_DEPTH_TEST);
 }
 
+int Gizmo::get_selectedAxis()
+{
+	return selectedAxis_index;
+}
+
+void Gizmo::set_selectedAxis(int _axis)
+{
+	selectedAxis_index = _axis;
+}
+
 void Gizmo::move(Camera* _camera,vec2 _curPos, vec2 _prevPos, int _axis)
 {
-
+	set_selectedAxis(_axis);
 	if (abs(length(_curPos) - length(_prevPos)) < 0.01f)
 	{
 		return;

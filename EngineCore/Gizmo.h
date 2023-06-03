@@ -57,7 +57,15 @@ private:
 	);
 	void render_transformMesh_selection(Camera* _camera);
 	void render_scaleMesh_selection(Camera* _camera);
+	
+	// ===== 클릭 이펙트 관련 ======
+private:
+	vec3 selectedAxis_color = { 1.f,1.f,0.f };
+	int selectedAxis_index = -1; // -1 : Not Selected, 0 ~ 3  Axis
+	int get_selectedAxis();
 
+public:
+	void set_selectedAxis(int _axis);
 
 	// ===== Move 조작 관련 =====
 public:
@@ -65,7 +73,7 @@ public:
 	void move_dot(Camera* _camera, glm::vec2& _curPos, glm::vec2& _prevPos);
 
 
-	// ===== ZSort =====
+	// ===== ZSort 관련 =====
 private:
 	struct zSortStruct
 	{

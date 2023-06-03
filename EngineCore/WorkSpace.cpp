@@ -117,6 +117,8 @@ void WorkSpace::render_view(Renderer* renderer){
             }
         }
     }
+    vec2 CurMousePos = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
+    renderer->render_and_read_specificInfo(root_model->get_children(), CurMousePos);
 
     // Gui 렌더링
     #pragma warning(disable: 4312)
