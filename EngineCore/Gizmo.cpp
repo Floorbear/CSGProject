@@ -5,7 +5,7 @@
 
 #include "FileSystem.h"
 
-GizmoMode Gizmo::gizmoMode = GizmoMode::Transform;
+GizmoMode Gizmo::gizmoMode = GizmoMode::Translate;
 
 Gizmo::Gizmo(TransformComponent* _parentTransform)
 {
@@ -73,13 +73,14 @@ Gizmo::Gizmo(TransformComponent* _parentTransform)
 		scaleMesh_position.push_back({ valueSmall,valueSmall,valueSmall });
 	}
 
+
 	//렌더 함수 초기화
 	renderColorFunc.resize(static_cast<int>(GizmoMode::Max));
-	renderColorFunc[static_cast<int>(GizmoMode::Transform)] = std::bind(&Gizmo::render_transformMesh, this, std::placeholders::_1);
+	renderColorFunc[static_cast<int>(GizmoMode::Translate)] = std::bind(&Gizmo::render_transformMesh, this, std::placeholders::_1);
 	renderColorFunc[static_cast<int>(GizmoMode::Scale)] = std::bind(&Gizmo::render_scaleMesh, this,std::placeholders::_1);
 
 	renderSelectionFunc.resize(static_cast<int>(GizmoMode::Max));
-	renderSelectionFunc[static_cast<int>(GizmoMode::Transform)] = std::bind(&Gizmo::render_transformMesh_selection, this, std::placeholders::_1);
+	renderSelectionFunc[static_cast<int>(GizmoMode::Translate)] = std::bind(&Gizmo::render_transformMesh_selection, this, std::placeholders::_1);
 	renderSelectionFunc[static_cast<int>(GizmoMode::Scale)] = std::bind(&Gizmo::render_scaleMesh_selection, this, std::placeholders::_1);
 }
 
@@ -105,10 +106,8 @@ void Gizmo::render(Camera* _camera)
 	glEnable(GL_DEPTH_TEST);
 }
 
-void Gizmo::render_color(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position, std::vector<vec3> _mesh_color)
+void Gizmo::render_color(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position, std::vector<vec3> _mesh_color, int _selectedAxis)
 { 
-	//선택 이펙트
-	int SelectedAxis_index = get_selectedAxis();
 
 	std::vector<int> renderOrder = get_renderOrder(_camera, _mesh_position);
 	for (int i = 0; i < renderOrder.size(); i++)
@@ -120,7 +119,7 @@ void Gizmo::render_color(Camera* _camera, TransformComponent* _parentTransform, 
 		_shader->set_mat4("world", newTransform.get_world_matrix());
 		_shader->set_mat4("view", _camera->get_view());
 		_shader->set_mat4("projection", _camera->get_projection());
-		if (renderOrder[i] == SelectedAxis_index) // 선택된 녀석이면 색깔을 노란색으로
+		if (renderOrder[i] == _selectedAxis) // 선택된 녀석이면 색깔을 노란색으로
 		{
 			_shader->set_vec3("gizmoColor", selectedAxis_color);
 		}
@@ -134,13 +133,17 @@ void Gizmo::render_color(Camera* _camera, TransformComponent* _parentTransform, 
 
 void Gizmo::render_transformMesh(Camera* _camera)
 {
-	render_color(_camera, parentTransform, transformMesh, shader, transformMesh_scale, transformMesh_position, mesh_color);
+	//선택 이펙트
+	int SelectedAxis_index = get_selectedAxis();
+	render_color(_camera, parentTransform, transformMesh, shader, transformMesh_scale, transformMesh_position, mesh_color, SelectedAxis_index);
 }
 
 void Gizmo::render_scaleMesh(Camera* _camera)
 {
-	render_color(_camera, parentTransform, transformMesh, shader, transformMesh_scale, transformMesh_position, mesh_color);
-	render_color(_camera, parentTransform, scaleMesh, shader, scaleMesh_scale, scaleMesh_position, mesh_color);
+	//선택 이펙트
+	int SelectedAxis_index = get_selectedAxis();
+	render_color(_camera, parentTransform, transformMesh, shader, transformMesh_scale, transformMesh_position, mesh_color, SelectedAxis_index);
+	render_color(_camera, parentTransform, scaleMesh, shader, scaleMesh_scale, scaleMesh_position, mesh_color, SelectedAxis_index);
 }
 
 void Gizmo::render_selection(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position)
@@ -230,7 +233,7 @@ void Gizmo::move(Camera* _camera,vec2 _curPos, vec2 _prevPos, int _axis)
 	float speed = 5.f;
 	switch (gizmoMode)
 	{
-	case GizmoMode::Transform:
+	case GizmoMode::Translate:
 		parentTransform->add_position(speed * Utils::time_delta() * mesh_color[_axis] * moveForce); // Color는 축역활도 함
 		break;
 	case GizmoMode::Scale:

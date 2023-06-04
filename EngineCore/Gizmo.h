@@ -5,8 +5,9 @@
 // ===== 기즈모 외관 관련 =====
 enum class GizmoMode
 {
-	Transform,
+	Translate,
 	Scale,
+	Rotation,
 	Max
 };
 
@@ -30,6 +31,11 @@ private:
 	std::vector<vec3> scaleMesh_scale;
 	std::vector<vec3> scaleMesh_position;
 
+	// ===== Rotation Mesh =====
+	std::vector<Mesh*> rotationMesh;
+	std::vector<vec3> rotationMesh_scale;
+	std::vector<vec3> rotationMesh_position;
+
 	// ===== 컬러 렌더링 관련 ======
 	std::vector<vec3> mesh_color;
 	TransformComponent* parentTransform;
@@ -39,7 +45,7 @@ public:
 private:
 	void render_color(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader
 		, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position,
-		std::vector<vec3> _mesh_color);
+		std::vector<vec3> _mesh_color, int _selectedAxis);
 
 	void render_transformMesh(Camera* _camera);
 	void render_scaleMesh(Camera* _camera);
