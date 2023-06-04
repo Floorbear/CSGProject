@@ -28,7 +28,7 @@ class Mesh{
     unsigned int VBO = 0;
     unsigned int EBO = 0;
 
-    std::string name = "<Empty>";
+    std::string name = "<Empty>";   
     CGAL_Mesh cgal_mesh;
 
     std::vector<Vertex_Rendering> vertices_rendering;

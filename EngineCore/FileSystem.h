@@ -36,6 +36,8 @@ public:
 		EnginePath NewPath(std::filesystem::current_path());
 		return NewPath;
 	}
+
+	static EnginePath getFilePath();
 };
 
 

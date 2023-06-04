@@ -3,6 +3,8 @@
 #include "Camera.h"
 #include <algorithm>
 
+#include "FileSystem.h"
+
 GizmoMode Gizmo::gizmoMode = GizmoMode::Transform;
 
 Gizmo::Gizmo(TransformComponent* _parentTransform)

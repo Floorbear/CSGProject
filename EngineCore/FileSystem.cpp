@@ -3,6 +3,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <Windows.h>
 
 EnginePath::EnginePath()
 {
@@ -43,4 +44,32 @@ std::string EnginePath::ReadFile()
 	TextData += '\0';
 	File.close();
 	return TextData;
+}
+
+EnginePath FileSystem::getFilePath()
+{
+	std::wstring filePath;
+
+	OPENFILENAME ofn;
+	wchar_t fileName[MAX_PATH] = L"";
+	ZeroMemory(&ofn, sizeof(ofn));
+
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = NULL;
+
+	//파일 로드 윈도우창에서 obj,fbx,jpg 만로드 할 수 있습니다.
+	//만약 모든 파일을 로드 할 수 있게 하려면 L"All Files (*.*)\0*.*\0" 로 수정
+	ofn.lpstrFilter = L"(*.obj;*.fbx;*.jpg)\0*.obj;*.fbx;*.jpg\0"; 
+
+	ofn.lpstrFile = fileName;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+	if (GetOpenFileName(&ofn)) {
+		filePath = fileName;
+	}
+
+	EnginePath NewPath = EnginePath(filePath);
+	return NewPath;
+
 }
