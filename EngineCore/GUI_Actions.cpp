@@ -20,14 +20,18 @@ void WorkSpace_Actions::delete_selected_models(){
     workspace->selected_models.clear();
 }
 
-void WorkSpace_Actions::add_model_new(const Mesh& mesh){
+void WorkSpace_Actions::add_model_new(const Mesh& mesh, const Transform& transform){
     static int count = 0;
-    Model* model = new Model(Utils::format("Model%1%", count++).c_str());
+    Model* model = new Model(Utils::format("Model%1%", count).c_str());
     model->set_csg_mesh_new(&mesh);
     model->get_transform()->set_position(vec3(count * 0.7, count * 0.7, count * 0.7)); // TODO : I believe it places objects in the center of the active viewport
+    count++;
 
-    workspace->transaction_manager.add(new TreeModifyTask("Add " + mesh.get_name(), workspace->root_model, [this, model](){
-        return workspace->root_model->add_child(model);
+    workspace->transaction_manager.add(new TreeModifyTask("Add " + mesh.get_name(), workspace->root_model, [=, this](){
+        if (workspace->root_model->add_child(model)){
+            model->get_csg_mesh()->get_transform()->set(transform);
+        }
+        return true;
     }));
 }
 
@@ -101,7 +105,9 @@ void WorkSpace_Actions::reorder_model_down(Model* model){
 
 void WorkSpace_Actions::move_model_to_parent(Model* model){
     workspace->transaction_manager.add(new TreeModifyTask("Model Tree Edit", model->get_parent()->get_parent(), [=](){
-        return model->get_parent()->get_parent()->reparent_child(model, model->get_parent());
+        Model* parent = model->get_parent();
+        Model* ancestor = parent->get_parent();
+        return ancestor->reparent_child(model, parent);
     }));
 }
 

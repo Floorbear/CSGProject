@@ -31,25 +31,33 @@ vec3 Transform::get_scale(){
 }
 
 vec3 Transform::get_world_position(){
-    // assert matrix_world가 최신상태
-    return vec3(matrix_world[3]);
+    return position_world;
 }
 
-//https://stackoverflow.com/questions/17918033/glm-decompose-mat4-into-translation-and-rotation
 vec3 Transform::get_world_rotation(){
-    // assert matrix_world가 최신상태
-    return rotation;//vec3(); TODO : 구현
+    return rotation_world;
 }
 
-void Transform::set_parent(Transform* parent_, bool calculate_local){
-    if (calculate_local){
-        calculate_matrix();
-        parent_->calculate_matrix();
-        matrix_local = matrix_world * glm::affineInverse(parent_->matrix_world);
-        set_position(vec3(matrix_local[3]));
+void Transform::set_parent(Transform* parent_, bool fix_position){
+    vec3 old_parent_scale = vec3(1, 1, 1);
+    if (parent != nullptr){
+        old_parent_scale = parent->scale3d_world;
     }
-    // TODO : rotation과 scale도 행렬에서 구하기
+    if (fix_position){
+        scale3d = scale3d_world / parent_->scale3d_world;
+        rotation = rotation_world - parent_->rotation_world;
+        position = (position_world - parent_->position_world) * old_parent_scale / parent_->scale3d_world;
+    }
     parent = parent_;
+    is_modified_local = true;
+    calculate_matrix();
+}
+
+void Transform::set(const Transform& value){
+    position = value.position;
+    rotation = value.rotation;
+    scale3d = value.scale3d;
+    on_local_modify();
 }
 
 void Transform::set_position(const vec3& value){
@@ -92,14 +100,14 @@ void Transform::add_position(const vec3& value){
 
 void Transform::calculate_matrix(){
     matrix_world = get_local_matrix();
+    position_world = position;
+    rotation_world = rotation;
+    scale3d_world = scale3d;
     if (parent != nullptr){
-        /*glm::mat4 leftMat = glm::mat4(1.0f);
-        glm::mat4 rightMat = glm::mat4(1.0f);
-        leftMat = glm::translate(leftMat, position);
-        rightMat = glm::translate(rightMat, parent->position_world); // ex)  Root : 2 , Root->children : 3 >> Root->children->childeren = 5 (Pos)
-        leftMat = leftMat * rightMat;
-        position_world = vec3(leftMat[3][0], leftMat[3][1], leftMat[3][2]); //mat[col][row] ??*/
         matrix_world = parent->matrix_world * matrix_world;
+        position_world += parent->position_world;
+        rotation_world += parent->rotation_world;
+        scale3d_world *= parent->scale3d_world;
     }
 }
 
@@ -128,7 +136,7 @@ vec3 Transform::get_forward_dir(){
 vec3 Transform::get_right_dir(){
     glm::vec3 forward_dir = Utils::get_vecFromPitchYaw(rotation.x, rotation.y);
     glm::vec3 up_dir = glm::vec3(0, 1, 0);
-
+ 
     return glm::normalize(cross(forward_dir, up_dir));
 }
 

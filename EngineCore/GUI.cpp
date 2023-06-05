@@ -296,11 +296,6 @@ void GUI::render_end(){
     ++frame_count;
 }
 
-void GUI::log(std::string text){
-    Core::get()->gui.active_workspace->logs.push_back(text);
-}
-
-
 // ===== 기능 ===== //
 
 void GUI::render_menubar(){

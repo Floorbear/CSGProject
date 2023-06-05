@@ -4,7 +4,7 @@ in vec3 fragPos;
 
 uniform uint modelID;
 uniform uint meshID;
-uniform uint objectType; // 0 : model&mesh 1 : Gizmo
+uniform uint objectType;
 out uvec3 FragColor;
 
 

@@ -1,6 +1,7 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Utils.h"
+#include "GUI.h"
 
 #include <CGAL/Mesh_criteria_3.h>
 #include <CGAL/Labeled_mesh_domain_3.h>
@@ -129,18 +130,32 @@ std::string Mesh::get_name() const{
     return name;
 }
 
+std::string Mesh::get_mesh_info() const{
+    std::stringstream ret;
+    ret << cgal_mesh.number_of_vertices() << "vertices\n" << cgal_mesh.number_of_edges() << "edges\n" << cgal_mesh.number_of_faces() << " faces";
+    return ret.str();
+}
+
 void Mesh::save(std::string path){
-    CGAL::IO::write_polygon_mesh(path, cgal_mesh, CGAL::parameters::stream_precision(17));
-    // TODO : 로그창에 추가
+    if (!CGAL::IO::write_polygon_mesh(path, cgal_mesh, CGAL::parameters::stream_precision(17))){
+        Utils::log("Save file : " + path + "failed!");
+        return;
+    }
+    Utils::log("Save file : " + path);
 }
 
 Mesh Mesh::load(std::string path){
     CGAL_Mesh cgal_result;
-    if (!CGAL::IO::read_polygon_mesh(CGAL::data_file_path(path), cgal_result)){
-        // TODO : 로그창에 추가
+    if (!CGAL::IO::read_polygon_mesh(path, cgal_result, CGAL::parameters::repair_polygon_soup(true))){
+        Utils::log("Load file : " + path + "failed!");
         return Mesh();
     }
-    size_t path_filename_index = path.find("/");
+
+    auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
+    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    Utils::log("Load file : " + path);
+    size_t path_filename_index = path.rfind("\\");
     return Mesh(path.substr(path_filename_index == std::string::npos ? 0 : path_filename_index + 1, path.length()), cgal_result);
 }
 
@@ -229,12 +244,12 @@ Mesh Mesh::pyramid(float r, float height){
     Vertex_index v6 = cgal_result.add_vertex(Kernel::Point_3(r, 0, r));
     Vertex_index v7 = cgal_result.add_vertex(Kernel::Point_3(r, 0, -r));
 
-    Face_index f4 = cgal_result.add_face(v0, v6, v5);
-    Face_index f5 = cgal_result.add_face(v0, v5, v4);
-    Face_index f8 = cgal_result.add_face(v0, v4, v7);
-    Face_index f9 = cgal_result.add_face(v0, v7, v6);
-    Face_index f11 = cgal_result.add_face(v4, v5, v6);
-    Face_index f12 = cgal_result.add_face(v4, v6, v7);
+    Face_index f4 = cgal_result.add_face(v0, v5, v6);
+    Face_index f5 = cgal_result.add_face(v0, v4, v5);
+    Face_index f8 = cgal_result.add_face(v0, v7, v4);
+    Face_index f9 = cgal_result.add_face(v0, v6, v7);
+    Face_index f11 = cgal_result.add_face(v4, v6, v5);
+    Face_index f12 = cgal_result.add_face(v4, v7, v6);
 
     auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
     CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
@@ -254,20 +269,101 @@ std::list<vec2> make_unit_circle(int step){
     return result;
 }
 
+void compute_half_vertex(const float radius, const vec3 v1, const vec3 v2, vec3& new_v){
+    // find middle point of 2 vertices
+    // NOTE: new vertex must be resized, so the length is equal to the radius
+    new_v = (v1 + v2) * (radius / glm::length(v1 + v2));
+}
+
+vec3 pt3_to_vec3(Kernel::Point_3 point){
+    return vec3(point.x(), point.y(), point.z());
+}
+
+Kernel::Point_3 vec3_to_pt3(vec3 point){
+    return Kernel::Point_3(point.x, point.y, point.z);
+}
+
+// http://www.songho.ca/opengl/gl_sphere.html
 Mesh Mesh::sphere(float radius, float step){
-    /*typedef CGAL::Mesh_triangulation_3<CGAL::Labeled_mesh_domain_3<Kernel>, CGAL::Default, CGAL::Sequential_tag >::type Tr;
-    typedef CGAL::Mesh_criteria_3<Tr> Mesh_criteria;
-    typedef CGAL::Mesh_complex_3_in_triangulation_3<Tr> C3t3;
-    auto sphere_function = [](const Kernel::Point_3& p){
-        return CGAL::squared_distance(p, Kernel::Point_3(CGAL::ORIGIN)) - 1;
-    };
-    CGAL::Labeled_mesh_domain_3<Kernel> domain =
-        CGAL::Labeled_mesh_domain_3<Kernel>::create_implicit_mesh_domain(sphere_function,
-                                                 Kernel::Sphere_3(CGAL::ORIGIN, radius * radius));
-    // facet_angle=30, facet_size = 0.1, facet_distance = 0.025, cell_radius_edge_ratio = 2, cell_size = 0.1;
-    Mesh_criteria criteria(30, 0.1, 0.025, 2, 0.1);
-    C3t3 a = CGAL::make_mesh_3<C3t3>(domain, criteria);*/
-    return Mesh("<Sphere>", CGAL_Mesh());
+    CGAL_Mesh cgal_result;
+    CGAL_Mesh cgal_icosahedron;
+    CGAL::make_icosahedron(cgal_icosahedron, Kernel::Point_3(0, 0, 0), radius);
+
+    std::vector<CGAL::Triple<Vertex_index, Vertex_index, Vertex_index>> step_faces_pre;
+    for (Vertex_index vertex_index : cgal_icosahedron.vertices()){
+        cgal_result.add_vertex(cgal_icosahedron.point(vertex_index));
+    }
+
+    for (Face_index face_index : cgal_icosahedron.faces()){
+        std::vector<Vertex_index> face_vertex;
+        for (Vertex_index vertex_index : cgal_icosahedron.vertices_around_face(cgal_icosahedron.halfedge(face_index))){
+            face_vertex.push_back(vertex_index);
+        }
+        step_faces_pre.push_back(CGAL::Triple(face_vertex[0], face_vertex[1], face_vertex[2]));
+    }
+
+    for (int i = 1; i <= step; ++i){
+        std::map<std::pair<Vertex_index, Vertex_index>, Vertex_index> subdivision_vertices;
+        std::vector<CGAL::Triple<Vertex_index, Vertex_index, Vertex_index>> step_faces;
+
+        for (int j = 0; j < step_faces_pre.size(); ++j){
+            Vertex_index v1_index = step_faces_pre[j].first;
+            Vertex_index v2_index = step_faces_pre[j].second;
+            Vertex_index v3_index = step_faces_pre[j].third;
+            vec3 v1 = pt3_to_vec3(cgal_result.point(v1_index));
+            vec3 v2 = pt3_to_vec3(cgal_result.point(v2_index));
+            vec3 v3 = pt3_to_vec3(cgal_result.point(v3_index));
+            //         v1       
+            //        / \       
+            // new_v1 *---* new_v3
+            //      / \ / \     
+            //    v2---*---v3   
+            //       new_v2      
+            vec3 new_v1, new_v2, new_v3;
+            Vertex_index new_v1_index, new_v2_index, new_v3_index;
+
+            if (subdivision_vertices.contains({v1_index, v2_index})){
+                new_v1_index = subdivision_vertices[{v1_index, v2_index}];
+            } else{
+                compute_half_vertex(radius, v1, v2, new_v1);
+                new_v1_index = cgal_result.add_vertex(vec3_to_pt3(new_v1));
+                subdivision_vertices[{v1_index, v2_index}] = new_v1_index;
+                subdivision_vertices[{v2_index, v1_index}] = new_v1_index;
+            }
+            if (subdivision_vertices.contains({v2_index, v3_index})){
+                new_v2_index = subdivision_vertices[{v2_index, v3_index}];
+            } else{
+                compute_half_vertex(radius, v2, v3, new_v2);
+                new_v2_index = cgal_result.add_vertex(vec3_to_pt3(new_v2));
+                subdivision_vertices[{v2_index, v3_index}] = new_v2_index;
+                subdivision_vertices[{v3_index, v2_index}] = new_v2_index;
+            }
+            if (subdivision_vertices.contains({v3_index, v1_index})){
+                new_v3_index = subdivision_vertices[{v3_index, v1_index}];
+            } else{
+                compute_half_vertex(radius, v3, v1, new_v3);
+                new_v3_index = cgal_result.add_vertex(vec3_to_pt3(new_v3));
+                subdivision_vertices[{v3_index, v1_index}] = new_v3_index;
+                subdivision_vertices[{v1_index, v3_index}] = new_v3_index;
+            }
+
+            step_faces.push_back(CGAL::Triple(v1_index, new_v1_index, new_v3_index));
+            step_faces.push_back(CGAL::Triple(new_v1_index, v2_index, new_v2_index));
+            step_faces.push_back(CGAL::Triple(new_v3_index, new_v2_index, v3_index));
+            step_faces.push_back(CGAL::Triple(new_v2_index, new_v3_index, new_v1_index));
+        }
+        step_faces_pre = step_faces;
+        subdivision_vertices.clear();
+    }
+
+    for (CGAL::Triple<Vertex_index, Vertex_index, Vertex_index> triple : step_faces_pre){
+        cgal_result.add_face(triple.first, triple.second, triple.third);
+    }
+
+    auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
+    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    return Mesh("<Sphere>", cgal_result);
 }
 
 Mesh Mesh::cylinder(float radius, float height, float step){
@@ -336,18 +432,50 @@ Mesh Mesh::cone(float radius, float height, float step){
     return Mesh("<Cone>", cgal_result);
 }
 
-Mesh Mesh::torus(float radius, float thickness, float step){
-    return Mesh();
+Mesh Mesh::torus(float radius, float thickness, float step1, float step2){
+    CGAL_Mesh cgal_result;
+    std::list<vec2> unit_circle = make_unit_circle(step1);
+    std::list<vec2> unit_circle_band = make_unit_circle(step2);
+
+    std::list<std::list<Vertex_index>> bands;
+    for (vec2 dir1 : unit_circle){
+        std::list<Vertex_index> band_vertices;
+        vec3 center = vec3(dir1.x * radius, 0, dir1.y * radius);
+        for (vec2 dir2 : unit_circle_band){
+            band_vertices.push_back(cgal_result.add_vertex(vec3_to_pt3(center + vec3(dir2.x * dir1.x, dir2.y, dir2.x * dir1.y) * thickness)));
+        }
+        band_vertices.push_back(band_vertices.front());
+        bands.push_back(band_vertices);
+    }
+    bands.push_back(bands.front());
+
+    std::list<std::list<Vertex_index>>::iterator band_iter = bands.begin();
+    std::list<std::list<Vertex_index>>::iterator band_prev = band_iter;
+    ++band_iter;
+    for (; band_iter != bands.end(); ++band_iter, ++band_prev){
+        std::list<Vertex_index>::iterator right_vertex_iter = (*band_iter).begin(); // TODO : 매번 리스트가 복사되는거 아님? stl 작동원리 이해 필요
+        std::list<Vertex_index>::iterator right_vertex_prev = right_vertex_iter;
+        std::list<Vertex_index>::iterator left_vertex_iter = (*band_prev).begin();
+        std::list<Vertex_index>::iterator left_vertex_prev = left_vertex_iter;
+        ++right_vertex_iter;
+        ++left_vertex_iter;
+        for (; right_vertex_iter != (*band_iter).end();
+             ++right_vertex_iter, ++right_vertex_prev, ++left_vertex_iter, ++left_vertex_prev){
+            cgal_result.add_face(*left_vertex_iter, *right_vertex_iter, *right_vertex_prev);
+            cgal_result.add_face(*left_vertex_iter, *right_vertex_prev, *left_vertex_prev);
+        }
+    }
+
+    auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
+    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    return Mesh("<Torus>", cgal_result);
 }
 
 CGAL::Aff_transformation_3<Kernel> mat4_to_cgal_transform(const mat4& matrix){
     return CGAL::Aff_transformation_3<Kernel>(matrix[0][0], matrix[1][0], matrix[2][0], matrix[3][0],
                                               matrix[0][1], matrix[1][1], matrix[2][1], matrix[3][1],
                                               matrix[0][2], matrix[1][2], matrix[2][2], matrix[3][2]);
-}
-
-vec3 pt3_to_vec3(Kernel::Point_3 point){
-    return vec3(point.x(), point.y(), point.z());
 }
 
 /*struct Visitor : public CGAL::Polygon_mesh_processing::Corefinement::Default_visitor<CGAL_Mesh>{

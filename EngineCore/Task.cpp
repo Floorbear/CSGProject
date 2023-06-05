@@ -1,4 +1,5 @@
 #include "Task.h"
+#include "Utils.h"
 
 // ===== Job System ===== //
 
@@ -99,6 +100,7 @@ void TransactionTaskManager::add(TransactionTask* task_){
 void TransactionTaskManager::execute_all(){
     while (!work_queue.empty()){
         if (work_queue.front()->execute()){ // 성공했을 때만 undo 등록
+            Utils::log(work_queue.front()->detail);
             history_stack.push_back(work_queue.front());
             if (history_stack.size() > option_undo_max_cnt){
                 delete history_stack.front();
@@ -122,6 +124,7 @@ void TransactionTaskManager::undo(){
     history_stack.pop_back();
 
     work_queue_no_history.push(Task([=](){
+        Utils::log("Undo " + task_to_undo->detail);
         task_to_undo->undo_task().execute();
         redo_stack.push_back(task_to_undo);
     }));

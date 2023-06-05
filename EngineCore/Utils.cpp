@@ -1,4 +1,6 @@
 #include "Utils.h"
+#include "Core.h"
+#include "WorkSpace.h"
 
 #include <boost/format.hpp>
 
@@ -56,9 +58,12 @@ glm::vec3 Utils::get_vecFromPitchYaw(float pitch_, float yaw_){
     return newVec;
 }
 
-
 // Transform(const Transform& _ref);
 // Transform(const Transform& _Other) = delete;
 // Transform(Transform&& _Other) noexcept = delete;
 // Transform& operator=(const Transform& _Other) = delete;
 // Transform& operator=(Transform&& _Other) noexcept = delete;
+
+void Utils::log(std::string text){
+    Core::get()->gui.active_workspace->logs.push_back(text);
+}

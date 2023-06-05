@@ -15,8 +15,8 @@ out vec2 texCoord;
 void main()
 {
 	//multiply : Right to left
-	gl_Position = projection * view * world * vec4(aPos.x,aPos.y,aPos.z,1.0);
 	fragPos = vec3(world * vec4(aPos.x,aPos.y,aPos.z,1.0 ));
 	normal = mat3(transpose(inverse(world))) * aNormal;
+	gl_Position = projection * view * world * vec4(aPos,1.0);
 	texCoord = aTexCoord;
 }

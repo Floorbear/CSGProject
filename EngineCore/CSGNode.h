@@ -37,15 +37,15 @@ private:
     CSGNodeTransform transform; //  TODO : 포인터로 변경?
     Type type;
 
+
 public:
     Model* model = nullptr; // root mesh 조작시 사용
     bool selection_group = false;
 
     CSGNode(const Mesh& mesh);
-    CSGNode(Type type_, CSGNode* node1, CSGNode* node2);
+    CSGNode(Type type_);
     ~CSGNode();
 
-    void set_parent(CSGNode* parent_) override;
     bool add_child(CSGNode* node) override;
     bool reparent_child(CSGNode* node, CSGNode* after = nullptr) override;
     void swap_child(CSGNode* child1, CSGNode* child2) override;
@@ -54,6 +54,7 @@ public:
     std::vector<Type> get_changable_types();
     Type get_type();
     void set_type(Type type_);
+    Mesh* get_mesh();
 
     TransformComponent* get_transform();
 

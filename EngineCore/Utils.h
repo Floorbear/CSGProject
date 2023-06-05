@@ -29,7 +29,7 @@ public:
     //static double time(); // 시계 (절대)
     static float time_acc(); // 프로그램 시작부터 누적
     static float time_delta(); // 프레임 사이 간격
-    static void time_update(); // TODO : 메인루프 에서 호출
+    static void time_update();
 private:
     static float last_frameTime;
     static float deltaTime;
@@ -38,4 +38,5 @@ private:
 public:
     static glm::vec3 get_vecFromPitchYaw(float pitch_, float yaw_); //pitch : xAxis , yaw : yAxis
 
+    static void log(std::string text);
 };

@@ -74,7 +74,7 @@ void Material::apply_selection_id(){
     selectionShader->set_mat4("view", uniform_camera->get_view());
     selectionShader->set_mat4("projection", uniform_camera->get_projection());
 
-    selectionShader->set_uint("objectType", 0);
+    selectionShader->set_uint("objectType", uniform_selection_id.object_type);
     selectionShader->set_uint("modelID", uniform_selection_id.model_id);
     selectionShader->set_uint("meshID", uniform_selection_id.mesh_id);
 }

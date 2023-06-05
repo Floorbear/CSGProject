@@ -64,7 +64,8 @@ public:
     vec2 mouse_pos_left_press_view = vec2();
     vec2 mouse_pos_left_current_raw = vec2();
     vec2 mouse_pos_left_current_view = vec2();
-    bool is_view_pressed = false;
+    bool is_background_pressed = false;
+    bool is_gizmo_pressed = false; // TODO : pressed_object_type으로 변경
     
     WorkSpace(GUI* parent_);
     WorkSpace(GUI* parent_, std::string title_);
@@ -84,7 +85,11 @@ public:
     void on_mouse_release_left();
     vec2 prevPos;
 
-    static WorkSpace* create_new(GUI* parent_, const char* filename);
+    bool check_model_selected_exact(Model* model);
+    bool check_model_selected(Model* model);
+    bool check_mesh_selected_exact(CSGNode* mesh);
+    bool check_mesh_selected(CSGNode* mesh);
 
+    static WorkSpace* create_new(GUI* parent_, const char* filename);
     void add_view_new();
 };

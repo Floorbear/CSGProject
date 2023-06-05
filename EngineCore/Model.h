@@ -5,12 +5,14 @@
 #include "Component.h"
 #include "TreeNode.hpp"
 #include "Gizmo.h"
+
 #include <glm/glm.hpp>
 
 #include <list>
 
 class CSGNode;
 class Material;
+class Renderer;
 class Model : public Entity, public TreeNode<Model>{
     CSGNode* csgmesh = nullptr; // root node
     TransformComponent* transform = nullptr;
@@ -23,7 +25,7 @@ public:
     ~Model();
 
     void set_parent(Model* parent_) override;
-    
+
     CSGNode* get_csg_mesh();
     void set_csg_mesh(CSGNode* csgmesh_, bool fix_mesh_position = false);
     void set_csg_mesh_new(const Mesh& mesh);
@@ -37,7 +39,7 @@ public:
     void set_material(Material* material_);
 
     bool is_renderable();
-    void render();
+    void render(Renderer* renderer);
 
     void render_selection_id(uint32_t* selection_id_model_acc);
     SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, uint32_t* selection_id_model_acc);
@@ -50,8 +52,7 @@ private:
     Gizmo* gizmo = nullptr;
 public:
     void render_gizmo();
-    inline Gizmo* get_gizmo()
-    {
+    inline Gizmo* get_gizmo()    {
         return gizmo;
     }
 

@@ -159,8 +159,8 @@ void Gizmo::render_selection(Camera* _camera, TransformComponent* _parentTransfo
 		_shader->set_mat4("view", _camera->get_view());
 		_shader->set_mat4("projection", _camera->get_projection());
 		
-		_shader->set_uint("objectType", 1);
-		_shader->set_uint("modelID", renderOrder[i]); // 0 : x , 1 : y , 2: z , 3 : mainDot
+		_shader->set_uint("objectType", renderOrder[i] + 2);// 2 : x , 3 : y , 4: z , 5 : mainDot
+		_shader->set_uint("modelID", 0); 
 		_shader->set_uint("meshID", 0);
 		_mesh[renderOrder[i]]->render();
 	}

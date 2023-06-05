@@ -1,5 +1,6 @@
 #include "WorkSpace.h"
 #include "Utils.h"
+#include "Core.h"
 #include "Camera.h"
 #include "Model.h"
 #include "CSGNode.h"
@@ -17,7 +18,7 @@ WorkSpace::WorkSpace(GUI* parent_, std::string title_) : parent(parent_), title(
     id = id_counter++;
 
     renderers.push_back(renderer_focused = new Renderer(512, 512));
-    renderer_focused->set_parent(parent);
+    renderer_focused->set_parent(this);
 
     root_model = new Model("Root");
     root_model->clear_components();
@@ -72,18 +73,46 @@ void WorkSpace::render_view(Renderer* renderer){
     renderer->render(root_model->get_children(), &lights);
 
     // view 마우스 좌표 측정
+    mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
     if (is_window_content_hovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
         renderer_focused = renderer;
-        mouse_pos_left_press_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
-        mouse_pos_left_current_view = mouse_pos_left_press_view;
-        is_view_pressed = true;
+        mouse_pos_left_press_view = mouse_pos_left_current_view;
+    }
 
-                // selection 처리
+    // 오브젝트 피킹 (클릭시 모델,메쉬 선택, 호버링시 기즈모 하이라이트)
+    if (is_window_content_hovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
         SelectionPixelObjectInfo info = renderer->find_selection(root_model->get_children(), mouse_pos_left_current_view);
+
         if (info.empty()){
-            selected_models.clear(); // TODO : 기즈모 등등 선택 확인 이후
+            is_background_pressed = true;
+            selected_models.clear();
             selected_meshes.clear();
-        } else{
+        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_x){
+            is_gizmo_pressed = true;
+            if (!selected_models.empty()){ // TODO : 선택된 오브젝트 모두 이동하게 변경
+                dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                              0);
+            }
+        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_y){
+            is_gizmo_pressed = true;
+            if (!selected_models.empty()){
+                dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                              1);
+            }
+        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_z){
+            is_gizmo_pressed = true;
+            if (!selected_models.empty()){
+                dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                              2);
+            }
+        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_dot){
+            is_gizmo_pressed = true;
+            if (!selected_models.empty()){ // TODO : 선택된 오브젝트 모두 이동하게 변경
+                dragDelegate =
+                    std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                              3);
+            }
+        } else if (info.object_type == SelectionPixelInfo::object_type_object){
             if (selection_mode == SelectionMode::Model){
                 if (ImGui::GetIO().KeyCtrl){
                     if (Utils::contains(selected_models, info.model)){
@@ -108,19 +137,12 @@ void WorkSpace::render_view(Renderer* renderer){
                 }
             }
         }
+
+    } else if (is_window_content_hovered() && !ImGui::IsMouseDown(ImGuiButtonFlags_MouseButtonLeft)){
+        renderer->find_selection_gizmo(selected_models, mouse_pos_left_current_view); // TODO : 리팩토링 : 기즈모 select변경 관련 여기로 빼기
     }
 
-    if (renderer_focused == renderer && ImGui::IsMouseDragging(ImGuiMouseButton_Left)){
-        mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
-    }
-
-    if (is_window_content_hovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){
-        mouse_pos_left_current_view = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
-
-
-    }
-    vec2 CurMousePos = vec2(ImGui::GetMousePos().x - p_min.x, ImGui::GetMousePos().y - p_min.y);
-    renderer->render_and_read_specificInfo(root_model->get_children(), CurMousePos);
+    renderer->render_outline(selected_models); // TODO : 메쉬 관련 추가 renderer->render_outline(selected_meshes) 
 
     // Gui 렌더링
     #pragma warning(disable: 4312)
@@ -343,14 +365,15 @@ void WorkSpace::render_hierarchy(){
 void WorkSpace::render_inspector(){
     ImGui::Begin(Utils::format("Inspector##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
 
-    // 마지막으로 선택된 것 (기즈모가 그려지는 것)
-    if (!selected_models.empty()){
+    if (selected_models.size() == 1){
         ImGui::Text(("Model : " + selected_models.back()->name + "\n\n").c_str());
+
         for (Component* component : selected_models.back()->get_components()){
             component->render();
         }
-    } else if (!selected_meshes.empty()){
-        ImGui::Text("Mesh\n\n");
+    } else if (selected_meshes.size() == 1){
+        ImGui::Text(("Mesh : " + selected_meshes.back()->get_mesh()->get_name() + "\n").c_str());
+        ImGui::Text((selected_meshes.back()->get_mesh()->get_mesh_info() + "\n").c_str());
         for (Component* component : selected_meshes.back()->get_components()){
             component->render();
         }
@@ -368,19 +391,21 @@ void WorkSpace::render_inspector(){
 void WorkSpace::render_logs(){
     if (gui_logs){
         ImGui::Begin(Utils::format("Logs##%1%", id).c_str(), 0, ImGuiWindowFlags_NoCollapse);
-        for (std::string line : logs){
-            ImGui::Text(line.c_str());
-        }
         if (logs.size() > 100){
             logs.pop_front();
         }
+        for (std::string line : logs){
+            ImGui::Text(line.c_str());
+        }
+        ImGui::ScrollToItem();
         ImGui::End();
     }
 }
 
 void WorkSpace::render(){
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
-        is_view_pressed = false;
+        is_background_pressed = false;
+        is_gizmo_pressed = false;
     }
     for (Renderer* renderer : renderers){
         render_view(renderer);
@@ -447,19 +472,18 @@ void WorkSpace::on_mouse_drag_left(){
     float sensitivity = 22.f;
     vec2 moveDir = mouse_pos_left_current_raw - prevPos;
 
-    if (is_view_pressed){
+    if (is_background_pressed){
+        if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
+            get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta() * sensitivity, 0));
+        }
+    } else if (is_gizmo_pressed){
         //기즈모용 델리게이트 
         if (dragDelegate != nullptr){
             dragDelegate(get_main_camera(), mouse_pos_left_current_raw, prevPos);
-            prevPos = mouse_pos_left_current_raw;
 
-        } else if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
-            prevPos = mouse_pos_left_current_raw;
-            get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta() * sensitivity, 0));
         }
     }
-
-
+    prevPos = mouse_pos_left_current_raw;
 
     // printf("%lf \n", abs(length(mouse_pos_left_current_raw) - length(prevPos)));
     // camera.transform.set_rotation(Transform(camera_transform_saved).rotate(C * vec3(0, mouse_pos_left_current_raw - mouse_pos_left_press_raw, 0)));
@@ -470,13 +494,43 @@ void WorkSpace::on_mouse_release_left(){
     dragDelegate = nullptr;
 }
 
+bool WorkSpace::check_model_selected_exact(Model* model){
+    return Utils::contains(selected_models, model);
+}
+
+bool WorkSpace::check_model_selected(Model* model){
+    Model* current_model = model;
+    while (current_model != nullptr){
+        if (check_model_selected_exact(current_model)){
+            return true; // 자신 혹은 부모가 선택됨
+        }
+        current_model = current_model->get_parent();
+    }
+    return false;
+}
+
+bool WorkSpace::check_mesh_selected_exact(CSGNode* mesh){
+    return Utils::contains(selected_meshes, mesh);
+}
+
+bool WorkSpace::check_mesh_selected(CSGNode* mesh){
+    CSGNode* current_mesh = mesh;
+    while (current_mesh != nullptr){
+        if (check_mesh_selected_exact(current_mesh)){
+            return true; // 자신 혹은 부모가 선택됨
+        }
+        current_mesh = current_mesh->get_parent();
+    }
+    return false;
+}
+
 WorkSpace* WorkSpace::create_new(GUI* parent_, const char* filename){
     return new WorkSpace(parent_, filename);
 }
 
 void WorkSpace::add_view_new(){
     renderers.push_back(renderer_focused = new Renderer(256, 256));
-    renderer_focused->set_parent(parent);
+    renderer_focused->set_parent(this);
 }
 
 void WorkSpace::render_popup_menu_view(){
@@ -544,12 +598,9 @@ void WorkSpace::render_popup_menu_view(){
                     selection_mode = SelectionMode::Mesh;
                 }
             }*/
-            // if (ImGui::MenuItem("Filter Selection")){}
             ImGui::EndMenu();
         }
         ImGui::Separator();
-        // TODO : if 선택된 모델이 있는경우 클릭하면 add child model
-        // TODO : add mesh 
         if (ImGui::BeginMenu("Add Basic Model")){
             if (ImGui::MenuItem("Cube")){
                 actions.add_model_new(Mesh::cube(1.0f));
@@ -558,7 +609,7 @@ void WorkSpace::render_popup_menu_view(){
                 actions.add_model_new(Mesh::pyramid(0.5f, 1.0f));
             }
             if (ImGui::MenuItem("Sphere")){
-                actions.add_model_new(Mesh::sphere(1.0f, 0.1f));
+                actions.add_model_new(Mesh::sphere(0.5f, 2));
             }
             if (ImGui::MenuItem("Cylinder")){
                 actions.add_model_new(Mesh::cylinder(0.5f, 1.0f, 32));
@@ -567,13 +618,50 @@ void WorkSpace::render_popup_menu_view(){
                 actions.add_model_new(Mesh::cone(0.5f, 1.0f, 32));
             }
             if (ImGui::MenuItem("Torus")){
+                actions.add_model_new(Mesh::torus(0.5f, 0.25f, 32, 16));
             }
             ImGui::EndMenu();
         }
-        if (ImGui::MenuItem("Load Model")){}
+        if (ImGui::MenuItem("Load Model")){
+            Core::get()->task_manager.add([this](){
+                Transform load_default_transform;
+                load_default_transform.set_scale(vec3(0.1f, 0.1f, 0.1f));
+                load_default_transform.set_rotation(vec3(-90, 0, 0));
+                actions.add_model_new(Mesh::load(FileSystem::getFilePath().get_path()), load_default_transform);
+            });
+        }
         ImGui::Separator();
         if (ImGui::BeginMenu("Boolean Operation", selection_mode == SelectionMode::Model)){
             if (ImGui::MenuItem("Create Union Of Selected Models", NULL, false, selected_models.size() >= 2)){
+                // TODO : action로 옮기기
+                Model* model = new Model("Union Model"); // TODO : name들 스트링 concat
+                std::list<CSGNode*> selected_model_meshes;
+                for (Model* model : selected_models){
+                    selected_model_meshes.push_back(model->get_csg_mesh());
+                }
+                model->get_transform()->set(selected_models.front()->get_transform()->get_value());
+                model->set_csg_mesh(new CSGNode(CSGNode::Type::Union));
+
+                /*workspace->transaction_manager.add(new TreeModifyTask("Add " + mesh.get_name(), workspace->root_model, [=, this](){
+                    if (workspace->root_model->add_child(model)){
+                        model->get_csg_mesh()->get_transform()->set(transform);
+                    }
+                    return true;
+                }));
+                reparent childdfasfafsdfkasdfkasdnflsdnflnasdlkfdnakl
+                transaction_manager.add((new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){
+                    return node->reparent_child(payload_node);
+                }, node->model->get_csg_mesh(), [=](CSGNode* root){
+                    node->model->set_csg_mesh(root, true);
+                }, payload_node->model->get_csg_mesh(), [=](CSGNode* root){
+                    payload_node->model->set_csg_mesh(root, true);
+
+                }))->link(new TreeModifyTask("Delete Model", root_model, [=](){
+                    if (payload_node_model->get_csg_mesh() == nullptr){ // empty model
+                        payload_node_model->remove_self();
+                    }
+                    return true;
+                })));*/
             }
             if (ImGui::MenuItem("Create Intersection Of Selected Models", NULL, false, selected_models.size() >= 2)){
             }

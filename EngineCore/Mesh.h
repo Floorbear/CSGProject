@@ -54,6 +54,7 @@ public:
     void render();
 
     std::string get_name() const;
+    std::string get_mesh_info() const;
     void save(std::string path);
 
     static Mesh load(std::string path);
@@ -62,7 +63,7 @@ public:
     static Mesh sphere(float radius, float step);
     static Mesh cylinder(float radius, float height, float step);
     static Mesh cone(float radius, float height, float step);
-    static Mesh torus(float radius, float thickness, float step);
+    static Mesh torus(float radius, float thickness, float step1, float step2);
 
     static bool compute_union(const Mesh& mesh1, Transform* transform1,
                               const Mesh& mesh2, Transform* transform2, Mesh& result);

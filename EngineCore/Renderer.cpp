@@ -21,7 +21,7 @@ int Renderer::default_camera_pos_z = 20.0f;
 
 Renderer::Renderer(int viewport_width, int viewport_height){
     id = id_counter++;
-    parent = nullptr;
+    workspace = nullptr;
     camera = nullptr;
 
     texture_size = vec2(512, 512); // default
@@ -35,8 +35,8 @@ Renderer::~Renderer(){
     delete camera;
 }
 
-void Renderer::set_parent(GUI* parent_){
-    parent = parent_;
+void Renderer::set_parent(WorkSpace* workspace_){
+    workspace = workspace_;
 }
 
 int Renderer::get_id(){
@@ -57,197 +57,134 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
 
     camera->calculate_view();
 
-    // TEST
-    if (parent->active_workspace != nullptr){
-        static Model* newModel = nullptr;
-        if (newModel == nullptr){
-            newModel = new Model("MyModel");
+    /*EnginePath newPath = FileSystem::GetProjectPath();
+    newPath.Move("EngineResource");
+    newPath.Move("Texture");
+    newPath.Move("rockTexture.jpg");
+    model->set_material(new TextureMaterial(Texture::create_texture(newPath)));*/
 
-            //parent->active_workspace->root_model->add_child(newModel);
-        }
+    // ===== 일반 스크린 렌더링 ===== //
 
-
-
-        Model* model = parent->active_workspace->find_model("MyModel");
-        if (model != NULL){
-            //CSGMesh* newMesh = 
-            Transform* newMesh = model->get_transform();
-            newMesh->set_position(vec3(0, 0, 2));
-            newMesh->set_scale(vec3(1.5f, 1.0f, 0.5f));
-
-            static bool TextureTest = true;
-            static bool TextureTest2 = true;
-            if (TextureTest){
-                TextureTest = false;
-                EnginePath newPath = FileSystem::GetProjectPath();
-                newPath.Move("EngineResource");
-                newPath.Move("Texture");
-                newPath.Move("rockTexture.jpg");
-                Texture* newTexture = Texture::create_texture(newPath);
-
-                model->set_material(new TextureMaterial(newTexture));
-            }
-            if (TextureTest2 && Utils::time_acc() > 5.0f){
-                TextureTest2 = false;
-                model->set_material(new ColorMaterial());
-            }
-        }
-
-    }
-
-
+    glEnable(GL_DEPTH_TEST);
     for (Model* model : models){
-        glEnable(GL_DEPTH_TEST);
-        bool isSelected = Utils::contains(get_selected_models(), model);
-        //윤곽선을 그리기 위해 Stencil 셋팅
-        //Selected Model의 모델의 픽셀들은 스텐실 값이 1로 초기화 됩니다. 그 외에는 0입니다.
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        if (isSelected){
-            glStencilMask(0xFF);
-        } else{
-            glStencilMask(0x00);
-        }
         model->get_material()->set_uniform_camera(camera);
         model->get_material()->set_uniform_lights(lights);
-        model->render();
+        model->render(this);
     }
-
-
-    render_selectedObject(models, lights); //맨 마지막에 호출
 }
 
-void Renderer::render_and_read_specificInfo(const std::list<Model*>& models, vec2 mouse_position)
-{
-    if (framebuffer_selection == nullptr)
-    {
+void Renderer::render_outline(const std::list<Model*>& models){ // render()의 연장
+    if (models.empty()){
         return;
     }
 
-    // 셀렉션 버퍼에 렌더링
-    {
-        framebuffer_selection->enable();
-       // glStencilMask(0x00);
+    framebuffer_screen->enable();
 
-        //기즈모 정보 렌더링
-        for (Model* model : get_selected_models()) {
-            model->get_gizmo()->render_selectionBuffer(camera);
-        }
+    // ===== 윤곽선 렌더링 ===== //
 
-        framebuffer_selection->disable();
-    }
-    // 셀렉션 렌더링 정보 읽기
-    framebuffer_selection->enable();
-    SelectionPixelIdInfo Pixel = framebuffer_selection->
-        read_pixel((int)(texture_size.x * mouse_position.x / viewport_size.x),
-            (int)(texture_size.y * mouse_position.y / viewport_size.y));
-    framebuffer_selection->disable();
-
-    //3번째 픽셀값이 1 == 기즈모 셀렉트 이펙트
-    if (Pixel.objectType == 1) {
-        Model* firstSelectedModel = nullptr;
-        for (Model* model : get_selected_models()) {
-            firstSelectedModel = model;
-            break;
-        }
-        int axis = Pixel.model_id; // 0 : x , 1 : y , 2 : z, 3 : mainDot
-        if(firstSelectedModel != nullptr)
-        {
-            firstSelectedModel->get_gizmo()->set_selectedAxis(axis);
-        }
-    }
-}
-
-void Renderer::render_selectedObject(const std::list<Model*>& models, const std::list<PointLight*>* lights)
-{
     //조금 더 큰 모델을 윤곽선 쉐이더로 그립니다.
     //이때 스텐실이 1인 픽셀에는 그리지 않습니다.
-    for (Model* model : get_selected_models()) {
+    glDisable(GL_DEPTH_TEST);
+    for (Model* model : models){
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
         glStencilMask(0x00);
-        glDisable(GL_DEPTH_TEST);
         model->get_material()->set_uniform_camera(camera);
         float ff = 1.05f;
-        model->render_outline({ ff, ff, ff });
-        //parent->active_workspace->selected_models
+        model->render_outline({ff, ff, ff});
 
         glStencilMask(0xFF);
         glStencilFunc(GL_ALWAYS, 0, 0xFF);
         glEnable(GL_DEPTH_TEST);
     }
 
-    //기즈모 렌더링
-    for (Model* model : get_selected_models()) {
+    // ===== 기즈모 렌더링 ===== //
+
+    for (Model* model : models){
         model->render_gizmo();
     }
 }
 
-SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& models, vec2 mouse_position){
-    glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
+void Renderer::find_selection_gizmo(const std::list<Model*>& models, vec2 mouse_position){
+    if (models.empty()){
+        return;
+    }
 
     if (framebuffer_selection == nullptr){
         framebuffer_selection = SelectionFrameBuffer::create_selectionFrameBuffer(texture_size);
     }
+    framebuffer_selection->enable();
+
+    glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
+    glStencilMask(0x00);
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    //기즈모 정보 렌더링
+    for (Model* model : models){
+        model->get_gizmo()->render_selectionBuffer(camera);
+    }
+
+
+    // 셀렉션 렌더링 정보 읽기
+    SelectionPixelIdInfo Pixel = framebuffer_selection->
+        read_pixel((int)(texture_size.x * mouse_position.x / viewport_size.x),
+            (int)(texture_size.y * mouse_position.y / viewport_size.y));
+
+    framebuffer_selection->disable();
+
+    models.front()->get_gizmo()->set_selectedAxis(-1);
+    if (Pixel.object_type != SelectionPixelInfo::object_type_none){
+        int axis = Pixel.object_type - 2; // 0 : x , 1 : y , 2 : z, 3 : mainDot
+        models.front()->get_gizmo()->set_selectedAxis(axis);
+    }
+}
+
+SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& models, vec2 mouse_position){
+    if (models.empty()){
+        return SelectionPixelObjectInfo(); // null
+    }
+
+    if (framebuffer_selection == nullptr){
+        framebuffer_selection = SelectionFrameBuffer::create_selectionFrameBuffer(texture_size);
+    }
+    framebuffer_selection->enable();
 
     // 셀렉션 버퍼에 렌더링
-    {
-        framebuffer_selection->enable();
-        glStencilMask(0x00);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
+    glStencilMask(0x00);
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        //모델 정보 렌더링
-        uint32_t selection_id_model_acc = 1;
-        for (Model* model : models){
-            model->get_material()->set_uniform_camera(camera);
-            model->render_selection_id(&selection_id_model_acc);
-        }
+    //모델 정보 렌더링
+    uint32_t selection_id_model_acc = 1;
+    for (Model* model : models){
+        model->get_material()->set_uniform_camera(camera);
+        model->render_selection_id(&selection_id_model_acc);
+    }
 
-        //기즈모 정보 렌더링
-        for (Model* model : get_selected_models()){
-            model->get_gizmo()->render_selectionBuffer(camera);
-        }
-
-        framebuffer_selection->disable();
+    //기즈모 정보 렌더링
+    for (Model* model : workspace->selected_models){
+        model->get_gizmo()->render_selectionBuffer(camera);
     }
 
     // 셀렉션 렌더링 정보 읽기
-    framebuffer_selection->enable();
-    SelectionPixelIdInfo Pixel = framebuffer_selection->
+    SelectionPixelIdInfo pixel = framebuffer_selection->
         read_pixel((int)(texture_size.x * mouse_position.x / viewport_size.x),
                    (int)(texture_size.y * mouse_position.y / viewport_size.y));
+
     framebuffer_selection->disable();
 
-    //3번째 픽셀값이 1 == 기즈모 셀렉트
-    if (Pixel.objectType == 1){
-        Model* firstSelectedModel = nullptr;
-        for (Model* model : get_selected_models()){
-            firstSelectedModel = model;
-            break;
-        }
-        int axis = Pixel.model_id; // 0 : x , 1 : y , 2 : z, 3 : mainDot
-        if (firstSelectedModel != nullptr)
-        {
-            parent->active_workspace->dragDelegate =
-                std::bind(&Gizmo::move, firstSelectedModel->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, axis);
-            SelectionPixelObjectInfo info;
-            info.model = firstSelectedModel;
-            info.mesh = firstSelectedModel->get_csg_mesh();
-            return info;
-        }
-    } else{
+    if (pixel.object_type == SelectionPixelInfo::object_type_object){
         uint32_t selection_id_model_acc = 1;
         for (Model* model : models){
-            SelectionPixelObjectInfo info = model->from_selection_id(Pixel, &selection_id_model_acc);
+            SelectionPixelObjectInfo info = model->from_selection_id(pixel, &selection_id_model_acc);
             if (!info.empty()){
                 return info;
             }
+
         }
     }
-
-    return SelectionPixelObjectInfo(); // null
-}
-
-std::list<Model*> Renderer::get_selected_models(){
-    return parent->active_workspace->selected_models;
+    return SelectionPixelObjectInfo(pixel.object_type);
 }
 
 void Renderer::dispose(){

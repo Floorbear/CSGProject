@@ -5,6 +5,8 @@
 #include "Leaked_Pointers.h"
 #include "GUI.h"
 #include "Texture.h"
+#include "Renderer.h"
+#include "WorkSpace.h"
 
 Model::Model(std::string name_) : name(name_){
     components.push_back(transform = new TransformComponent());
@@ -41,7 +43,7 @@ void Model::set_csg_mesh(CSGNode* csgmesh_, bool fix_mesh_position){
     csgmesh = csgmesh_;
     if (csgmesh != nullptr){
         csgmesh->model = this;
-        csgmesh->get_transform()->set_parent(transform, fix_mesh_position);
+        csgmesh->get_transform()->set_parent(transform, false);
     }
 }
 
@@ -81,8 +83,16 @@ bool Model::is_renderable(){
     return csgmesh != nullptr;
 }
 
-void Model::render(){
-    transform->calculate_matrix();
+void Model::render(Renderer* renderer){
+    //윤곽선을 그리기 위해 Stencil 셋팅
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    if (renderer->workspace == nullptr || renderer->workspace->check_model_selected(this)){
+        glStencilMask(0xFF); // on
+    } else{
+        glStencilMask(0x00); // off
+    }
+
+    transform->calculate_matrix(); // 부모가 먼저 계산하고 자식으로 전파해야하므로 제거하지 마세요!
     if (csgmesh != nullptr){
         csgmesh->get_transform()->calculate_matrix();
         material->set_uniform_model_transform(csgmesh->get_transform());
@@ -93,7 +103,7 @@ void Model::render(){
     for (Model* child : children){
         child->material->set_uniform_camera(material->get_uniform_camera());
         child->material->set_uniform_lights(material->get_uniform_lights());
-        //child->render();
+        child->render(renderer);
     }
 }
 
@@ -102,13 +112,10 @@ void Model::render_outline(const vec3& _scaleAcc){
     if (csgmesh != nullptr){
         Transform newTransform = csgmesh->get_transform()->get_value();
         vec3 newScale = newTransform.get_scale();
-        newScale.x *= _scaleAcc.x;
-        newScale.y *= _scaleAcc.y;
-        newScale.z *= _scaleAcc.z;
+        newScale *= _scaleAcc;
         newTransform.set_scale(newScale);
         material->set_uniform_model_transform(&newTransform);
         material->apply_outline();
-
         csgmesh->render();
     }
 
@@ -128,7 +135,6 @@ void Model::render_selection_id(uint32_t* selection_id_model_acc){
 
     if (csgmesh != nullptr){
         material->set_uniform_model_transform(csgmesh->get_transform());
-        material->apply_selection_id();
         csgmesh->render_selection_id(material, *selection_id_model_acc, &selection_id_mesh_acc);
     }
     (*selection_id_model_acc)++;
