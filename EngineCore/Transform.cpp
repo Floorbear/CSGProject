@@ -38,6 +38,10 @@ vec3 Transform::get_world_rotation(){
     return rotation_world;
 }
 
+Transform* Transform::get_parent(){
+    return parent;
+}
+
 void Transform::set_parent(Transform* parent_, bool fix_position){
     vec3 old_parent_scale = vec3(1, 1, 1);
     if (parent != nullptr){
@@ -103,7 +107,7 @@ void Transform::calculate_matrix(){
     position_world = position;
     rotation_world = rotation;
     scale3d_world = scale3d;
-    if (parent != nullptr){
+    if (parent != nullptr){ // 렌더링시 탑다운 방식이라 parent가 자동으로 먼저 계산되는 구조임.
         matrix_world = parent->matrix_world * matrix_world;
         position_world += parent->position_world;
         rotation_world += parent->rotation_world;

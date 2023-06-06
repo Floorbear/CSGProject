@@ -17,7 +17,7 @@
 #pragma warning(disable : 4717)
 
 int Renderer::id_counter = 1; // 1부터 시작
-int Renderer::default_camera_pos_z = 20.0f;
+float Renderer::default_camera_pos_z = 20.0f;
 
 Renderer::Renderer(int viewport_width, int viewport_height){
     id = id_counter++;
@@ -56,12 +56,6 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     camera->calculate_view();
-
-    /*EnginePath newPath = FileSystem::GetProjectPath();
-    newPath.Move("EngineResource");
-    newPath.Move("Texture");
-    newPath.Move("rockTexture.jpg");
-    model->set_material(new TextureMaterial(Texture::create_texture(newPath)));*/
 
     // ===== 일반 스크린 렌더링 ===== //
 
@@ -124,7 +118,6 @@ void Renderer::find_selection_gizmo(const std::list<Model*>& models, vec2 mouse_
         model->get_gizmo()->render_selectionBuffer(camera);
     }
 
-
     // 셀렉션 렌더링 정보 읽기
     SelectionPixelIdInfo Pixel = framebuffer_selection->
         read_pixel((int)(texture_size.x * mouse_position.x / viewport_size.x),
@@ -175,13 +168,12 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
     framebuffer_selection->disable();
 
     if (pixel.object_type == SelectionPixelInfo::object_type_object){
-        uint32_t selection_id_model_acc = 1;
+        selection_id_model_acc = 1;
         for (Model* model : models){
             SelectionPixelObjectInfo info = model->from_selection_id(pixel, &selection_id_model_acc);
             if (!info.empty()){
                 return info;
             }
-
         }
     }
     return SelectionPixelObjectInfo(pixel.object_type);

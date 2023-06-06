@@ -11,6 +11,7 @@
 Model::Model(std::string name_) : name(name_){
     components.push_back(transform = new TransformComponent());
     components.push_back(material = new ColorMaterial());
+    // components.push_back(material = new TextureMaterial(Texture::create_texture(EnginePath::get_texture_path().move("rockTexture.jpg"))));
 
     gizmo = new Gizmo(get_transform()); // TODO : 씬당 하나만있음 되는거아님?
 }
@@ -135,6 +136,7 @@ void Model::render_selection_id(uint32_t* selection_id_model_acc){
 
     if (csgmesh != nullptr){
         material->set_uniform_model_transform(csgmesh->get_transform());
+        // csgmesh에서 material.apply()
         csgmesh->render_selection_id(material, *selection_id_model_acc, &selection_id_mesh_acc);
     }
     (*selection_id_model_acc)++;

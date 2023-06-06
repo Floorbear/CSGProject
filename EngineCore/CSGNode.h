@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Mesh.h"
 #include "Shader.h"
 #include "SelectionPixelInfo.h"
@@ -19,6 +18,7 @@ public:
         Intersection,
         Difference // children 제한 : 2개
     };
+    static const char* type_string_values[];
 
 private:
     class CSGNodeTransform : public TransformComponent{
@@ -28,11 +28,8 @@ private:
         void on_local_modify() override;
     };
 
-    static const char* type_string_values[];
-
     Mesh result;
     bool is_result_valid = false;
-    void mark_edited();
 
     CSGNodeTransform transform; //  TODO : 포인터로 변경?
     Type type;
@@ -46,9 +43,14 @@ public:
     CSGNode(Type type_);
     ~CSGNode();
 
-    bool add_child(CSGNode* node) override;
+    bool add_child(CSGNode* node, CSGNode* after = nullptr) override;
     bool reparent_child(CSGNode* node, CSGNode* after = nullptr) override;
     void swap_child(CSGNode* child1, CSGNode* child2) override;
+    bool remove_self() override;
+    bool remove_self_subtree() override;
+    bool unpack_to_parent();
+
+    void mark_edited();
 
     std::string get_name();
     std::vector<Type> get_changable_types();

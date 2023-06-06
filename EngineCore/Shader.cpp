@@ -13,10 +13,7 @@ Shader::Shader(std::string vertexShader_, std::string fragmentShader_)
 		auto iter = compileData.find(vertexShader_);
 		if(iter == compileData.end())
 		{
-			EnginePath NewPath = FileSystem::GetProjectPath();
-			NewPath.Move("EngineResource");
-			NewPath.Move("Shader");
-			NewPath.Move(vertexShader_);
+			EnginePath NewPath = FileSystem::GetProjectPath().move("EngineResource").move("Shader").move(vertexShader_);
 			std::string ShaderTEXT = NewPath.ReadFile();
 			compileData.insert(std::make_pair(vertexShader_, ShaderTEXT));
 			//shaderSource = ShaderTEXT.c_str();
@@ -37,10 +34,7 @@ Shader::Shader(std::string vertexShader_, std::string fragmentShader_)
 		auto iter = compileData.find(fragmentShader_);
 		if (iter == compileData.end())
 		{
-			EnginePath NewPath = FileSystem::GetProjectPath();
-			NewPath.Move("EngineResource");
-			NewPath.Move("Shader");
-			NewPath.Move(fragmentShader_);
+			EnginePath NewPath = FileSystem::GetProjectPath().move("EngineResource").move("Shader").move(fragmentShader_);
 			std::string ShaderTEXT = NewPath.ReadFile();
 			compileData.insert(std::make_pair(fragmentShader_, ShaderTEXT));
 			isCompileFragmentShader = true;

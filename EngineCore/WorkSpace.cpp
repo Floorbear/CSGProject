@@ -59,6 +59,10 @@ bool is_window_content_hovered(){
     return ImGui::IsWindowHovered() && (ImGui::IsWindowDocked() || !ImGui::GetCurrentWindow()->TitleBarRect().Contains(ImGui::GetMousePos()));
 }
 
+ImVec4 ImVec4_add(ImVec4 a, ImVec4 b){
+    return ImVec4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+}
+
 void WorkSpace::render_view(Renderer* renderer){
     main_renderer = renderer;
     // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
@@ -147,12 +151,70 @@ void WorkSpace::render_view(Renderer* renderer){
     // Gui 렌더링
     #pragma warning(disable: 4312)
     ImGui::GetWindowDrawList()->AddImage((void*)renderer->framebuffer_screen->
-                                         get_framebufferTexutre()->get_textureHandle(),
+                                         get_framebufferTexutre()->get_texture_handle(),
                                          ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y),
                                          ImVec2(0, 0), ImVec2(1, 1));
     ImGui::PopStyleVar();
     render_popup_menu_view();
     ImGui::End();
+
+    {
+        ImGui::PushID(1);
+        ImVec4* colors = ImGui::GetStyle().Colors;
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.06f, 0.06f, 0.06f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.22f, 0.48f, 0.80f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.26f, 0.59f, 0.98f, 1.0f));
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(colors[ImGuiCol_WindowBg].x, colors[ImGuiCol_WindowBg].y, colors[ImGuiCol_WindowBg].z, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 5));
+
+        ImGui::SetNextWindowPos(ImVec2(p_min.x + 10, p_min.y + 10));
+        ImGui::Begin(Utils::format("View_Floating##%1%", renderer->get_id()).c_str(), 0,
+                     ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking |
+                     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+        static Texture* button_image_model_mode = nullptr;
+        static Texture* button_image_mesh_mode = nullptr;
+        static Texture* button_image_gizmo_translate = nullptr;
+        static Texture* button_image_gizmo_rotate = nullptr;
+        static Texture* button_image_gizmo_scale = nullptr;
+        if (button_image_model_mode == nullptr){
+            button_image_model_mode = Texture::create_texture(EnginePath::get_texture_path().move("button_image_model_mode.png"), GL_RGBA8, GL_RGBA, false);
+            button_image_mesh_mode = Texture::create_texture(EnginePath::get_texture_path().move("button_image_mesh_mode.png"), GL_RGBA8, GL_RGBA, false);
+            button_image_gizmo_translate = Texture::create_texture(EnginePath::get_texture_path().move("button_image_gizmo_translate.png"), GL_RGBA8, GL_RGBA, false);
+            button_image_gizmo_rotate = Texture::create_texture(EnginePath::get_texture_path().move("button_image_gizmo_rotate.png"), GL_RGBA8, GL_RGBA, false);
+            button_image_gizmo_scale = Texture::create_texture(EnginePath::get_texture_path().move("button_image_gizmo_scale.png"), GL_RGBA8, GL_RGBA, false);
+        }
+        if (ImGui::ImageButton("Selection_Mode_Model", (ImTextureID)button_image_model_mode->get_texture_handle(), selection_mode == SelectionMode::Model, ImVec2(25, 25))){
+            selected_meshes.clear();
+            selection_mode = SelectionMode::Model;
+        }
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Selection_Mode_Mesh", (ImTextureID)button_image_mesh_mode->get_texture_handle(), selection_mode == SelectionMode::Mesh, ImVec2(25, 25))){
+            selected_models.clear();
+            selection_mode = SelectionMode::Mesh;
+        }
+        ImGui::SameLine();
+        ImGui::Text("  ");
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Gizmo_Mode_Translate", (ImTextureID)button_image_gizmo_translate->get_texture_handle(), gizmo_mode == GizmoMode::Translate, ImVec2(25, 25))){
+            gizmo_mode = GizmoMode::Translate;
+            Gizmo::set_gizmoMode(gizmo_mode); // TDDO : 리팩토링 진행예정!
+        }
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Gizmo_Mode_Rotation", (ImTextureID)button_image_gizmo_rotate->get_texture_handle(), gizmo_mode == GizmoMode::Rotation, ImVec2(25, 25))){
+            gizmo_mode = GizmoMode::Rotation;
+            // Gizmo::set_gizmoMode(gizmo_mode);
+        }
+        ImGui::SameLine();
+        if (ImGui::ImageButton("Gizmo_Mode_Scale", (ImTextureID)button_image_gizmo_scale->get_texture_handle(), gizmo_mode == GizmoMode::Scale, ImVec2(25, 25))){
+            gizmo_mode = GizmoMode::Scale;
+            Gizmo::set_gizmoMode(gizmo_mode);
+        }
+        ImGui::End();
+        ImGui::PopStyleVar(1);
+        ImGui::PopStyleColor(4);
+        ImGui::PopID();
+    }
 }
 
 void WorkSpace::render_hierarchy(){
@@ -199,16 +261,54 @@ void WorkSpace::render_hierarchy(){
             if (ImGui::MenuItem("Cut", "CTRL+X")){}
             if (ImGui::MenuItem("Copy", "CTRL+C")){}
             if (ImGui::MenuItem("Paste", "CTRL+V")){}
-            if (ImGui::MenuItem("Delete Selection", "Del", false, !selected_meshes.empty())){
-                // TODO
+            if (ImGui::MenuItem("Delete Selection And Subtree", "Del", false, !selected_meshes.empty())){
+                actions.delete_selected_meshes();
             }
             ImGui::Separator();
-
             if (ImGui::MenuItem("Move Up", 0, false, node->get_parent() != nullptr && node->get_parent()->get_children().front() != node)){
                 actions.reorder_mesh_up(node);
             }
             if (ImGui::MenuItem("Move Down", 0, false, node->get_parent() != nullptr && node->get_parent()->get_children().back() != node)){
                 actions.reorder_mesh_down(node);
+            }
+            ImGui::Separator();
+            if (!node->is_root_node()){
+                if (ImGui::MenuItem("Unpack Operation", 0, false, node->get_type() == node->get_parent()->get_type() &&
+                                    (node->get_type() == CSGNode::Type::Union || node->get_type() == CSGNode::Type::Intersection))){
+                    transaction_manager.add(new TreeModifyTask("Reparent Model", node->get_parent(), [=](){
+                        return node->unpack_to_parent();
+                    }));
+                }
+            }
+            ImGui::Separator();
+            if (ImGui::BeginMenu("Add Basic Model As Child")){
+                if (ImGui::MenuItem("Cube")){
+                    actions.add_mesh_new(node, Mesh::cube(1.0f));
+                }
+                if (ImGui::MenuItem("Pyramid")){
+                    actions.add_mesh_new(node, Mesh::pyramid(0.5f, 1.0f));
+                }
+                if (ImGui::MenuItem("Sphere")){
+                    actions.add_mesh_new(node, Mesh::sphere(0.5f, 2));
+                }
+                if (ImGui::MenuItem("Cylinder")){
+                    actions.add_mesh_new(node, Mesh::cylinder(0.5f, 1.0f, 32));
+                }
+                if (ImGui::MenuItem("Cone")){
+                    actions.add_mesh_new(node, Mesh::cone(0.5f, 1.0f, 32));
+                }
+                if (ImGui::MenuItem("Torus")){
+                    actions.add_mesh_new(node, Mesh::torus(0.5f, 0.25f, 32, 16));
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::MenuItem("Load Model As Child")){
+                Core::get()->task_manager.add([this](){
+                    Transform load_default_transform;
+                    load_default_transform.set_scale(vec3(0.1f, 0.1f, 0.1f));
+                    load_default_transform.set_rotation(vec3(-90, 0, 0));
+                    actions.add_model_new(Mesh::load(FileSystem::getFilePath().get_path()), load_default_transform);
+                });
             }
             ImGui::EndPopup();
         }
@@ -223,31 +323,26 @@ void WorkSpace::render_hierarchy(){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){
                 IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
                 CSGNode* payload_node = *(CSGNode**)payload->Data;
-                Model* payload_node_model = payload_node->model; // delete model작업에서 이미 model값이 변해있을수도 있기때문에 필요.
+
+                Model* node_model = node->model; // 추후 작업으로 model값이 변해있을수도 있기때문에 필요.
+                Model* payload_node_model = payload_node->model;
 
                 transaction_manager.add((new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){
                     return node->reparent_child(payload_node);
-                }, node->model->get_csg_mesh(), [=](CSGNode* root){
-                    node->model->set_csg_mesh(root, true);
-                }, payload_node->model->get_csg_mesh(), [=](CSGNode* root){
-                    payload_node->model->set_csg_mesh(root, true);
+                }, node_model->get_csg_mesh(),
+                    [=](CSGNode* root){node_model->set_csg_mesh(root, true);
+                }, payload_node_model->get_csg_mesh(),
+                    [=](CSGNode* root){payload_node_model->set_csg_mesh(root, true);
 
-                }))->link(new TreeModifyTask("Delete Model", root_model, [=](){
+                }))->link(new TreeModifyTask("Delete Empty Model", root_model, [=](){
                     if (payload_node_model->get_csg_mesh() == nullptr){ // empty model
                         payload_node_model->remove_self();
                     }
                     return true;
                 })));
             }
-            // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){ }
             ImGui::EndDragDropTarget();
         }
-
-        // 추가 ui
-        //if (!node->is_leaf_node()){
-        //    ImGui::SameLine();
-        //    ImGui::Checkbox("##Selection Group", &node->selection_group); // TODO : 체크박스 안쪽에서는 트리노드 클릭 안되게하기...
-        //}
 
         // 하위 노드
         if (node_open){
@@ -324,7 +419,6 @@ void WorkSpace::render_hierarchy(){
             ImGui::EndDragDropSource();
         }
         if (ImGui::BeginDragDropTarget()){
-            // if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){} 
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
                 MultiTransactionTask* task_multi = new MultiTransactionTask(Utils::format("Reparent %1% Model(s)", (int)selected_models.size()));
                 for (Model* selected_model : selected_models){
@@ -460,12 +554,9 @@ void WorkSpace::process_input(){
     }
 }
 
-void WorkSpace::on_mouse_press_left(){
+void WorkSpace::on_mouse_press_left(){ // TODO : 여기서 is gizmo pressed 시 transform 저장
     prevPos = mouse_pos_left_press_raw;
-    // camera_transform_saved = camera.transform;
-    if (renderer_focused != nullptr){
-        renderer_focused->find_selection(root_model->get_children(), mouse_pos_left_current_view);
-    }
+    // camera_transform_saved = camera.transform; -> 이것 캡쳐 추가 (파라미터변경 step 에서)
 }
 
 void WorkSpace::on_mouse_drag_left(){
@@ -490,7 +581,7 @@ void WorkSpace::on_mouse_drag_left(){
 }
 
 void WorkSpace::on_mouse_release_left(){
-    // camera.transform.set_rotation(Transform(camera_transform_saved).rotate(C * vec3(0, mouse_pos_left_current_raw - mouse_pos_left_press_raw, 0))); 그냥 똑같은짓 하고 끝
+    // TODO : 기즈모 이동이 이루어졌다면 completion으로 task 등록해야함
     dragDelegate = nullptr;
 }
 
@@ -587,17 +678,6 @@ void WorkSpace::render_popup_menu_view(){
                     }
                 }
             }
-            /*if (selection_mode == SelectionMode::Mesh){ // TODO : 버튼으로 변경!
-                if (ImGui::MenuItem("Switch To Model Picking")){
-                    selected_meshes.clear();
-                    selection_mode = SelectionMode::Model;
-                }
-            } else if (selection_mode == SelectionMode::Model){
-                if (ImGui::MenuItem("Switch To Mesh Picking")){
-                    selected_models.clear();
-                    selection_mode = SelectionMode::Mesh;
-                }
-            }*/
             ImGui::EndMenu();
         }
         ImGui::Separator();
@@ -633,37 +713,10 @@ void WorkSpace::render_popup_menu_view(){
         ImGui::Separator();
         if (ImGui::BeginMenu("Boolean Operation", selection_mode == SelectionMode::Model)){
             if (ImGui::MenuItem("Create Union Of Selected Models", NULL, false, selected_models.size() >= 2)){
-                // TODO : action로 옮기기
-                Model* model = new Model("Union Model"); // TODO : name들 스트링 concat
-                std::list<CSGNode*> selected_model_meshes;
-                for (Model* model : selected_models){
-                    selected_model_meshes.push_back(model->get_csg_mesh());
-                }
-                model->get_transform()->set(selected_models.front()->get_transform()->get_value());
-                model->set_csg_mesh(new CSGNode(CSGNode::Type::Union));
-
-                /*workspace->transaction_manager.add(new TreeModifyTask("Add " + mesh.get_name(), workspace->root_model, [=, this](){
-                    if (workspace->root_model->add_child(model)){
-                        model->get_csg_mesh()->get_transform()->set(transform);
-                    }
-                    return true;
-                }));
-                reparent childdfasfafsdfkasdfkasdnflsdnflnasdlkfdnakl
-                transaction_manager.add((new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){
-                    return node->reparent_child(payload_node);
-                }, node->model->get_csg_mesh(), [=](CSGNode* root){
-                    node->model->set_csg_mesh(root, true);
-                }, payload_node->model->get_csg_mesh(), [=](CSGNode* root){
-                    payload_node->model->set_csg_mesh(root, true);
-
-                }))->link(new TreeModifyTask("Delete Model", root_model, [=](){
-                    if (payload_node_model->get_csg_mesh() == nullptr){ // empty model
-                        payload_node_model->remove_self();
-                    }
-                    return true;
-                })));*/
+                actions.create_boolean_opertation_of_selected_models(CSGNode::Type::Union);
             }
             if (ImGui::MenuItem("Create Intersection Of Selected Models", NULL, false, selected_models.size() >= 2)){
+                actions.create_boolean_opertation_of_selected_models(CSGNode::Type::Intersection);
             }
             std::string selected_model1_name = "A";
             std::string selected_model2_name = "B";
@@ -672,8 +725,13 @@ void WorkSpace::render_popup_menu_view(){
                 selected_model2_name = selected_models.back()->name;
             }
             if (ImGui::MenuItem(("Create Difference Of Model " + selected_model1_name + " - " + selected_model2_name).c_str(), NULL, false, selected_models.size() == 2)){
+                actions.create_boolean_opertation_of_selected_models(CSGNode::Type::Difference);
             }
             if (ImGui::MenuItem(("Create Difference Of Model " + selected_model2_name + " - " + selected_model1_name).c_str(), NULL, false, selected_models.size() == 2)){
+                Model* model2 = selected_models.front();
+                selected_models.pop_front();
+                selected_models.push_back(model2);
+                actions.create_boolean_opertation_of_selected_models(CSGNode::Type::Difference);
             }
             ImGui::EndMenu();
         }

@@ -23,10 +23,10 @@ EnginePath::~EnginePath()
 	
 }
 
-void EnginePath::Move(std::string _Path)
-{
-	path += "\\"+_Path;
+EnginePath EnginePath::move(std::string path_){
+	path = path += "\\" + path_;
 	assert(std::filesystem::exists(path) == true && "Not exists!");
+	return *this;
 }
 
 std::string EnginePath::ReadFile()
@@ -44,6 +44,14 @@ std::string EnginePath::ReadFile()
 	TextData += '\0';
 	File.close();
 	return TextData;
+}
+
+EnginePath EnginePath::get_shader_path(){
+	return FileSystem::GetProjectPath().move("EngineResource").move("Shader");
+}
+
+EnginePath EnginePath::get_texture_path(){
+	return FileSystem::GetProjectPath().move("EngineResource").move("Texture");
 }
 
 EnginePath FileSystem::getFilePath()

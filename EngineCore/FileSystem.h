@@ -10,12 +10,15 @@ public:
 	EnginePath(std::filesystem::path _Path);
 	~EnginePath();
 
-	void Move(std::string _Path);
+	EnginePath move(std::string path_);
 	std::string ReadFile();
 	inline std::string get_path()
 	{
 		return path.string();
 	}
+
+	static EnginePath get_shader_path();
+	static EnginePath get_texture_path();
 
 private:
 	std::filesystem::path path;

@@ -284,7 +284,7 @@ Kernel::Point_3 vec3_to_pt3(vec3 point){
 }
 
 // http://www.songho.ca/opengl/gl_sphere.html
-Mesh Mesh::sphere(float radius, float step){
+Mesh Mesh::sphere(float radius, int step){
     CGAL_Mesh cgal_result;
     CGAL_Mesh cgal_icosahedron;
     CGAL::make_icosahedron(cgal_icosahedron, Kernel::Point_3(0, 0, 0), radius);
@@ -366,7 +366,7 @@ Mesh Mesh::sphere(float radius, float step){
     return Mesh("<Sphere>", cgal_result);
 }
 
-Mesh Mesh::cylinder(float radius, float height, float step){
+Mesh Mesh::cylinder(float radius, float height, int step){
     CGAL_Mesh cgal_result;
     std::list<vec2> unit_circle = make_unit_circle(step);
     std::list<Vertex_index> bottom_circle_vertices;
@@ -405,7 +405,7 @@ Mesh Mesh::cylinder(float radius, float height, float step){
     return Mesh("<Cylinder>", cgal_result);
 }
 
-Mesh Mesh::cone(float radius, float height, float step){
+Mesh Mesh::cone(float radius, float height, int step){
     CGAL_Mesh cgal_result;
     std::list<vec2> unit_circle = make_unit_circle(step);
     std::list<Vertex_index> circle_vertices;
@@ -432,7 +432,7 @@ Mesh Mesh::cone(float radius, float height, float step){
     return Mesh("<Cone>", cgal_result);
 }
 
-Mesh Mesh::torus(float radius, float thickness, float step1, float step2){
+Mesh Mesh::torus(float radius, float thickness, int step1, int step2){
     CGAL_Mesh cgal_result;
     std::list<vec2> unit_circle = make_unit_circle(step1);
     std::list<vec2> unit_circle_band = make_unit_circle(step2);

@@ -35,6 +35,7 @@ public:
     vec3 get_world_position();
     vec3 get_world_rotation();
 
+    Transform* get_parent();
     void set_parent(Transform* parent_, bool fix_position);
 
     void set(const Transform& value);

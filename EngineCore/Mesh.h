@@ -60,10 +60,10 @@ public:
     static Mesh load(std::string path);
     static Mesh cube(float size);
     static Mesh pyramid(float radius, float height);
-    static Mesh sphere(float radius, float step);
-    static Mesh cylinder(float radius, float height, float step);
-    static Mesh cone(float radius, float height, float step);
-    static Mesh torus(float radius, float thickness, float step1, float step2);
+    static Mesh sphere(float radius, int step);
+    static Mesh cylinder(float radius, float height, int step);
+    static Mesh cone(float radius, float height, int step);
+    static Mesh torus(float radius, float thickness, int step1, int step2);
 
     static bool compute_union(const Mesh& mesh1, Transform* transform1,
                               const Mesh& mesh2, Transform* transform2, Mesh& result);

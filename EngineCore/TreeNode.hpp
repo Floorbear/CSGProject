@@ -5,7 +5,7 @@
 
 // https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
 
-template <typename T>// requires std::derived_from<T, TreeNode<T>>
+template <typename T> // requires std::derived_from<T, TreeNode<T>>
 class TreeNode{
 public:
     class TreeSnapShot{
@@ -63,12 +63,16 @@ public:
         return children.size();
     }
 
-    virtual bool add_child(T* item){
+    virtual bool add_child(T* item, T* after = nullptr){
         if (is_descendant_of(item)){
             return false;
         }
         item->set_parent(static_cast<T*>(this));
-        children.push_back(item);
+        if (after != nullptr){
+            children.insert(std::next(std::find(children.begin(), children.end(), after)), item);
+        } else{
+            children.push_back(item);
+        }
         return true;
     }
 
@@ -94,18 +98,35 @@ public:
         std::swap(*it1, *it2);
     }
 
-    virtual void remove_self(){
-        assert(parent != nullptr); // root는 있어야한다
-        auto it = std::next(std::find(parent->children.begin(), parent->children.end(), static_cast<T*>(this)));
-        for (T* child : children){
-            parent->children.insert(it, child);
+    virtual bool remove_self(){
+        if (is_root_node()){
+            return false;
+        }
+        if (!children.empty()){
+            auto it = std::next(std::find(parent->children.begin(), parent->children.end(), static_cast<T*>(this)));
+            for (T* child : children){
+                parent->children.insert(it, child);
+            }
         }
         parent->children.remove(static_cast<T*>(this));
+        return true;
+    }
+
+    virtual bool remove_self_subtree(){
+        if (is_root_node()){
+            return false;
+        }
+        parent->children.remove(static_cast<T*>(this));
+        return true;
     }
 
     // void remove_child(T* item){
     //    children.remove(item);
     // }
+
+    bool is_root_node(){
+        return parent == nullptr;
+    }
 
     bool is_leaf_node(){
         return children.empty();
@@ -127,9 +148,9 @@ public:
     }
 
 private:
-    void make_snapshot_(TreeSnapShot::Node* node_this){
+    void make_snapshot_(typename TreeSnapShot::Node* node_this){
         for (T* child : children){
-            auto node_child = new TreeSnapShot::Node(child);
+            auto node_child = new typename TreeSnapShot::Node(child);
             node_this->add_child(node_child);
             child->make_snapshot_(node_child);
         }
@@ -138,14 +159,32 @@ private:
 
 template <typename T>
 class TreeModifyTask : public TransactionTask{
-    TreeNode<T>::TreeSnapShot* snapshot1 = nullptr;
-    TreeNode<T>::TreeSnapShot* snapshot2 = nullptr;
+    typename TreeNode<T>::TreeSnapShot* snapshot1 = nullptr;
+    typename TreeNode<T>::TreeSnapShot* snapshot2 = nullptr;
 public:
     TreeModifyTask(std::string detail_, TreeNode<T>* recovery_root, std::function<bool()> work_) : TransactionTask(detail_, [=, this](){
         snapshot1 = recovery_root->make_snapshot_new();
         return work_();
     }, [this](){
         snapshot1->recover();
+    }){
+    }
+
+    // TODO : 여러개의 root를 고칠수 있는걸로 확장
+    TreeModifyTask(std::string detail_, std::function<bool()> work_with_set_root,
+                   TreeNode<T>* root_old, std::function<void(T*)> set_root) : TransactionTask(detail_, [=, this](){ // root가 수정되는 작업
+        if (root_old != nullptr){
+            snapshot1 = root_old->make_snapshot_new();
+        }
+        return work_with_set_root(); // set root 작업이 있어도 되고 없어도 됨.
+    }, [=, this](){
+        if (snapshot1 != nullptr){
+            snapshot1->recover();
+        }
+        if (root_old != nullptr){
+            root_old->set_parent(nullptr);
+        }
+        set_root(static_cast<T*>(root_old));
     }){
     }
 

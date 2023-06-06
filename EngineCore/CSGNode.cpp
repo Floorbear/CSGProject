@@ -22,7 +22,7 @@ void CSGNode::mark_edited(){
     }
 }
 
-const char* CSGNode::type_string_values[] = {"None", "Union", "Intersection", "Difference"};
+const char* CSGNode::type_string_values[] = {"Operand", "Union", "Intersection", "Difference"};
 
 CSGNode::CSGNode(Type type_) : Component("CSG Params"), transform(CSGNodeTransform(this)){
     type = type_;
@@ -58,72 +58,60 @@ CSGNode::~CSGNode(){
     Entity::~Entity();
 }
 
-bool CSGNode::add_child(CSGNode* node){
+bool CSGNode::add_child(CSGNode* node, CSGNode* after){
     assert(type != Type::Operand);
     if (type == Type::Difference){
         assert(children.size() < 2);
     }
-    if (TreeNode<CSGNode>::add_child(node)){
-        CSGNode* parent_ = parent;
-        while (parent_ != nullptr){
-            parent_->mark_edited();
-            parent_ = parent_->parent;
-        }
-        if (parent != nullptr){
-            transform.set_parent(parent->get_transform(), true);
-        }
-        return true;
+    bool succeed = TreeNode<CSGNode>::add_child(node, after);
+    if (succeed){
+        node->transform.set_parent(get_transform(), true);
+        node->model = model;
+        mark_edited();
     }
-    return false;
+    return succeed;
 }
 
-bool CSGNode::reparent_child(CSGNode* node, CSGNode* after){ // TODO : 리팩토링 절실... 너무 더럽
-    if (type == Type::Operand){
-        if (parent != nullptr && node->type == Type::Union){
-            parent->reparent_child(node, this);
+bool CSGNode::reparent_child(CSGNode* node, CSGNode* after){
+    if (is_descendant_of(node)){
+        return false;
+    }
+    if (type == Type::Difference && children.size() >= 2){
+        return false;
+    }
+    CSGNode* this_parent = parent;
+    CSGNode* node_parent = node->parent;
+    Model* node_model = node->model;
+
+    if (type == Type::Operand){ // Case 1 : Operand <- Any
+
+        // 새 union 노드 생성
+        CSGNode* union_node = new CSGNode(Type::Union);
+        union_node->model = model;
+
+        // parent에서 union 노드 추가, this 제거
+        if (this_parent == nullptr){ // root
+            model->set_csg_mesh(union_node);
         } else{
-            CSGNode* union_node = new CSGNode(Type::Union);
-            union_node->children.push_back(this);
-            union_node->children.push_back(node);
-            if (parent == nullptr){ // root
-                model->set_csg_mesh(union_node);
-            } else{
-                parent->children.insert(std::find(parent->children.begin(), parent->children.end(), this), union_node);
-                parent->children.remove(this);
-                union_node->set_parent(parent);
-                union_node->transform.set_parent(parent->get_transform(), false);
-            }
-            if (node->parent == nullptr){
-                node->model->set_csg_mesh(nullptr);
-            } else{
-                node->parent->children.remove(node);
-            }
-            set_parent(union_node);
-            node->set_parent(union_node);
-            transform.set_parent(union_node->get_transform(), true);
-            node->transform.set_parent(union_node->get_transform(), true);
+            union_node->get_transform()->set(*get_transform()->get_parent());
+            this_parent->add_child(union_node, this);
+            this_parent->children.remove(this);
         }
+
+        union_node->add_child(this, nullptr);
+        union_node->add_child(node, this);
+
+    } else{ // Case 2 : Op <- Any
+        add_child(node, after);
+    }
+
+    // node->parent에서 node 제거
+    if (node_parent == nullptr){
+        node_model->set_csg_mesh(nullptr);
     } else{
-        if (type == Type::Difference && children.size() >= 2){ // 더이상 자식 추가 불가
-            return false;
-        }
-        if (type == node->type && (type == Type::Union || type == Type::Intersection)){
-            auto node_children_copy = node->children;
-            for (CSGNode* child : node_children_copy){
-                reparent_child(child, after);
-            }
-            if (node->parent == nullptr){
-                node->model->set_csg_mesh(nullptr);
-            } else{
-                node->parent->children.remove(node);
-            }
-        } else{
-            node->transform.set_parent(&transform, true);
-            if (node->parent == nullptr){
-                node->model->set_csg_mesh(nullptr);
-            }
-            transform.set_parent(node->get_transform(), true);
-            return TreeNode<CSGNode>::reparent_child(node, after);
+        node_parent->children.remove(node);
+        if (node_parent->is_leaf_node()){ // not operand
+            node_parent->remove_self();
         }
     }
     return true;
@@ -134,6 +122,31 @@ void CSGNode::swap_child(CSGNode* child1, CSGNode* child2){
     if (type == Type::Difference){
         is_result_valid = false;
     }
+}
+
+bool CSGNode::remove_self(){
+    bool succeed = TreeNode::remove_self();
+    if (succeed && parent->type != Type::Operand && parent->is_leaf_node()){
+        parent->remove_self();
+    }
+    return succeed;
+}
+
+bool CSGNode::remove_self_subtree(){
+    if (is_root_node()){
+        model->set_csg_mesh(nullptr);
+        return true;
+    } else{
+        bool succeed = TreeNode::remove_self_subtree();
+        if (succeed && parent->type != Type::Operand && parent->is_leaf_node()){
+            parent->remove_self();
+        }
+        return succeed;
+    }
+}
+
+bool CSGNode::unpack_to_parent(){
+    return remove_self();
 }
 
 std::string CSGNode::get_name(){
@@ -172,10 +185,15 @@ TransformComponent* CSGNode::get_transform(){
 
 void CSGNode::calculate_mesh(){
     if (!is_result_valid){
+        if (type == Type::Operand){
+            printf("warning : CSGNode::calculate_mesh() : type was operand!\n");
+            is_result_valid = true;
+            return;
+        }
+        assert(children.size() != 0);
         for (CSGNode* child : children){
             child->calculate_mesh();
         }
-        assert(children.size() != 0);
         if (children.size() == 1){
             result = children.front()->result;
         } else{
@@ -216,27 +234,31 @@ void CSGNode::render(){
 
 void CSGNode::render_selection_id(Material* material, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc){
     if (selection_group || children.empty()){ // leaf node
+        transform.calculate_matrix();
+        material->set_uniform_model_transform(&transform);
         material->set_uniform_selection_id(SelectionPixelIdInfo(selection_id_model_acc, *selection_id_mesh_acc));
         material->apply_selection_id();
         result.render();
-    }
-    (*selection_id_mesh_acc)++;
-    if (!selection_group){
+        (*selection_id_mesh_acc)++;
+
+    } else{
         for (CSGNode* child : children){
             child->render_selection_id(material, selection_id_model_acc, selection_id_mesh_acc);
         }
     }
 }
 
-SelectionPixelObjectInfo CSGNode::from_selection_id(SelectionPixelIdInfo selection_id, Model* model, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc){
-    SelectionPixelObjectInfo info;
-    if (selection_id.model_id == selection_id_model_acc && selection_id.mesh_id == *selection_id_mesh_acc){
-        return SelectionPixelObjectInfo(model, this);
-    }
-    (*selection_id_mesh_acc)++;
-    if (!selection_group){
+SelectionPixelObjectInfo CSGNode::from_selection_id(SelectionPixelIdInfo selection_id, Model* model_, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc){
+    if (selection_group || children.empty()){ // leaf node
+        SelectionPixelObjectInfo info;
+        if (selection_id.model_id == selection_id_model_acc && selection_id.mesh_id == *selection_id_mesh_acc){
+            return SelectionPixelObjectInfo(model_, this);
+        }
+        (*selection_id_mesh_acc)++;
+
+    } else{
         for (CSGNode* child : children){
-            SelectionPixelObjectInfo info = child->from_selection_id(selection_id, model, selection_id_model_acc, selection_id_mesh_acc);
+            SelectionPixelObjectInfo info = child->from_selection_id(selection_id, model_, selection_id_model_acc, selection_id_mesh_acc);
             if (!info.empty()){
                 return info;
             }

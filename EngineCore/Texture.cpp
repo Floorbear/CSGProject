@@ -16,13 +16,24 @@ Texture::~Texture()
 std::list<Texture*> Texture::all_textures;
 
 
-Texture* Texture::create_texture(EnginePath& _path)
+Texture* Texture::create_texture(EnginePath _path, bool flip)
 {
     ivec3 textureSize = { 0,0,0 };
-    unsigned char* data = load_resouce(_path, &textureSize);
+    unsigned char* data = load_resouce(_path, &textureSize, flip);
     //TODO : data 확장자 파싱해서 png, jpg 분기 나누기
 
     Texture* newTexture = Texture::create_texture({ textureSize.x,textureSize.y }, data, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_REPEAT);
+    stbi_image_free(data);//릴리즈
+    return newTexture;
+}
+
+Texture* Texture::create_texture(EnginePath _path, GLint _internalformat, GLenum _format, bool flip)
+{
+    ivec3 textureSize = { 0,0,0 };
+    unsigned char* data = load_resouce(_path, &textureSize, flip);
+    //TODO : data 확장자 파싱해서 png, jpg 분기 나누기
+
+    Texture* newTexture = Texture::create_texture({ textureSize.x,textureSize.y }, data, _internalformat, _format, GL_UNSIGNED_BYTE, GL_LINEAR, GL_REPEAT);
     stbi_image_free(data);//릴리즈
     return newTexture;
 }
@@ -98,11 +109,11 @@ void Texture::enable()
     glBindTexture(GL_TEXTURE_2D,texture);
 }
 
-unsigned char* Texture::load_resouce(EnginePath& _path, ivec3* _return_size)
+unsigned char* Texture::load_resouce(EnginePath& _path, ivec3* _return_size, bool flip)
 {
     //ivec3 textureSize = { 0,0,0 };
     std::string str = _path.get_path();
-    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    stbi_set_flip_vertically_on_load(flip); // tell stb_image.h to flip loaded texture's on the y-axis.
     unsigned char* data = stbi_load(str.c_str(), &(_return_size->x), &(_return_size->y), &(_return_size->z), 0);
     return data;
 }

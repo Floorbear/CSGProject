@@ -17,7 +17,7 @@ class Camera;
 class PointLight;
 class Renderer{
     static int id_counter;
-    static int default_camera_pos_z;
+    static float default_camera_pos_z;
 
     int id;
 
