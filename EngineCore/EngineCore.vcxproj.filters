@@ -44522,9 +44522,6 @@
     <ClCompile Include="WorkSpace.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
     <ClCompile Include="Task.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
@@ -44546,6 +44543,9 @@
     <ClCompile Include="Leaked_Pointers.cpp" />
     <ClCompile Include="Gizmo.cpp">
       <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Base</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

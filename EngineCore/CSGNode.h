@@ -43,11 +43,12 @@ public:
     CSGNode(Type type_);
     ~CSGNode();
 
-    bool add_child(CSGNode* node, CSGNode* after = nullptr) override;
-    bool reparent_child(CSGNode* node, CSGNode* after = nullptr) override;
-    void swap_child(CSGNode* child1, CSGNode* child2) override;
-    bool remove_self() override;
-    bool remove_self_subtree() override;
+    void set_parent(CSGNode* parent_) override;
+    bool add_child(CSGNode* node, CSGNode* after = nullptr);
+    bool reparent_child(CSGNode* node, CSGNode* after = nullptr);
+    void swap_child(CSGNode* child1, CSGNode* child2);
+    bool remove_self();
+    bool remove_self_subtree();
     bool unpack_to_parent();
 
     void mark_edited();

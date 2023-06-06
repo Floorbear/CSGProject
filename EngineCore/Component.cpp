@@ -2,6 +2,10 @@
 #include "GUI.h"
 #include "Utils.h"
 
+// ===== Parameter ===== //
+
+int Parameter::id_counter = 0;
+
 ImGuiInputTextCallback Parameter::edit_callback = [](ImGuiInputTextCallbackData* data){
     Parameter* parent = (Parameter*)data->UserData;
     parent->is_edited = true;
@@ -14,9 +18,6 @@ ImGuiInputTextCallback Parameter::edit_callback = [](ImGuiInputTextCallbackData*
     return 0;
 };*/
 
-Parameter::Parameter(std::string label_) : label(label_){
-}
-
 Parameter::Parameter(std::string label_, std::function<void()> render_) : label(label_), render_action(render_){
 }
 
@@ -24,95 +25,178 @@ void Parameter::render(){
     render_action();
 }
 
-FloatParameter::FloatParameter(std::string label_, std::function<float()> get_, std::function<void(float)> set_) :
-    Parameter(label_), get(get_), set(set_){
-    int parameter_count = GUI::parameter_count++;
-    render_action = [this, parameter_count](){ // TODO : completion 액션 추가
-        temp = get();
-        ImGui::Text(label.c_str());
-        ImGui::DragFloat(Utils::format("##InputFloat%1%", parameter_count).c_str(), &temp, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
+ParameterSnapshot* Parameter::make_snapshot_new(){
+    ParameterSnapshot* ret = new ParameterSnapshot(this);
+    // ret->set_value(get());
+    return ret;
+}
+
+void Parameter::recover_from(ParameterSnapshot* snapshot){
+    // set(snapshot->get_value());
+}
+
+
+// ===== ParameterSnapshot ===== //
+
+ParameterSnapshot::ParameterSnapshot(Parameter* ptr_) : ptr(ptr_){
+}
+
+ParameterSnapshot::~ParameterSnapshot(){
+    delete value;
+}
+
+template<typename T>
+void ParameterSnapshot::set_value(T value_){
+    value = new T(value_);
+}
+
+template<typename T>
+T ParameterSnapshot::get_value(){
+    return *((T*)value);
+}
+
+void ParameterSnapshot::set_value_(void* value_){
+    value = value_;
+}
+void* ParameterSnapshot::get_value_(){
+    return value;
+}
+
+void ParameterSnapshot::recover(){
+    ptr->recover_from(this);
+}
+
+
+// ===== FloatParameter ===== //
+
+// TODO : completion 액션 추가
+FloatParameter::FloatParameter(std::string label_, std::function<float()> get_, std::function<void(float)> set_) : Parameter(label_, [this](){
+    temp = get();
+    ImGui::Text(label.c_str());
+    ImGui::DragFloat(Utils::format("##InputFloat%1%", id).c_str(), &temp, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
+    if (is_edited){ // TODO : 리팩토링
+        if (set != nullptr){
+            set(temp);
+        }
+        is_edited = false;
+    }
+}), get(get_), set(set_){
+}
+
+ParameterSnapshot* FloatParameter::make_snapshot_new(){
+    ParameterSnapshot* ret = new ParameterSnapshot(this);
+    ret->set_value<float>(get());
+    return ret;
+}
+
+void FloatParameter::recover_from(ParameterSnapshot* snapshot){
+    set(snapshot->get_value<float>());
+}
+
+
+// ===== BoolParameter ===== //
+
+BoolParameter::BoolParameter(std::string label_, std::function<bool()> get_, std::function<void(bool)> set_) : Parameter(label_, [this](){
+    bool temp = get();
+    if (ImGui::Checkbox((label + Utils::format("##CheckBox%1%", id)).c_str(), &temp)){
         if (is_edited){ // TODO : 리팩토링
             if (set != nullptr){
                 set(temp);
             }
             is_edited = false;
         }
-    };
+    }
+}), get(get_), set(set_){
 }
 
-BoolParameter::BoolParameter(std::string label_, std::function<bool()> get_, std::function<void(bool)> set_) :
-    Parameter(label_), get(get_), set(set_){
-    int parameter_count = GUI::parameter_count++;
-    render_action = [this, parameter_count](){ // TODO : completion 액션 추가
-        bool temp = get();
-        if (ImGui::Checkbox((label + Utils::format("##CheckBox%1%", parameter_count)).c_str(), &temp)){
-            printf("aa");
-            if (is_edited){ // TODO : 리팩토링
-                if (set != nullptr){
-                    set(temp);
-                }
-                is_edited = false;
-            }
-        }
-    };
+ParameterSnapshot* BoolParameter::make_snapshot_new(){
+    ParameterSnapshot* ret = new ParameterSnapshot(this);
+    ret->set_value<bool>(get());
+    return ret;
+}
+
+void BoolParameter::recover_from(ParameterSnapshot* snapshot){
+    set(snapshot->get_value<bool>());
 }
 
 
-Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::string label_y_, std::string label_z_, std::function<vec3()> get_, std::function<void(vec3)> set_) :
-    Parameter(label_), label_x(label_x_), label_y(label_y_), label_z(label_z_), get(get_), set(set_){
-    int parameter_count = GUI::parameter_count++; // TODO : parameter id로 리팩토링
-    render_action = [this, parameter_count](){ // TODO : completion 액션 추가
-        temp = get();
-        ImGui::Text(label.c_str());
-        if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingStretchSame)){
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("x");
-            ImGui::SameLine(0, 3);
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::DragFloat(Utils::format("##InputFloat%1%", parameter_count).c_str(), &temp.x, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text("y");
-            ImGui::SameLine(0, 3);
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::DragFloat(Utils::format("##InputFloat%1%", parameter_count + 1).c_str(), &temp.y, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
-            ImGui::TableSetColumnIndex(2);
-            ImGui::Text("z");
-            ImGui::SameLine(0, 3);
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            ImGui::DragFloat(Utils::format("##InputFloat%1%", parameter_count + 2).c_str(), &temp.z, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
-            ImGui::EndTable();
+// ===== Vec3Parameter ===== //
+
+Vec3Parameter::Vec3Parameter(std::string label_, std::string label_x_, std::string label_y_, std::string label_z_, std::function<vec3()> get_, std::function<void(vec3)> set_) : Parameter(label_, [this](){
+    temp = get();
+    ImGui::Text(label.c_str());
+    if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingStretchSame)){
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("x");
+        ImGui::SameLine(0, 3);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        ImGui::DragFloat(Utils::format("##InputFloat%1%", id).c_str(), &temp.x, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("y");
+        ImGui::SameLine(0, 3);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        ImGui::DragFloat(Utils::format("##InputFloat%1%", id + 1).c_str(), &temp.y, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
+        ImGui::TableSetColumnIndex(2);
+        ImGui::Text("z");
+        ImGui::SameLine(0, 3);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        ImGui::DragFloat(Utils::format("##InputFloat%1%", id + 2).c_str(), &temp.z, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
+        ImGui::EndTable();
+    }
+    if (is_edited){ // TODO : 리팩토링
+        if (set != nullptr){
+            set(temp);
         }
-        if (is_edited){ // TODO : 리팩토링
-            if (set != nullptr){
-                set(temp);
-            }
-            is_edited = false;
-        }
-    };
+        is_edited = false;
+    }
+}), label_x(label_x_), label_y(label_y_), label_z(label_z_), get(get_), set(set_){
 }
 
-ColorParameter::ColorParameter(std::string label_, std::function<vec4()> get_, std::function<void(vec4)> set_) :
-    Parameter(label_), get(get_), set(set_){
-    int parameter_count = GUI::parameter_count++;
-    render_action = [this, parameter_count](){ // TODO : completion 액션 추가
-        vec4 temp_vec = get();
-        temp[0] = temp_vec.x;
-        temp[1] = temp_vec.y;
-        temp[2] = temp_vec.z;
-        temp[3] = temp_vec.w;
-        ImGui::Text(label.c_str());
-        // ImGuiColorEditFlags_PickerHueWheel
-        ImGui::ColorEdit4(Utils::format("##ColorEdit%1%", parameter_count).c_str(), temp, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_NoOptions);
-        is_edited = true;
-        if (is_edited){ // TODO : 리팩토링
-            if (set != nullptr){
-                set(vec4(temp[0], temp[1], temp[2], temp[3]));
-            }
-            is_edited = false;
-        }
-    };
+ParameterSnapshot* Vec3Parameter::make_snapshot_new(){
+    ParameterSnapshot* ret = new ParameterSnapshot(this);
+    ret->set_value<vec3>(get());
+    return ret;
 }
+
+void Vec3Parameter::recover_from(ParameterSnapshot* snapshot){
+    set(snapshot->get_value<vec3>());
+}
+
+
+// ===== ColorParameter ===== //
+
+ColorParameter::ColorParameter(std::string label_, std::function<vec4()> get_, std::function<void(vec4)> set_) : Parameter(label_, [this](){
+    vec4 temp_vec = get();
+    temp[0] = temp_vec.x;
+    temp[1] = temp_vec.y;
+    temp[2] = temp_vec.z;
+    temp[3] = temp_vec.w;
+    ImGui::Text(label.c_str());
+    // ImGuiColorEditFlags_PickerHueWheel
+    ImGui::ColorEdit4(Utils::format("##ColorEdit%1%", id).c_str(), temp, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_NoOptions);
+    is_edited = true;
+    if (is_edited){ // TODO : 리팩토링
+        if (set != nullptr){
+            set(vec4(temp[0], temp[1], temp[2], temp[3]));
+        }
+        is_edited = false;
+    }
+}), get(get_), set(set_){
+}
+
+ParameterSnapshot* ColorParameter::make_snapshot_new(){
+    ParameterSnapshot* ret = new ParameterSnapshot(this);
+    ret->set_value<vec4>(get());
+    return ret;
+}
+
+void ColorParameter::recover_from(ParameterSnapshot* snapshot){
+    set(snapshot->get_value<vec4>());
+}
+
+
+// ===== Component ===== //
 
 bool Component::show_remove_button = false;
 
@@ -139,8 +223,15 @@ void Component::render(){
 
 void Component::set_label(std::string label_){
     label = label_;
-    
+
 }
+
+std::list<Parameter*> Component::get_parameters(){
+    return parameters;
+}
+
+
+// ===== Entity ===== //
 
 Entity::~Entity(){
     for (Component* component : components){
@@ -160,55 +251,37 @@ void Entity::clear_components(){
     components.clear();
 }
 
-/*
-* TODO : undo redo에서 focus가 inputtext인지 확인
-*
-            static char buf1[64] = ""; ImGui::InputText("default",     buf1, 64);
-            static char buf2[64] = ""; ImGui::InputText("decimal",     buf2, 64, ImGuiInputTextFlags_CharsDecimal);
-            static char buf3[64] = ""; ImGui::InputText("hexadecimal", buf3, 64, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
-            static char buf4[64] = ""; ImGui::InputText("uppercase",   buf4, 64, ImGuiInputTextFlags_CharsUppercase);
-            static char buf5[64] = ""; ImGui::InputText("no blank",    buf5, 64, ImGuiInputTextFlags_CharsNoBlank);
-            static char buf6[64] = ""; ImGui::InputText("\"imgui\" letters", buf6, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterImGuiLetters);
+
+// ===== EntitySnapshot ===== //
+
+EntitySnapshot::EntitySnapshot(Entity* ptr){
+    for (Component* component : ptr->get_components()){
+        for (Parameter* parameter : component->get_parameters()){
+            snapshots.push_back(parameter->make_snapshot_new());
+        }
+    }
+}
+
+EntitySnapshot::~EntitySnapshot(){
+    for (ParameterSnapshot* snapshot : snapshots){
+        delete snapshot;
+    }
+}
+
+void EntitySnapshot::recover(){
+    for (ParameterSnapshot* snapshot : snapshots){
+        snapshot->recover();
+    }
+}
 
 
-            static float col1[3] = { 1.0f, 0.0f, 0.2f };
-            static float col2[4] = { 0.4f, 0.7f, 0.0f, 0.5f };
-            ImGui::ColorEdit3("color 1", col1);
-            ImGui::SameLine(); HelpMarker(
-                "Click on the color square to open a color picker.\n"
-                "Click and hold to use drag and drop.\n"
-                "Right-click on the color square to show options.\n"
-                "CTRL+click on individual component to input value.\n");
+// ===== ParameterModifyTask ==== // 
 
-            ImGui::ColorEdit4("color 2", col2);
-
-
-            ImGui::DragInt("drag int", &i1, 1);
-            ImGui::SameLine(); HelpMarker(
-                "Click and drag to edit value.\n"
-                "Hold SHIFT/ALT for faster/slower edit.\n"
-                "Double-click or CTRL+click to input value.");
-
-            ImGui::DragInt("drag int 0..100", &i2, 1, 0, 100, "%d%%", ImGuiSliderFlags_AlwaysClamp);
-
-            static float f1 = 1.00f, f2 = 0.0067f;
-            ImGui::DragFloat("drag float", &f1, 0.005f);
-            ImGui::DragFloat("drag small float", &f2, 0.0001f, 0.0f, 0.0f, "%.06f ns");
-
-
-            ImGui::InputTextWithHint("input text (w/ hint)", "enter text here", str1, IM_ARRAYSIZE(str1));
-
-            IMGUI_DEMO_MARKER("Widgets/Basic/InputInt, InputFloat");
-            static int i0 = 123;
-            ImGui::InputInt("input int", &i0);
-
-            static float f0 = 0.001f;
-            ImGui::InputFloat("input float", &f0, 0.01f, 1.0f, "%.3f");
-
-            static float f1 = 1.e10f;
-            ImGui::InputFloat("input scientific", &f1, 0.0f, 0.0f, "%e");
-            ImGui::SameLine(); HelpMarker(
-                "You can input value using the scientific notation,\n"
-                "  e.g. \"1e+8\" becomes \"100000000\".");
-
-*/
+ParameterModifyTask::ParameterModifyTask(std::string detail_, std::function<bool()> work_, std::function<void()> work_undo_) : TransactionTask(detail_, [=, this](){
+    // snapshot1 = recovery_root->make_snapshot_new();
+    return work_();
+}, [=, this](){
+    //snapshot1->recover();
+    work_undo_();
+}){
+}

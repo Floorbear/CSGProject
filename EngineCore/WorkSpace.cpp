@@ -275,7 +275,7 @@ void WorkSpace::render_hierarchy(){
             if (!node->is_root_node()){
                 if (ImGui::MenuItem("Unpack Operation", 0, false, node->get_type() == node->get_parent()->get_type() &&
                                     (node->get_type() == CSGNode::Type::Union || node->get_type() == CSGNode::Type::Intersection))){
-                    transaction_manager.add(new TreeModifyTask("Reparent Model", node->get_parent(), [=](){
+                    transaction_manager.add(new TreeEntityModifyTask("Reparent Model", node->get_parent(), [=](){
                         return node->unpack_to_parent();
                     }));
                 }
@@ -327,14 +327,14 @@ void WorkSpace::render_hierarchy(){
                 Model* node_model = node->model; // 추후 작업으로 model값이 변해있을수도 있기때문에 필요.
                 Model* payload_node_model = payload_node->model;
 
-                transaction_manager.add((new TreeModifyTask<CSGNode>("Reparent Mesh", [=](){
+                transaction_manager.add((new TreeEntityModifyTask<CSGNode>("Reparent Mesh", [=](){
                     return node->reparent_child(payload_node);
                 }, node_model->get_csg_mesh(),
                     [=](CSGNode* root){node_model->set_csg_mesh(root, true);
                 }, payload_node_model->get_csg_mesh(),
                     [=](CSGNode* root){payload_node_model->set_csg_mesh(root, true);
 
-                }))->link(new TreeModifyTask("Delete Empty Model", root_model, [=](){
+                }))->link(new TreeEntityModifyTask("Delete Empty Model", root_model, [=](){
                     if (payload_node_model->get_csg_mesh() == nullptr){ // empty model
                         payload_node_model->remove_self();
                     }
@@ -422,7 +422,7 @@ void WorkSpace::render_hierarchy(){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Model")){
                 MultiTransactionTask* task_multi = new MultiTransactionTask(Utils::format("Reparent %1% Model(s)", (int)selected_models.size()));
                 for (Model* selected_model : selected_models){
-                    task_multi->add_task(new TreeModifyTask("Reparent Model", root_model, [=](){
+                    task_multi->add_task(new TreeEntityModifyTask("Reparent Model", root_model, [=](){
                         return model->reparent_child(selected_model);
                     }));
                 }
@@ -742,11 +742,12 @@ void WorkSpace::render_popup_menu_view(){
 }
 
 void WorkSpace::render_popup_menu_inspector(){
+    return; // TODO : 컴포넌트 추가 삭제 관련 기능이 구현되면 해제 
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_None) && ImGui::GetIO().MouseReleased[ImGuiMouseButton_Right]){
         ImGui::OpenPopup("View_Popup_Inspector");
     }
     if (ImGui::BeginPopup("View_Popup_Inspector")){
-        if (ImGui::MenuItem("Add Component", 0, false, selected_models.size() <= 1 && selected_meshes.size() <= 1)){} // TODO : 구현
+        if (ImGui::MenuItem("Add Component", 0, false, selected_models.size() <= 1 && selected_meshes.size() <= 1)){}
         if (ImGui::MenuItem("Show Remove Button", 0, &Component::show_remove_button)){}
         ImGui::EndPopup();
     }

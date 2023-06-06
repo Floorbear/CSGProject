@@ -58,15 +58,21 @@ CSGNode::~CSGNode(){
     Entity::~Entity();
 }
 
+void CSGNode::set_parent(CSGNode* parent_){
+    TreeNode::set_parent(parent_);
+    if (parent != nullptr){
+        transform.set_parent(parent->get_transform(), true);
+        model = parent->model;
+    }
+}
+
 bool CSGNode::add_child(CSGNode* node, CSGNode* after){
     assert(type != Type::Operand);
     if (type == Type::Difference){
         assert(children.size() < 2);
     }
-    bool succeed = TreeNode<CSGNode>::add_child(node, after);
+    bool succeed = TreeNode::add_child(node, after);
     if (succeed){
-        node->transform.set_parent(get_transform(), true);
-        node->model = model;
         mark_edited();
     }
     return succeed;
@@ -118,7 +124,7 @@ bool CSGNode::reparent_child(CSGNode* node, CSGNode* after){
 }
 
 void CSGNode::swap_child(CSGNode* child1, CSGNode* child2){
-    TreeNode<CSGNode>::swap_child(child1, child2);
+    TreeNode::swap_child(child1, child2);
     if (type == Type::Difference){
         is_result_valid = false;
     }
