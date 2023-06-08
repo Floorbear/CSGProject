@@ -134,16 +134,18 @@ void WorkSpace::render_view(Renderer* renderer){
         }
 
     } else if (is_window_content_hovered() && !ImGui::IsMouseDown(ImGuiButtonFlags_MouseButtonLeft)){
-        SelectionPixelObjectInfo info = renderer->find_selection_gizmo(selected_models, mouse_pos_left_current_view);
+        if (!is_gizmo_pressed){
+            SelectionPixelObjectInfo info = renderer->find_selection_gizmo(selected_models, mouse_pos_left_current_view);
 
-        if (info.object_type == SelectionPixelInfo::object_type_gizmo_x){
-            selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::X); // TODO : renderer->get_gizmo()로 교체
-        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_y){
-            selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::Y);
-        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_z){
-            selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::Z);
-        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_dot){
-            selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::XYZ);
+            if (info.object_type == SelectionPixelInfo::object_type_gizmo_x){
+                selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::X); // TODO : renderer->get_gizmo()로 교체
+            } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_y){
+                selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::Y);
+            } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_z){
+                selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::Z);
+            } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_dot){
+                selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::XYZ);
+            }
         }
     }
 
@@ -208,7 +210,7 @@ void WorkSpace::render_view(Renderer* renderer){
         ImGui::SameLine();
         if (ImGui::ImageButton("Gizmo_Mode_Rotation", (ImTextureID)button_image_gizmo_rotate->get_handle(), gizmo_mode == GizmoMode::Rotation, ImVec2(25, 25))){
             gizmo_mode = GizmoMode::Rotation;
-            // Gizmo::set_gizmoMode(gizmo_mode);
+            Gizmo::set_gizmoMode(gizmo_mode);
         }
         ImGui::SameLine();
         if (ImGui::ImageButton("Gizmo_Mode_Scale", (ImTextureID)button_image_gizmo_scale->get_handle(), gizmo_mode == GizmoMode::Scale, ImVec2(25, 25))){
@@ -502,7 +504,7 @@ void WorkSpace::render_logs(){
 }
 
 void WorkSpace::render(){
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
         is_background_pressed = false;
         is_gizmo_pressed = false;
     }
