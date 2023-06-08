@@ -19,15 +19,11 @@ Core::Core(){
 }
 
 void Core::dispose(){
-    //Texture::dispose();
     gui.dispose();
     glfwTerminate();
-    //프레임버퍼
-    for (auto i : FrameBuffer::all_frameBuffer)
-    {
-        delete i;
-    }
-    //텍스처
+
+    FrameBuffer::dispose();
+    //Texture::dispose();
     for (auto i : Texture::all_textures)
     {
         delete i;

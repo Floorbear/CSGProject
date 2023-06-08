@@ -1,4 +1,5 @@
 #include "Mesh.h"
+#include "Transform.h"
 #include "Shader.h"
 #include "Utils.h"
 #include "GUI.h"
@@ -124,6 +125,7 @@ void Mesh::render(){
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, (int)indices_rendering.size(), GL_UNSIGNED_INT, 0);
+    // glBindVertexArray(0);
 }
 
 std::string Mesh::get_name() const{
@@ -258,7 +260,7 @@ Mesh Mesh::pyramid(float r, float height){
 }
 
 std::list<vec2> make_unit_circle(int step){
-    float angle_step = 2 * pi<float>() / step;
+    float angle_step = 2 * (float)M_PI / step;
     float angle;  // radian
 
     std::list<vec2> result;

@@ -1,93 +1,71 @@
 #include "FrameBuffer.h"
-#include <glad/glad.h>
 #include "Texture.h"
-FrameBuffer::FrameBuffer()
-{
+
+#include <glad/glad.h>
+
+std::list<FrameBuffer*> FrameBuffer::instances;
+
+void FrameBuffer::dispose(){
+    for (FrameBuffer* framebuffer : instances){
+        delete framebuffer;
+    }
 }
 
-FrameBuffer::~FrameBuffer()
-{
+FrameBuffer::FrameBuffer(){
+    instances.push_back(this);
+
+    glGenFramebuffers(1, &fbo);
 }
 
-FrameBuffer* FrameBuffer::create_frameBuffer()
-{
-	FrameBuffer* newFrameBuffer = new FrameBuffer();
-	glGenFramebuffers(1, &newFrameBuffer->fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, newFrameBuffer->fbo);
-	all_frameBuffer.push_back(newFrameBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	return newFrameBuffer;
+unsigned int FrameBuffer::get_fbo(){
+    return fbo;
 }
 
-void FrameBuffer::enable()
-{
-	assert(fbo != 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+Texture* FrameBuffer::get_texture(){
+    assert(texture != nullptr);
+    return texture;
 }
 
-void FrameBuffer::disable()
-{
-	assert(fbo != 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+void FrameBuffer::bind(){
+    assert(fbo != 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 }
 
-std::list<FrameBuffer*> FrameBuffer::all_frameBuffer;
-
-SelectionFrameBuffer::SelectionFrameBuffer()
-{
+void FrameBuffer::disable(){
+    assert(fbo != 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-SelectionFrameBuffer::~SelectionFrameBuffer()
-{
+ScreenFrameBuffer::ScreenFrameBuffer(const ivec2& texture_size){
+    bind();
+    texture = Texture::create_frameTexture(texture_size, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR);
+    texture->enable();
+
+    GLuint depth_stencil_renderbuffer;
+    glGenRenderbuffers(1, &depth_stencil_renderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depth_stencil_renderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, texture_size.x, texture_size.y);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_stencil_renderbuffer);
+
+    auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    assert(status == GL_FRAMEBUFFER_COMPLETE);
 }
 
-SelectionFrameBuffer* SelectionFrameBuffer::create_selectionFrameBuffer(const ivec2& _texture_size)
-{
-	SelectionFrameBuffer* newFramebuffer = static_cast<SelectionFrameBuffer*>(create_frameBuffer());
-	newFramebuffer->enable();
-	newFramebuffer->framebufferTexture = Texture::create_frameTexture(ivec2((int)_texture_size.x, (int)_texture_size.y), GL_RGB32UI, GL_RGB_INTEGER, GL_UNSIGNED_INT);
-	Texture* newdepthTexture = Texture::create_depthTexture(ivec2((int)_texture_size.x, (int)_texture_size.y));
-	auto Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	assert(Status == GL_FRAMEBUFFER_COMPLETE); //버퍼가 정상적으로 생성됬는지 체크
+SelectionFrameBuffer::SelectionFrameBuffer(const ivec2& texture_size_){
+    bind();
+    texture = Texture::create_frameTexture(texture_size_, GL_RGB32UI, GL_RGB_INTEGER, GL_UNSIGNED_INT);
+    texture_depth = Texture::create_depthTexture(texture_size_); // ???
 
-	glBindTexture(GL_TEXTURE_2D, 0);
-	newFramebuffer->disable();
-	return newFramebuffer;
+    auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    assert(status == GL_FRAMEBUFFER_COMPLETE);
 }
 
-SelectionPixelIdInfo SelectionFrameBuffer::read_pixel(int _x, int _y)
-{
-	glReadBuffer(GL_COLOR_ATTACHMENT0);
+SelectionPixelIdInfo SelectionFrameBuffer::read_pixel(float x, float y){
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
 
-	SelectionPixelIdInfo Pixel;
-	glReadPixels(_x, _y,
-		1, 1, GL_RGB_INTEGER, GL_UNSIGNED_INT, &Pixel);
+    SelectionPixelIdInfo pixel;
+    glReadPixels((int)x, (int)y, 1, 1, GL_RGB_INTEGER, GL_UNSIGNED_INT, &pixel);
+    glReadBuffer(GL_NONE);
 
-	glReadBuffer(GL_NONE);
-	return Pixel;
-}
-
-ScreenFrameBuffer::ScreenFrameBuffer()
-{
-}
-
-ScreenFrameBuffer::~ScreenFrameBuffer()
-{
-}
-
-ScreenFrameBuffer* ScreenFrameBuffer::create_screenFrameBuffer(const ivec2& _texture_size)
-{
-	ScreenFrameBuffer* newFramebuffer = static_cast<ScreenFrameBuffer*>(create_frameBuffer());
-	newFramebuffer->enable();
-	newFramebuffer->framebufferTexture = Texture::create_frameTexture(_texture_size, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR);
-	newFramebuffer->framebufferTexture->enable();
-
-	GLuint depthrenderbuffer;
-	glGenRenderbuffers(1, &depthrenderbuffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _texture_size.x, _texture_size.y);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
-	assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-
-	return newFramebuffer;
+    return pixel;
 }

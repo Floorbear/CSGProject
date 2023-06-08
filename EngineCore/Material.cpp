@@ -5,15 +5,15 @@
 #include "PointLight.h"
 
 Material::Material() : Component("Material"){
-    screenShader = new Shader();
+    shader = new Shader();
     selectionShader = new Shader("DefaultVertexShader.glsl", "SelectionFragmentShader.glsl");
-    outlineShader = new Shader("OutlineVertexShader.glsl", "OutlineFragementShader.glsl");
 }
 
 Material::~Material(){
-    if (screenShader != nullptr){
-        delete screenShader;
+    if (shader != nullptr){
+        delete shader;
     }
+
     if (selectionShader != nullptr){
         delete selectionShader;
     }
@@ -35,7 +35,6 @@ SelectionPixelIdInfo Material::get_uniform_selection_id(){
     return uniform_selection_id;
 }
 
-
 void Material::set_uniform_model_transform(Transform* model_transform){
     uniform_model_transform = model_transform;
 }
@@ -53,18 +52,17 @@ void Material::set_uniform_selection_id(SelectionPixelIdInfo selection_id){
 }
 
 void Material::apply(){
-    screenShader->use();
+    shader->use();
 
-    screenShader->set_mat4("world", uniform_model_transform->get_world_matrix());
-    screenShader->set_mat4("view", uniform_camera->get_view());
-    screenShader->set_mat4("projection", uniform_camera->get_projection());
+    shader->set_mat4("world", uniform_model_transform->get_world_matrix());
+    shader->set_mat4("view", uniform_camera->get_view());
+    shader->set_mat4("projection", uniform_camera->get_projection());
 
-    if(!uniform_lights->empty()){ // TODO : 여러개 입력으로 바꾸기?
-        screenShader->set_vec3("lightPos", vec3(uniform_lights->front()->get_position()));
-    }else{
-        screenShader->set_vec3("lightPos", vec3(0, 0, 0));// TODO : 지우기
+    if (uniform_lights == nullptr || uniform_lights->empty()){ // TODO : 여러개 입력으로 바꾸기?
+        shader->set_vec3("lightPos", vec3(0, 0, 0));// TODO : 지우기
+    } else{
+        shader->set_vec3("lightPos", vec3(uniform_lights->front()->get_position()));
     }
-    screenShader->set_int("fragmentShaderType", static_cast<int>(fragmentShaderType));
 }
 
 void Material::apply_selection_id(){
@@ -79,18 +77,27 @@ void Material::apply_selection_id(){
     selectionShader->set_uint("meshID", uniform_selection_id.mesh_id);
 }
 
-void Material::apply_outline(){
-    outlineShader->use();
 
-    outlineShader->set_mat4("world", uniform_model_transform->get_world_matrix());
-    outlineShader->set_mat4("view", uniform_camera->get_view());
-    outlineShader->set_mat4("projection", uniform_camera->get_projection());
+// ===== MonotoneMaterial ===== //
+
+MonotoneMaterial::MonotoneMaterial(vec3 color_) : color(color_){
+    shader = new Shader("monotone_vs.glsl", "monotone_fs.glsl");
 }
 
-ColorMaterial::ColorMaterial()
-{
-    fragmentShaderType = FragmentShaderType::Color;
+void MonotoneMaterial::apply(){
+    Material::apply();
 
+    shader->set_vec3("color", vec3(color));
+}
+
+vec3 MonotoneMaterial::get_color(){
+    return color;
+}
+
+
+// ===== ColorMaterial ===== //
+
+ColorMaterial::ColorMaterial(){
     parameters.push_back(new ColorParameter("color", [this](){
         return color;
     }, [this](vec4 value){
@@ -103,40 +110,36 @@ ColorMaterial::ColorMaterial()
     }));
 }
 
-ColorMaterial::~ColorMaterial()
-{
+void ColorMaterial::apply(){
+    Material::apply();
+
+    shader->set_int("fragmentShaderType", static_cast<int>(FragmentShaderType::Color));
+
+    shader->set_vec3("objectColor", vec3(color));
+    shader->set_float("ambient", ambient);
 }
 
-void ColorMaterial::apply()
-{
-    __super::apply();
-    screenShader->set_vec3("objectColor", vec3(color));
-    screenShader->set_float("ambient", ambient);
-}
 
+// ===== TextureMaterial ===== //
 
-
-TextureMaterial::TextureMaterial() : TextureMaterial(nullptr)
-{
+TextureMaterial::TextureMaterial() : TextureMaterial(nullptr){
     // TODO : texture parameter 구현해서 추가
 }
 
-TextureMaterial::TextureMaterial(Texture* texture_) : texture(texture_)
-{
-    fragmentShaderType = FragmentShaderType::Texture;
+TextureMaterial::TextureMaterial(Texture* texture_) : texture(texture_){
 }
 
-TextureMaterial::~TextureMaterial()
-{
+TextureMaterial::~TextureMaterial(){
+    delete texture;
 }
 
-void TextureMaterial::apply()
-{
-    __super::apply();
+void TextureMaterial::apply(){
+    Material::apply();
+
+    shader->set_int("fragmentShaderType", static_cast<int>(FragmentShaderType::Texture));
     //텍스처가 존재하는경우 유니폼으로 보내버립니다
-    if (texture != nullptr)
-    {
-        screenShader->set_int("texture1",0); //텍스처는 location은  0->1->2->3 , texture 
+    if (texture != nullptr){
+        shader->set_int("texture1", 0); //텍스처는 location은  0->1->2->3 , texture 
         glActiveTexture(GL_TEXTURE0);
         texture->enable();
         //if 2번째 texture
@@ -146,12 +149,10 @@ void TextureMaterial::apply()
     }
 }
 
-Texture* TextureMaterial::get_texture() const
-{
+Texture* TextureMaterial::get_texture() const{
     return texture;
 }
 
-void TextureMaterial::set_texture(Texture* _texture)
-{
+void TextureMaterial::set_texture(Texture* _texture){
     texture = _texture;
 }

@@ -1,58 +1,46 @@
 #pragma once
-#include "Utils.h"
 #include "SelectionPixelInfo.h"
 
-enum class FrameBufferType
-{
-	
-};
+#include "glm/glm.hpp"
 
+#include <list>
+
+using namespace glm;
 
 class Core;
 class Texture;
-class FrameBuffer
-{
-	friend Core;
-public:
-	FrameBuffer();
-	virtual ~FrameBuffer();
+class FrameBuffer{
+    static std::list<FrameBuffer*> instances;
+    static void dispose();
 
-	static FrameBuffer* create_frameBuffer();
-	virtual void enable();
-	virtual void disable();
-
-	Texture* get_framebufferTexutre()
-	{
-		assert(framebufferTexture != nullptr);
-		return framebufferTexture;
-	}
 protected:
-	unsigned int fbo = 0;
-	Texture* framebufferTexture = nullptr;
+    unsigned int fbo = 0;
+    Texture* texture = nullptr;
 
-private:
-	static std::list<FrameBuffer*> all_frameBuffer; 
+    FrameBuffer();
+
+public:
+    unsigned int get_fbo();
+    Texture* get_texture();
+
+    void bind();
+    void disable();
+
+    friend Core;
 };
 
-class ScreenFrameBuffer : public FrameBuffer
-{
+class ScreenFrameBuffer : public FrameBuffer{
 public:
-	ScreenFrameBuffer();
-	virtual ~ScreenFrameBuffer();
-
-	static ScreenFrameBuffer* create_screenFrameBuffer(const ivec2& _texture_size);
-
+    ScreenFrameBuffer(const ivec2& texture_size);
+    ~ScreenFrameBuffer(); // TODO : 버퍼 지우기...
 };
 
-class SelectionFrameBuffer : public FrameBuffer
-{
+class SelectionFrameBuffer : public FrameBuffer{
+    Texture* texture_depth = nullptr;
+
 public:
-	SelectionFrameBuffer();
-	virtual ~SelectionFrameBuffer();
+    SelectionFrameBuffer(const ivec2& texture_size);
+    ~SelectionFrameBuffer();
 
-	static SelectionFrameBuffer* create_selectionFrameBuffer(const ivec2& _texture_size);
-
-	SelectionPixelIdInfo read_pixel(int _x, int _y);
-
-
+    SelectionPixelIdInfo read_pixel(float x, float y);
 };

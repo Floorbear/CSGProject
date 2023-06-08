@@ -22,7 +22,7 @@ Texture* Texture::create_texture(EnginePath _path, bool flip)
     unsigned char* data = load_resouce(_path, &textureSize, flip);
     //TODO : data 확장자 파싱해서 png, jpg 분기 나누기
 
-    Texture* newTexture = Texture::create_texture({ textureSize.x,textureSize.y }, data, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_REPEAT);
+    Texture* newTexture = Texture::create_texture(textureSize, data, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_REPEAT);
     stbi_image_free(data);//릴리즈
     return newTexture;
 }
@@ -33,14 +33,18 @@ Texture* Texture::create_texture(EnginePath _path, GLint _internalformat, GLenum
     unsigned char* data = load_resouce(_path, &textureSize, flip);
     //TODO : data 확장자 파싱해서 png, jpg 분기 나누기
 
-    Texture* newTexture = Texture::create_texture({ textureSize.x,textureSize.y }, data, _internalformat, _format, GL_UNSIGNED_BYTE, GL_LINEAR, GL_REPEAT);
+    Texture* newTexture = Texture::create_texture(textureSize, data, _internalformat, _format, GL_UNSIGNED_BYTE, GL_LINEAR, GL_REPEAT);
     stbi_image_free(data);//릴리즈
     return newTexture;
 }
 
-Texture* Texture::create_texture(const ivec2& _size, const void* _data, GLint _internalformat, GLenum _format, GLenum _type, GLint _filtering, GLint _wrap)
+Texture* Texture::create_texture(const ivec2& texture_size_, const void* _data, GLint _internalformat, GLenum _format, GLenum _type, GLint _filtering, GLint _wrap)
 {
     Texture* newTexture = new Texture();
+    //newTexture->textureSize = ivec3(texture_size_, 1);
+    newTexture->textureSize.x = texture_size_.x;
+    newTexture->textureSize.y = texture_size_.y;
+
     glGenTextures(1, &newTexture->texture);
     glBindTexture(GL_TEXTURE_2D, newTexture->texture);
 
@@ -49,7 +53,7 @@ Texture* Texture::create_texture(const ivec2& _size, const void* _data, GLint _i
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, _wrap);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, _wrap);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, _internalformat, _size.x, _size.y, 0, _format, _type, _data);
+    glTexImage2D(GL_TEXTURE_2D, 0, _internalformat, texture_size_.x, texture_size_.y, 0, _format, _type, _data);
     if (_data != nullptr)
     {
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -59,9 +63,13 @@ Texture* Texture::create_texture(const ivec2& _size, const void* _data, GLint _i
     return newTexture;
 }
 
-Texture* Texture::create_frameTexture(const ivec2& _size, GLint _internalformat, GLenum _format, GLenum _type, GLint _filtering)
+Texture* Texture::create_frameTexture(const ivec2& texture_size_, GLint _internalformat, GLenum _format, GLenum _type, GLint _filtering)
 {
     Texture* newTexture = new Texture();
+    //newTexture->textureSize = ivec3(texture_size_, 1);
+    newTexture->textureSize.x = texture_size_.x;
+    newTexture->textureSize.y = texture_size_.y;
+
     glGenTextures(1, &(newTexture->texture));
     glBindTexture(GL_TEXTURE_2D, newTexture->texture);
 
@@ -70,7 +78,7 @@ Texture* Texture::create_frameTexture(const ivec2& _size, GLint _internalformat,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, _internalformat, _size.x, _size.y, 0, _format, _type, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, _internalformat, texture_size_.x, texture_size_.y, 0, _format, _type, NULL);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, newTexture->texture, 0);
    // glBindTexture(GL_TEXTURE_2D, 0);
     all_textures.push_back(newTexture);
@@ -116,4 +124,8 @@ unsigned char* Texture::load_resouce(EnginePath& _path, ivec3* _return_size, boo
     stbi_set_flip_vertically_on_load(flip); // tell stb_image.h to flip loaded texture's on the y-axis.
     unsigned char* data = stbi_load(str.c_str(), &(_return_size->x), &(_return_size->y), &(_return_size->z), 0);
     return data;
+}
+
+vec2 Texture::get_size(){
+    return vec2(textureSize.x, textureSize.y);
 }

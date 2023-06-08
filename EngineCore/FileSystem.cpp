@@ -5,6 +5,8 @@
 #include <iostream>
 #include <Windows.h>
 
+std::filesystem::path FileSystem::engine_path;
+
 EnginePath::EnginePath()
 {
 

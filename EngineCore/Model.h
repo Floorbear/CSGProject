@@ -39,7 +39,7 @@ public:
 
     bool is_renderable();
     void render(Renderer* renderer);
-    void render_outline(const vec3& _scaleAcc);
+    void render_monotone(Material* material_monotone);
 
     void render_selection_id(uint32_t* selection_id_model_acc);
     SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, uint32_t* selection_id_model_acc);

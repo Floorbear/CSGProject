@@ -108,6 +108,9 @@ public:
     }
 
     bool is_descendant_of(T* parent_){
+        if (this == parent_){
+            return true;
+        }
         for (T* child : parent_->children){
             if (is_descendant_of(child)){
                 return true;

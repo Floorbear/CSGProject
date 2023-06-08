@@ -27,10 +27,14 @@ private:
 
 class FileSystem
 {
+	static std::filesystem::path engine_path;
 public:
 	static EnginePath GetProjectPath()
 	{
-		EnginePath NewPath(std::filesystem::current_path());
+		if(engine_path.empty()){
+			engine_path = std::filesystem::current_path();
+		}
+		EnginePath NewPath(engine_path);
 		return NewPath;
 	}
 

@@ -43540,7 +43540,6 @@
     <ClInclude Include="..\Thirdparty\Eigen\src\UmfPackSupport\UmfPackSupport.h">
       <Filter>ThirdParty\Eigen</Filter>
     </ClInclude>
-    <ClInclude Include="EngineMinimal.h" />
     <ClInclude Include="Shader.h">
       <Filter>Rendering</Filter>
     </ClInclude>
@@ -44455,6 +44454,9 @@
     <ClInclude Include="Gizmo.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessor.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
@@ -44545,7 +44547,10 @@
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
-      <Filter>Base</Filter>
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessor.cpp">
+      <Filter>Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -45089,6 +45094,21 @@
       <Filter>Shader</Filter>
     </None>
     <None Include="..\EngineResource\Shader\GizmoFragmentShader.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\monotone_fs.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\monotone_vs.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\postprocessing_overlay_fs.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\postprocessing_vs.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\EngineResource\Shader\postprocessing_expand3_fs.glsl">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>

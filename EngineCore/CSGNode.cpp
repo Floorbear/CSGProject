@@ -238,6 +238,24 @@ void CSGNode::render(){
     result.render();
 }
 
+void CSGNode::render_operands(Material* material_mesh_overlay){
+    if (selection_group || children.empty()){ // leaf node
+        material_mesh_overlay->set_uniform_model_transform(&transform);
+        material_mesh_overlay->apply();
+        result.render();
+    } else{
+        for (CSGNode* child : children){
+            child->render_operands(material_mesh_overlay);
+        }
+    }
+}
+
+void CSGNode::render_monotone(Material* material_monotone){
+    material_monotone->set_uniform_model_transform(&transform);
+    material_monotone->apply();
+    result.render();
+}
+
 void CSGNode::render_selection_id(Material* material, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc){
     if (selection_group || children.empty()){ // leaf node
         transform.calculate_matrix();

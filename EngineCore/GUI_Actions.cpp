@@ -3,6 +3,8 @@
 #include "Model.h"
 #include "CSGNode.h"
 #include "WorkSpace.h"
+#include "Renderer.h"
+#include "Camera.h"
 
 WorkSpace_Actions::WorkSpace_Actions(WorkSpace* workspace_) : workspace(workspace_){
 }
@@ -48,7 +50,9 @@ void WorkSpace_Actions::add_model_new(const Mesh& mesh, const Transform& transfo
     static int count = 0;
     Model* model = new Model(Utils::format("Model%1%", count).c_str());
     model->set_csg_mesh_new(&mesh);
-    model->get_transform()->set_position(vec3(count * 0.7, count * 0.7, count * 0.7)); // TODO : I believe it places objects in the center of the active viewport
+
+    Camera* camera = workspace->renderer_focused->camera;
+    model->get_transform()->set_position(camera->get_transform()->get_world_position() + camera->get_transform()->get_forward_dir() * Renderer::default_camera_pos_z);
     count++;
 
     workspace->transaction_manager.add(new TreeEntityModifyTask<Model>("Add Model " + mesh.get_name(), workspace->root_model, [=, this](){

@@ -1,9 +1,11 @@
 #include "Gizmo.h"
 #include "Shader.h"
 #include "Camera.h"
-#include <algorithm>
-
 #include "FileSystem.h"
+
+#include <glad/glad.h>
+
+#include <algorithm>
 
 GizmoMode Gizmo::gizmoMode = GizmoMode::Translate;
 
@@ -198,14 +200,14 @@ int Gizmo::get_selectedAxis()
 	return CopyValue;
 }
 
-void Gizmo::set_selectedAxis(int _axis)
+void Gizmo::set_selectedAxis(GizmoAxis _axis)
 {
-	selectedAxis_index = _axis;
+	selectedAxis_index = (int)_axis;
 }
 
 void Gizmo::move(Camera* _camera,vec2 _curPos, vec2 _prevPos, int _axis)
 {
-	set_selectedAxis(_axis);
+	set_selectedAxis((GizmoAxis)_axis);
 	if (abs(length(_curPos) - length(_prevPos)) < 0.01f)
 	{
 		return;

@@ -1,14 +1,13 @@
 #pragma once
 
-#include "Transform.h"
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Surface_mesh.h>
 
 #include <glm/glm.hpp>
 
 #include <vector>
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <CGAL/Simple_cartesian.h>
-#include <CGAL/Surface_mesh.h>
 
 typedef CGAL::Simple_cartesian<float> Kernel;
 typedef CGAL::Surface_mesh<Kernel::Point_3> CGAL_Mesh;
@@ -23,6 +22,7 @@ struct Vertex_Rendering{
     Vertex_Rendering(float x, float y, float z,float normal_x, float normal_y, float normal_z, float tex_x, float tex_y);
 };
 
+class Transform;
 class Mesh{
     unsigned int VAO = 0;
     unsigned int VBO = 0;

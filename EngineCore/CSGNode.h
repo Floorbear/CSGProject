@@ -2,6 +2,7 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "SelectionPixelInfo.h"
+#include "Transform.h"
 #include "Component.h"
 #include "TreeNode.hpp"
 
@@ -63,6 +64,8 @@ public:
 
     void calculate_mesh();
     void render();
+    void render_operands(Material* material_mesh_overlay);
+    void render_monotone(Material* material_monotone);
     void render_selection_id(Material* material, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc);
     SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, Model* model, uint32_t selection_id_model_acc, uint32_t* selection_id_mesh_acc);
 };

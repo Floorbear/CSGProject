@@ -1,11 +1,10 @@
 #include "WorkSpace.h"
-#include "Utils.h"
 #include "Core.h"
+#include "Utils.h"
 #include "Camera.h"
 #include "Model.h"
 #include "CSGNode.h"
 #include "Renderer.h"
-#include "FrameBuffer.h"
 #include "Texture.h"
 #include "PointLight.h"
 
@@ -91,31 +90,23 @@ void WorkSpace::render_view(Renderer* renderer){
             is_background_pressed = true;
             selected_models.clear();
             selected_meshes.clear();
+
         } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_x){
             is_gizmo_pressed = true;
-            if (!selected_models.empty()){ // TODO : 선택된 오브젝트 모두 이동하게 변경
-                dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-                              0);
-            }
+            dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, 0); // TODO : 선택된 오브젝트 모두 이동하게 변경
+
         } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_y){
             is_gizmo_pressed = true;
-            if (!selected_models.empty()){
-                dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-                              1);
-            }
+            dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, 1);// TODO : 내부에서 스냅샷 생성 등등 수행
+
         } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_z){
             is_gizmo_pressed = true;
-            if (!selected_models.empty()){
-                dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-                              2);
-            }
+            dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, 2);
+
         } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_dot){
             is_gizmo_pressed = true;
-            if (!selected_models.empty()){ // TODO : 선택된 오브젝트 모두 이동하게 변경
-                dragDelegate =
-                    std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-                              3);
-            }
+            dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, 3);
+
         } else if (info.object_type == SelectionPixelInfo::object_type_object){
             if (selection_mode == SelectionMode::Model){
                 if (ImGui::GetIO().KeyCtrl){
@@ -143,19 +134,33 @@ void WorkSpace::render_view(Renderer* renderer){
         }
 
     } else if (is_window_content_hovered() && !ImGui::IsMouseDown(ImGuiButtonFlags_MouseButtonLeft)){
-        renderer->find_selection_gizmo(selected_models, mouse_pos_left_current_view); // TODO : 리팩토링 : 기즈모 select변경 관련 여기로 빼기
+        SelectionPixelObjectInfo info = renderer->find_selection_gizmo(selected_models, mouse_pos_left_current_view);
+
+        if (info.object_type == SelectionPixelInfo::object_type_gizmo_x){
+            selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::X); // TODO : renderer->get_gizmo()로 교체
+        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_y){
+            selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::Y);
+        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_z){
+            selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::Z);
+        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_dot){
+            selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::XYZ);
+        }
     }
 
-    renderer->render_outline(selected_models); // TODO : 메쉬 관련 추가 renderer->render_outline(selected_meshes) 
+    if (selection_mode == SelectionMode::Model){
+        renderer->render_outline(selected_models);
+    } else if (selection_mode == SelectionMode::Mesh){
+        renderer->render_mesh_overlay_and_outline(root_model->get_children(), selected_meshes, &lights);
+    }
 
     // Gui 렌더링
     #pragma warning(disable: 4312)
     ImGui::GetWindowDrawList()->AddImage((void*)renderer->framebuffer_screen->
-                                         get_framebufferTexutre()->get_texture_handle(),
+                                         get_texture()->get_handle(),
                                          ImVec2(p_min.x, p_min.y), ImVec2(p_max.x, p_max.y),
                                          ImVec2(0, 0), ImVec2(1, 1));
     ImGui::PopStyleVar();
-    render_popup_menu_view();
+    render_popup_menu_view(renderer);
     ImGui::End();
 
     {
@@ -184,29 +189,29 @@ void WorkSpace::render_view(Renderer* renderer){
             button_image_gizmo_rotate = Texture::create_texture(EnginePath::get_texture_path().move("button_image_gizmo_rotate.png"), GL_RGBA8, GL_RGBA, false);
             button_image_gizmo_scale = Texture::create_texture(EnginePath::get_texture_path().move("button_image_gizmo_scale.png"), GL_RGBA8, GL_RGBA, false);
         }
-        if (ImGui::ImageButton("Selection_Mode_Model", (ImTextureID)button_image_model_mode->get_texture_handle(), selection_mode == SelectionMode::Model, ImVec2(25, 25))){
+        if (ImGui::ImageButton("Selection_Mode_Model", (ImTextureID)button_image_model_mode->get_handle(), selection_mode == SelectionMode::Model, ImVec2(25, 25))){
             selected_meshes.clear();
             selection_mode = SelectionMode::Model;
         }
         ImGui::SameLine();
-        if (ImGui::ImageButton("Selection_Mode_Mesh", (ImTextureID)button_image_mesh_mode->get_texture_handle(), selection_mode == SelectionMode::Mesh, ImVec2(25, 25))){
+        if (ImGui::ImageButton("Selection_Mode_Mesh", (ImTextureID)button_image_mesh_mode->get_handle(), selection_mode == SelectionMode::Mesh, ImVec2(25, 25))){
             selected_models.clear();
             selection_mode = SelectionMode::Mesh;
         }
         ImGui::SameLine();
         ImGui::Text("  ");
         ImGui::SameLine();
-        if (ImGui::ImageButton("Gizmo_Mode_Translate", (ImTextureID)button_image_gizmo_translate->get_texture_handle(), gizmo_mode == GizmoMode::Translate, ImVec2(25, 25))){
+        if (ImGui::ImageButton("Gizmo_Mode_Translate", (ImTextureID)button_image_gizmo_translate->get_handle(), gizmo_mode == GizmoMode::Translate, ImVec2(25, 25))){
             gizmo_mode = GizmoMode::Translate;
             Gizmo::set_gizmoMode(gizmo_mode); // TDDO : 리팩토링 진행예정!
         }
         ImGui::SameLine();
-        if (ImGui::ImageButton("Gizmo_Mode_Rotation", (ImTextureID)button_image_gizmo_rotate->get_texture_handle(), gizmo_mode == GizmoMode::Rotation, ImVec2(25, 25))){
+        if (ImGui::ImageButton("Gizmo_Mode_Rotation", (ImTextureID)button_image_gizmo_rotate->get_handle(), gizmo_mode == GizmoMode::Rotation, ImVec2(25, 25))){
             gizmo_mode = GizmoMode::Rotation;
             // Gizmo::set_gizmoMode(gizmo_mode);
         }
         ImGui::SameLine();
-        if (ImGui::ImageButton("Gizmo_Mode_Scale", (ImTextureID)button_image_gizmo_scale->get_texture_handle(), gizmo_mode == GizmoMode::Scale, ImVec2(25, 25))){
+        if (ImGui::ImageButton("Gizmo_Mode_Scale", (ImTextureID)button_image_gizmo_scale->get_handle(), gizmo_mode == GizmoMode::Scale, ImVec2(25, 25))){
             gizmo_mode = GizmoMode::Scale;
             Gizmo::set_gizmoMode(gizmo_mode);
         }
@@ -608,7 +613,7 @@ bool WorkSpace::check_mesh_selected(CSGNode* mesh){
     CSGNode* current_mesh = mesh;
     while (current_mesh != nullptr){
         if (check_mesh_selected_exact(current_mesh)){
-            return true; // 자신 혹은 부모가 선택됨
+            return true;
         }
         current_mesh = current_mesh->get_parent();
     }
@@ -624,11 +629,16 @@ void WorkSpace::add_view_new(){
     renderer_focused->set_parent(this);
 }
 
-void WorkSpace::render_popup_menu_view(){
+void WorkSpace::render_popup_menu_view(Renderer* renderer){
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_None) && ImGui::GetIO().MouseReleased[ImGuiMouseButton_Right]){
         ImGui::OpenPopup("View_Popup_Edit");
     }
     if (ImGui::BeginPopup("View_Popup_Edit")){
+        if (ImGui::MenuItem("Reset Camera")){
+            renderer->camera->get_transform()->set_position(vec3(0, 0, Renderer::default_camera_pos_z));
+            renderer->camera->get_transform()->set_rotation({0,-90,0});
+        }
+        ImGui::Separator();
         if (ImGui::BeginMenu("Select")){
             if (ImGui::MenuItem("Switch Last Selected Object To Parent")){ // TODO : 메쉬랑 분리
                 if (!selected_models.empty()){

@@ -85,9 +85,7 @@ bool Model::is_renderable(){
 }
 
 void Model::render(Renderer* renderer){
-    //윤곽선을 그리기 위해 Stencil 셋팅
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    if (renderer->workspace == nullptr || renderer->workspace->check_model_selected(this)){
+    if (renderer->workspace == nullptr || renderer->workspace->check_model_selected(this)){ // TODO : 이 로직이 여기 없었으면 좋겠긴한데... 파라미터로 스텐실 테스트 함수로 넘겨받는방법?
         glStencilMask(0xFF); // on
     } else{
         glStencilMask(0x00); // off
@@ -108,21 +106,15 @@ void Model::render(Renderer* renderer){
     }
 }
 
-void Model::render_outline(const vec3& _scaleAcc){
-    //조금더 큰 모델을 렌더링 합니다.
+void Model::render_monotone(Material* material_monotone){
     if (csgmesh != nullptr){
-        Transform newTransform = csgmesh->get_transform()->get_value();
-        vec3 newScale = newTransform.get_scale();
-        newScale *= _scaleAcc;
-        newTransform.set_scale(newScale);
-        material->set_uniform_model_transform(&newTransform);
-        material->apply_outline();
+        material_monotone->set_uniform_model_transform(csgmesh->get_transform());
+        material_monotone->apply();
         csgmesh->render();
     }
 
     for (Model* child : children){
-        child->material->set_uniform_camera(material->get_uniform_camera());
-        child->render_outline(_scaleAcc);
+        child->render_monotone(material_monotone);
     }
 }
 

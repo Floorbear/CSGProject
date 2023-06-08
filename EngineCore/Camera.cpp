@@ -1,6 +1,9 @@
 #include "Camera.h"
 #include "Utils.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 using namespace glm;
 
 float Camera::speed_move_default = 7.f;

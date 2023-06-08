@@ -1,6 +1,10 @@
 #include "Shader.h"
 #include "FileSystem.h"
 
+#include <glad/glad.h>
+
+#include <glm/gtc/type_ptr.hpp>
+
  std::map<std::string, std::string> Shader::compileData;
 
 Shader::Shader(std::string vertexShader_, std::string fragmentShader_)
@@ -78,6 +82,12 @@ void Shader::set_mat4(std::string_view uniform_, const glm::mat4& value_)
 {
 	GLuint uniformLocation = glGetUniformLocation(shaderProgram, uniform_.data());
 	glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, glm::value_ptr(value_));
+}
+
+void Shader::set_vec2(std::string_view uniform_, const glm::vec2& value_)
+{
+	GLuint uniformLocation = glGetUniformLocation(shaderProgram, uniform_.data());
+	glUniform2fv(uniformLocation, 1, &value_[0]);
 }
 
 void Shader::set_vec3(std::string_view uniform_, const glm::vec3& value_)

@@ -1,14 +1,19 @@
 #pragma once
+
 #include "Utils.h"
 #include "Mesh.h"
+#include "Transform.h"
 
 // ===== 기즈모 외관 관련 =====
-enum class GizmoMode
-{
+enum class GizmoMode{
 	Translate,
 	Scale,
 	Rotation,
 	Max
+};
+
+enum class GizmoAxis{
+	X = 0, Y = 1, Z = 2, XY = 4, YZ = 5, ZX = 6, XYZ = 3
 };
 
 class Shader;
@@ -71,7 +76,7 @@ private:
 	int get_selectedAxis();
 
 public:
-	void set_selectedAxis(int _axis);
+	void set_selectedAxis(GizmoAxis _axis);
 
 	// ===== Move 조작 관련 =====
 public:

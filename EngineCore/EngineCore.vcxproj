@@ -14953,13 +14953,13 @@
     <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="Gizmo.h" />
     <ClInclude Include="GUI.h" />
-    <ClInclude Include="EngineMinimal.h" />
     <ClInclude Include="GUI_Actions.h" />
     <ClInclude Include="Leaked_Pointers.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="PostProcessor.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="SelectionPixelInfo.h" />
     <ClInclude Include="Shader.h" />
@@ -14995,6 +14995,7 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="PointLight.cpp" />
+    <ClCompile Include="PostProcessor.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="SelectionPixelInfo.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -15029,7 +15030,12 @@
     <None Include="..\EngineResource\Shader\GizmoFragmentShader.glsl" />
     <None Include="..\EngineResource\Shader\OutlineFragementShader.glsl" />
     <None Include="..\EngineResource\Shader\OutlineVertexShader.glsl" />
+    <None Include="..\EngineResource\Shader\postprocessing_expand3_fs.glsl" />
+    <None Include="..\EngineResource\Shader\postprocessing_overlay_fs.glsl" />
+    <None Include="..\EngineResource\Shader\postprocessing_vs.glsl" />
     <None Include="..\EngineResource\Shader\SelectionFragmentShader.glsl" />
+    <None Include="..\EngineResource\Shader\monotone_fs.glsl" />
+    <None Include="..\EngineResource\Shader\monotone_vs.glsl" />
     <None Include="..\Thirdparty\Eigen\AccelerateSupport" />
     <None Include="..\Thirdparty\Eigen\Cholesky" />
     <None Include="..\Thirdparty\Eigen\CholmodSupport" />
