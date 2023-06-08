@@ -40,6 +40,7 @@ private:
 	std::vector<Mesh*> rotationMesh;
 	std::vector<vec3> rotationMesh_scale;
 	std::vector<vec3> rotationMesh_position;
+	std::vector<vec3> rotationMesh_rotation;
 
 	// ===== 컬러 렌더링 관련 ======
 	std::vector<vec3> mesh_color;
@@ -50,10 +51,11 @@ public:
 private:
 	void render_color(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader
 		, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position,
-		std::vector<vec3> _mesh_color, int _selectedAxis);
+		std::vector<vec3> _mesh_color, int _selectedAxis , std::vector<vec3> _mesh_rotation = {});
 
 	void render_transformMesh(Camera* _camera);
 	void render_scaleMesh(Camera* _camera);
+	void render_rotationMesh(Camera* _camera);
 
 
 
@@ -64,10 +66,12 @@ public:
 private:
 	Shader* selectionShader;
 	void render_selection(Camera* _camera, TransformComponent* _parentTransform, std::vector<Mesh*> _mesh, Shader* _shader
-		, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position
+		, std::vector<vec3> _mesh_scale, std::vector<vec3> _mesh_position,
+		std::vector<vec3> _mesh_rotation = {}
 	);
 	void render_transformMesh_selection(Camera* _camera);
 	void render_scaleMesh_selection(Camera* _camera);
+	void render_rotationMesh_selection(Camera* _camera);
 	
 	// ===== 클릭 이펙트 관련 ======
 private:
