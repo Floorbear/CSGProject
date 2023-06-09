@@ -91,22 +91,15 @@ void WorkSpace::render_view(Renderer* renderer){
             selected_models.clear();
             selected_meshes.clear();
 
-        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_x){
+        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo){
             is_gizmo_pressed = true;
-            dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, 0); // TODO : 선택된 오브젝트 모두 이동하게 변경
-
-        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_y){
-            is_gizmo_pressed = true;
-            dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, 1);// TODO : 내부에서 스냅샷 생성 등등 수행
-
-        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_z){
-            is_gizmo_pressed = true;
-            dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, 2);
-
-        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_dot){
-            is_gizmo_pressed = true;
-            dragDelegate = std::bind(&Gizmo::move, selected_models.front()->get_gizmo(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, 3);
-
+            std::list<TransformEntity*> selected_entities;
+            for (Model* model : selected_models){
+                selected_entities.push_back(model); // TODO : selected models parent계산해서 추려서 수집. mesh 기즈모도 동일한 방식으로!
+            }
+            dragDelegate = [=, this](Camera* camera, vec2 curPos, vec2 prevPos){
+                renderer->gizmo->move(camera, selected_entities, curPos, prevPos, info.gizmo_axis);
+            };
         } else if (info.object_type == SelectionPixelInfo::object_type_object){
             if (selection_mode == SelectionMode::Model){
                 if (ImGui::GetIO().KeyCtrl){
@@ -137,14 +130,9 @@ void WorkSpace::render_view(Renderer* renderer){
         if (!is_gizmo_pressed){
             SelectionPixelObjectInfo info = renderer->find_selection_gizmo(selected_models, mouse_pos_left_current_view);
 
-            if (info.object_type == SelectionPixelInfo::object_type_gizmo_x){
-                selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::X); // TODO : renderer->get_gizmo()로 교체
-            } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_y){
-                selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::Y);
-            } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_z){
-                selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::Z);
-            } else if (info.object_type == SelectionPixelInfo::object_type_gizmo_dot){
-                selected_models.front()->get_gizmo()->set_selectedAxis(GizmoAxis::XYZ);
+            // TODO : renderer->get_gizmo()로 교체
+            for (Model* selected_model : selected_models){
+                renderer->gizmo->set_selected_axis(info.gizmo_axis); // None까지 같이 처리 (info.object_type 검사 불필요)
             }
         }
     }
@@ -203,19 +191,16 @@ void WorkSpace::render_view(Renderer* renderer){
         ImGui::SameLine();
         ImGui::Text("  ");
         ImGui::SameLine();
-        if (ImGui::ImageButton("Gizmo_Mode_Translate", (ImTextureID)button_image_gizmo_translate->get_handle(), gizmo_mode == GizmoMode::Translate, ImVec2(25, 25))){
-            gizmo_mode = GizmoMode::Translate;
-            Gizmo::set_gizmoMode(gizmo_mode); // TDDO : 리팩토링 진행예정!
+        if (ImGui::ImageButton("Gizmo_Mode_Translate", (ImTextureID)button_image_gizmo_translate->get_handle(), renderer->gizmo->get_gizmo_mode() == GizmoMode::Translation, ImVec2(25, 25))){
+            renderer->gizmo->set_gizmo_mode(GizmoMode::Translation);
         }
         ImGui::SameLine();
-        if (ImGui::ImageButton("Gizmo_Mode_Rotation", (ImTextureID)button_image_gizmo_rotate->get_handle(), gizmo_mode == GizmoMode::Rotation, ImVec2(25, 25))){
-            gizmo_mode = GizmoMode::Rotation;
-            Gizmo::set_gizmoMode(gizmo_mode);
+        if (ImGui::ImageButton("Gizmo_Mode_Rotation", (ImTextureID)button_image_gizmo_rotate->get_handle(), renderer->gizmo->get_gizmo_mode() == GizmoMode::Rotation, ImVec2(25, 25))){
+            renderer->gizmo->set_gizmo_mode(GizmoMode::Rotation);
         }
         ImGui::SameLine();
-        if (ImGui::ImageButton("Gizmo_Mode_Scale", (ImTextureID)button_image_gizmo_scale->get_handle(), gizmo_mode == GizmoMode::Scale, ImVec2(25, 25))){
-            gizmo_mode = GizmoMode::Scale;
-            Gizmo::set_gizmoMode(gizmo_mode);
+        if (ImGui::ImageButton("Gizmo_Mode_Scale", (ImTextureID)button_image_gizmo_scale->get_handle(), renderer->gizmo->get_gizmo_mode() == GizmoMode::Scale, ImVec2(25, 25))){
+            renderer->gizmo->set_gizmo_mode(GizmoMode::Scale);
         }
         ImGui::End();
         ImGui::PopStyleVar(1);
@@ -328,25 +313,26 @@ void WorkSpace::render_hierarchy(){
         }
         if (ImGui::BeginDragDropTarget()){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){
-                IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
-                CSGNode* payload_node = *(CSGNode**)payload->Data;
+                // IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
 
-                Model* node_model = node->model; // 추후 작업으로 model값이 변해있을수도 있기때문에 필요.
-                Model* payload_node_model = payload_node->model;
+                for (CSGNode* selected_node : selected_meshes){// TODO : union노드 생겼을경우만 다르게처리해야함.
+                    Model* node_model = node->model; // 추후 작업으로 model값이 변해있을수도 있기때문에 필요.
+                    Model* selected_node_model = selected_node->model;
 
-                transaction_manager.add((new TreeEntityModifyTask<CSGNode>("Reparent Mesh", [=](){
-                    return node->reparent_child(payload_node);
-                }, node_model->get_csg_mesh(),
-                    [=](CSGNode* root){node_model->set_csg_mesh(root, true);
-                }, payload_node_model->get_csg_mesh(),
-                    [=](CSGNode* root){payload_node_model->set_csg_mesh(root, true);
+                    transaction_manager.add((new TreeEntityModifyTask<CSGNode>("Reparent Mesh", [=](){
+                        return node->reparent_child(selected_node);
+                    }, node_model->get_csg_mesh(),
+                        [=](CSGNode* root){node_model->set_csg_mesh(root, true);
+                    }, selected_node_model->get_csg_mesh(),
+                        [=](CSGNode* root){selected_node_model->set_csg_mesh(root, true);
 
-                }))->link(new TreeEntityModifyTask("Delete Empty Model", root_model, [=](){
-                    if (payload_node_model->get_csg_mesh() == nullptr){ // empty model
-                        payload_node_model->remove_self();
-                    }
-                    return true;
-                })));
+                    }))->link(new TreeEntityModifyTask("Delete Empty Model", root_model, [=](){
+                        if (selected_node_model->get_csg_mesh() == nullptr){ // empty model
+                            selected_node_model->remove_self();
+                        }
+                        return true;
+                    })));
+                }
             }
             ImGui::EndDragDropTarget();
         }

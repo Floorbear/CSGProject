@@ -33,7 +33,7 @@ public:
 
 class ParameterSnapshot{
     Parameter* ptr;
-    void* value;
+    void* value = nullptr;
 
 public:
     ParameterSnapshot(Parameter* ptr_);

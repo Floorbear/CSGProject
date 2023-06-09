@@ -316,6 +316,11 @@ void GUI::render_menubar(){
                 // 저장 형식 -> CSGProject, stl
             }
             if (ImGui::MenuItem("Save As..")){}
+            if (ImGui::MenuItem("Export Scene")){
+                Core::get()->task_manager.add([](){
+                    // 모든 모델들의 result를 csg
+                });
+            }
             if (ImGui::MenuItem("Close")){}
             if (ImGui::MenuItem("Close All")){}
             ImGui::Separator();

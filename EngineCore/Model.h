@@ -13,7 +13,7 @@
 class CSGNode;
 class Material;
 class Renderer;
-class Model : public Entity, public TreeNode<Model>{
+class Model : public Entity, public TreeNode<Model>, public TransformEntity{
     CSGNode* csgmesh = nullptr; // root node
     TransformComponent* transform = nullptr;
     Material* material = nullptr;
@@ -33,7 +33,7 @@ public:
     Model* find_model(std::string_view name_);
 
     // 필수적인 컴포넌트들 get set
-    TransformComponent* get_transform();
+    TransformComponent* get_transform() override;
     Material* get_material();
     void set_material(Material* material_);
 
@@ -43,15 +43,4 @@ public:
 
     void render_selection_id(uint32_t* selection_id_model_acc);
     SelectionPixelObjectInfo from_selection_id(SelectionPixelIdInfo selection_id, uint32_t* selection_id_model_acc);
-
-
-    // ===== Gizmo ======
-private:
-    Gizmo* gizmo = nullptr;
-public:
-    void render_gizmo();
-    inline Gizmo* get_gizmo()    {
-        return gizmo;
-    }
-
 };

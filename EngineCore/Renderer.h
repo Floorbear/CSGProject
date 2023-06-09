@@ -41,6 +41,7 @@ public:
 
     WorkSpace* workspace = nullptr;
     Camera* camera = nullptr;
+    Gizmo* gizmo = nullptr;
 
     unsigned int frame_texture = 0;
     ScreenFrameBuffer* framebuffer_screen = nullptr; // 전체 모델을 렌더링

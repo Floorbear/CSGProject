@@ -65,3 +65,7 @@ public:
     Transform get_value();
 };
 
+class TransformEntity{
+public:
+    virtual TransformComponent* get_transform() = 0;
+};

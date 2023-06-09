@@ -12,8 +12,6 @@ Model::Model(std::string name_) : name(name_){
     components.push_back(transform = new TransformComponent());
     components.push_back(material = new ColorMaterial());
     // components.push_back(material = new TextureMaterial(Texture::create_texture(EnginePath::get_texture_path().move("rockTexture.jpg"))));
-
-    gizmo = new Gizmo(get_transform()); // TODO : 씬당 하나만있음 되는거아님?
 }
 
 Model::~Model(){
@@ -25,9 +23,6 @@ Model::~Model(){
 
     if (csgmesh != nullptr){
         delete csgmesh;
-    }
-    if (gizmo != nullptr){
-        delete gizmo;
     }
 }
 
@@ -116,10 +111,6 @@ void Model::render_monotone(Material* material_monotone){
     for (Model* child : children){
         child->render_monotone(material_monotone);
     }
-}
-
-void Model::render_gizmo(){
-    gizmo->render(material->get_uniform_camera());
 }
 
 

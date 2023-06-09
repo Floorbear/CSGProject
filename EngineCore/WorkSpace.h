@@ -58,7 +58,6 @@ public:
     Model* root_model = nullptr;
 
     SelectionMode selection_mode = SelectionMode::Model;
-    GizmoMode gizmo_mode = GizmoMode::Translate;
     std::list<Model*> selected_models;
     std::list<CSGNode*> selected_meshes;
 

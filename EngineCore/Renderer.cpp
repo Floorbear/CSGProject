@@ -24,6 +24,7 @@ Renderer::Renderer(int viewport_width, int viewport_height){
     camera = new Camera((float)viewport_width, (float)viewport_height);
     camera->get_transform()->set_position(vec3(0.0f, 0.0f, default_camera_pos_z));
     camera->get_transform()->set_rotation({0,-90,0});
+    gizmo = new Gizmo();
 
     material_outline = new MonotoneMaterial(vec3(1.0, 0.5, 0)); // 윤곽선 색상
     material_outline->set_uniform_camera(camera);
@@ -34,6 +35,7 @@ Renderer::Renderer(int viewport_width, int viewport_height){
 
 Renderer::~Renderer(){
     delete camera;
+    delete gizmo;
     delete material_outline;
     delete postprocessor_outline_expand;
     delete postprocessor_outline_overlay;
@@ -116,12 +118,17 @@ void Renderer::render_outline(const std::list<Model*>& models){ // render() 후�
     glDisable(GL_STENCIL_TEST);
     glStencilMask(0xFF);
 
-    // ===== 기즈모 렌더링 ===== //
+    // ===== 기즈모 렌더링 ===== //=
+
+    std::list<TransformEntity*> transform_entities;
+    for(Model* model : models){
+        transform_entities.push_back(model);
+    }
+
     framebuffer_screen->bind();
 
-    for (Model* model : models){
-        model->render_gizmo();
-    }
+    glClear(GL_DEPTH_BUFFER_BIT);
+    gizmo->render(camera, transform_entities);
 }
 
 void Renderer::render_mesh_overlay_and_outline(const std::list<Model*>& models, const std::list<CSGNode*>& selected_meshes, const std::list<PointLight*>* lights){ // render() 후에 실행
@@ -212,11 +219,16 @@ void Renderer::render_mesh_overlay_and_outline(const std::list<Model*>& models, 
 
     // ===== 기즈모 렌더링 ===== //
 
-    /*framebuffer_screen->enable();
+    std::list<TransformEntity*> transform_entities;
+    for(CSGNode* mesh : selected_meshes){
+        transform_entities.push_back(mesh);
+    }
 
-    for (Model* model : models){
-        model->render_gizmo();
-    }*/
+    framebuffer_screen->bind();
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+    gizmo->render(camera, transform_entities);
+
     glStencilMask(0x00);
 }
 
@@ -241,10 +253,14 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
         model->render_selection_id(&selection_id_model_acc);
     }
 
+    glClear(GL_DEPTH_BUFFER_BIT);
+
     //기즈모 정보 렌더링
-    for (Model* model : workspace->selected_models){
-        model->get_gizmo()->render_selectionBuffer(camera);
+    std::list<TransformEntity*> transform_entities;
+    for(Model* model : models){
+        transform_entities.push_back(model);
     }
+    gizmo->render_selection(camera, transform_entities);
 
     // 셀렉션 렌더링 정보 읽기
     SelectionPixelIdInfo pixel = framebuffer_selection->
@@ -261,7 +277,20 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
                 return info;
             }
         }
+    } else if (pixel.object_type == SelectionPixelInfo::object_type_gizmo){
+        if (pixel.model_id == 0){
+            return SelectionPixelObjectInfo(GizmoAxis::X);
+        } else if (pixel.model_id == 1){
+            return SelectionPixelObjectInfo(GizmoAxis::Y);
+        } else if (pixel.model_id == 2){
+            return SelectionPixelObjectInfo(GizmoAxis::Z);
+        } else if (pixel.model_id == 3){
+            return SelectionPixelObjectInfo(GizmoAxis::XYZ);
+        } else{
+            return SelectionPixelObjectInfo(GizmoAxis::None);
+        }
     }
+
     return SelectionPixelObjectInfo(pixel.object_type);
 }
 
@@ -277,12 +306,15 @@ SelectionPixelObjectInfo Renderer::find_selection_gizmo(const std::list<Model*>&
 
     glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
     glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    std::list<TransformEntity*> transform_entities;
+    for(Model* model : models){
+        transform_entities.push_back(model);
+    }
 
     //기즈모 정보 렌더링
-    for (Model* model : models){
-        model->get_gizmo()->render_selectionBuffer(camera);
-    }
+    gizmo->render_selection(camera, transform_entities);
 
     // 셀렉션 렌더링 정보 읽기
     SelectionPixelIdInfo pixel = framebuffer_selection->
@@ -290,6 +322,20 @@ SelectionPixelObjectInfo Renderer::find_selection_gizmo(const std::list<Model*>&
                    texture_size.y * mouse_position.y / viewport_size.y);
 
     framebuffer_selection->disable();
+
+    if (pixel.object_type == SelectionPixelInfo::object_type_gizmo){
+        if (pixel.model_id == 0){
+            return SelectionPixelObjectInfo(GizmoAxis::X);
+        } else if (pixel.model_id == 1){
+            return SelectionPixelObjectInfo(GizmoAxis::Y);
+        } else if (pixel.model_id == 2){
+            return SelectionPixelObjectInfo(GizmoAxis::Z);
+        } else if (pixel.model_id == 3){
+            return SelectionPixelObjectInfo(GizmoAxis::XYZ);
+        } else{
+            return SelectionPixelObjectInfo(GizmoAxis::None);
+        }
+    }
 
     return SelectionPixelObjectInfo(pixel.object_type);
 }

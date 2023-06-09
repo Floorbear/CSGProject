@@ -65,6 +65,8 @@ public:
     static Mesh cone(float radius, float height, int step);
     static Mesh torus(float radius, float thickness, int step1, int step2);
 
+    static void transform(const Mesh& mesh, Transform* transform, Mesh& result);
+
     static bool compute_union(const Mesh& mesh1, Transform* transform1,
                               const Mesh& mesh2, Transform* transform2, Mesh& result);
     static bool compute_intersection(const Mesh& mesh1, Transform* transform1,

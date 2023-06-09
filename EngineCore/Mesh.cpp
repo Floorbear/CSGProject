@@ -480,6 +480,16 @@ CGAL::Aff_transformation_3<Kernel> mat4_to_cgal_transform(const mat4& matrix){
                                               matrix[0][2], matrix[1][2], matrix[2][2], matrix[3][2]);
 }
 
+void Mesh::transform(const Mesh& mesh, Transform* transform, Mesh& result){
+    result.name = mesh.name;
+    result.cgal_mesh = mesh.cgal_mesh;
+
+    CGAL::Polygon_mesh_processing::transform(mat4_to_cgal_transform(transform->get_local_matrix()), result.cgal_mesh);
+
+    auto fnormals = result.cgal_mesh.add_property_map<Face_index, Kernel::Vector_3>("f:normals").first;
+    CGAL::Polygon_mesh_processing::compute_face_normals(result.cgal_mesh, fnormals);
+}
+
 /*struct Visitor : public CGAL::Polygon_mesh_processing::Corefinement::Default_visitor<CGAL_Mesh>{
     std::map<const CGAL_Mesh*, std::vector<Vertex_index>> new_vertices_src;
     std::map<std::pair<Vertex_index, const CGAL_Mesh*>, std::pair<Vertex_index, Vertex_index>> edge_split_map; // edge_split[new_vertex] = {old_edge_vertex1, old_edge_vertex2, mesh_containing_edge}

@@ -99,12 +99,7 @@ void FloatParameter::recover_from(ParameterSnapshot* snapshot){
 BoolParameter::BoolParameter(std::string label_, std::function<bool()> get_, std::function<void(bool)> set_) : Parameter(label_, [this](){
     bool temp = get();
     if (ImGui::Checkbox((label + Utils::format("##CheckBox%1%", id)).c_str(), &temp)){
-        if (is_edited){ // TODO : 리팩토링
-            if (set != nullptr){
-                set(temp);
-            }
-            is_edited = false;
-        }
+        set(temp);
     }
 }), get(get_), set(set_){
 }

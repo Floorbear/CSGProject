@@ -11,7 +11,7 @@
 #include <vector>
 
 class Material;
-class CSGNode : public Entity, Component, public TreeNode<CSGNode>{
+class CSGNode : public Entity, Component, public TreeNode<CSGNode>, public TransformEntity{
 public:
     enum class Type{
         Operand, // children 제한 : 0개
@@ -60,7 +60,7 @@ public:
     void set_type(Type type_);
     Mesh* get_mesh();
 
-    TransformComponent* get_transform();
+    TransformComponent* get_transform() override;
 
     void calculate_mesh();
     void render();
