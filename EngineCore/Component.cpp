@@ -272,11 +272,10 @@ void EntitySnapshot::recover(){
 
 // ===== ParameterModifyTask ==== // 
 
-ParameterModifyTask::ParameterModifyTask(std::string detail_, std::function<bool()> work_, std::function<void()> work_undo_) : TransactionTask(detail_, [=, this](){
-    // snapshot1 = recovery_root->make_snapshot_new();
-    return work_();
+ParameterModifyTask::ParameterModifyTask(std::string detail_, ParameterSnapshot* snapshot_prev_, ParameterSnapshot* snapshot_next_) : TransactionTask(detail_, [=, this](){
+    snapshot_next->recover();
+    return true;
 }, [=, this](){
-    //snapshot1->recover();
-    work_undo_();
-}){
+    snapshot_prev->recover();
+}), snapshot_prev(snapshot_prev_), snapshot_next(snapshot_next_){
 }

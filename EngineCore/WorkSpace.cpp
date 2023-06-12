@@ -62,6 +62,22 @@ ImVec4 ImVec4_add(ImVec4 a, ImVec4 b){
     return ImVec4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
 }
 
+std::list<TransformEntity*> to_transform_entities(std::list<Model*>& models){
+    std::list<TransformEntity*> ret;
+    for (Model* model : models){
+        ret.push_back(model);
+    }
+    return ret;
+}
+
+std::list<TransformEntity*> to_transform_entities(std::list<CSGNode*>& meshes){
+    std::list<TransformEntity*> ret;
+    for (CSGNode* mesh : meshes){
+        ret.push_back(mesh);
+    }
+    return ret;
+}
+
 void WorkSpace::render_view(Renderer* renderer){
     main_renderer = renderer;
     // https://stackoverflow.com/questions/60955993/how-to-use-opengl-glfw3-render-in-a-imgui-window
@@ -82,58 +98,92 @@ void WorkSpace::render_view(Renderer* renderer){
         mouse_pos_left_press_view = mouse_pos_left_current_view;
     }
 
-    // 오브젝트 피킹 (클릭시 모델,메쉬 선택, 호버링시 기즈모 하이라이트)
+    // 오브젝트 피킹 (클릭시 기즈모, 모델,메쉬 선택, 호버링시 기즈모 하이라이트)]
     if (is_window_content_hovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
-        SelectionPixelObjectInfo info = renderer->find_selection(root_model->get_children(), mouse_pos_left_current_view);
+        SelectionPixelObjectInfo info;
+        if (selection_mode == SelectionMode::Model){
+            info = renderer->find_selection_gizmo(to_transform_entities(selected_models), mouse_pos_left_current_view);
+        } else if (selection_mode == SelectionMode::Mesh){
+            info = renderer->find_selection_gizmo(to_transform_entities(selected_meshes), mouse_pos_left_current_view);
+        }
 
-        if (info.empty()){
-            is_background_pressed = true;
-            selected_models.clear();
-            selected_meshes.clear();
-
-        } else if (info.object_type == SelectionPixelInfo::object_type_gizmo){
+        if (info.object_type == SelectionPixelInfo::object_type_gizmo){
             is_gizmo_pressed = true;
-            std::list<TransformEntity*> selected_entities;
-            for (Model* model : selected_models){
-                selected_entities.push_back(model); // TODO : selected models parent계산해서 추려서 수집. mesh 기즈모도 동일한 방식으로!
+            std::list<TransformEntity*> selected_entities; // TODO : selected_enties로 바꾸기
+            if (selection_mode == SelectionMode::Model){
+                for (Model* selected_model : selected_models){
+                    bool contains_parent = false;
+                    for (Model* possible_parent : selected_models){
+                        if (possible_parent != selected_model && selected_model->is_descendant_of(possible_parent)){
+                            contains_parent = true;
+                            break;
+                        }
+                    }
+                    if (!contains_parent){
+                        selected_entities.push_back(selected_model);
+                    }
+                }
+            } else if (selection_mode == SelectionMode::Mesh){
+                for (CSGNode* selected_mesh : selected_meshes){
+                    bool contains_parent = false;
+                    for (CSGNode* possible_parent : selected_meshes){
+                        if (possible_parent != selected_mesh && selected_mesh->is_descendant_of(possible_parent)){
+                            contains_parent = true;
+                            break;
+                        }
+                    }
+                    if (!contains_parent){
+                        selected_entities.push_back(selected_mesh);
+                    }
+                }
             }
             dragDelegate = [=, this](Camera* camera, vec2 curPos, vec2 prevPos){
                 renderer->gizmo->move(camera, selected_entities, curPos, prevPos, info.gizmo_axis);
             };
-        } else if (info.object_type == SelectionPixelInfo::object_type_object){
-            if (selection_mode == SelectionMode::Model){
-                if (ImGui::GetIO().KeyCtrl){
-                    if (Utils::contains(selected_models, info.model)){
-                        selected_models.remove(info.model);
+        } else{
+            SelectionPixelObjectInfo info = renderer->find_selection_objects(root_model->get_children(), mouse_pos_left_current_view);
+
+            if (info.empty()){
+                is_background_pressed = true;
+                selected_models.clear();
+                selected_meshes.clear();
+
+            } else if (info.object_type == SelectionPixelInfo::object_type_object){
+                if (selection_mode == SelectionMode::Model){
+                    if (ImGui::GetIO().KeyCtrl){
+                        if (Utils::contains(selected_models, info.model)){
+                            selected_models.remove(info.model);
+                        } else{
+                            selected_models.push_back(info.model);
+                        }
                     } else{
+                        selected_models.clear();
                         selected_models.push_back(info.model);
                     }
-                } else{
-                    selected_models.clear();
-                    selected_models.push_back(info.model);
-                }
-            } else if (selection_mode == SelectionMode::Mesh){
-                if (ImGui::GetIO().KeyCtrl){
-                    if (Utils::contains(selected_meshes, info.mesh)){
-                        selected_meshes.remove(info.mesh);
+                } else if (selection_mode == SelectionMode::Mesh){
+                    if (ImGui::GetIO().KeyCtrl){
+                        if (Utils::contains(selected_meshes, info.mesh)){
+                            selected_meshes.remove(info.mesh);
+                        } else{
+                            selected_meshes.push_back(info.mesh);
+                        }
                     } else{
+                        selected_meshes.clear();
                         selected_meshes.push_back(info.mesh);
                     }
-                } else{
-                    selected_meshes.clear();
-                    selected_meshes.push_back(info.mesh);
                 }
             }
         }
 
     } else if (is_window_content_hovered() && !ImGui::IsMouseDown(ImGuiButtonFlags_MouseButtonLeft)){
         if (!is_gizmo_pressed){
-            SelectionPixelObjectInfo info = renderer->find_selection_gizmo(selected_models, mouse_pos_left_current_view);
-
-            // TODO : renderer->get_gizmo()로 교체
-            for (Model* selected_model : selected_models){
-                renderer->gizmo->set_selected_axis(info.gizmo_axis); // None까지 같이 처리 (info.object_type 검사 불필요)
+            SelectionPixelObjectInfo info;
+            if (selection_mode == SelectionMode::Model){
+                info = renderer->find_selection_gizmo(to_transform_entities(selected_models), mouse_pos_left_current_view);
+            } else if (selection_mode == SelectionMode::Mesh){
+                info = renderer->find_selection_gizmo(to_transform_entities(selected_meshes), mouse_pos_left_current_view);
             }
+            renderer->gizmo->set_selected_axis(info.gizmo_axis); // None까지 같이 처리 (info.object_type 검사 불필요)
         }
     }
 
@@ -297,9 +347,9 @@ void WorkSpace::render_hierarchy(){
             if (ImGui::MenuItem("Load Model As Child")){
                 Core::get()->task_manager.add([this](){
                     Transform load_default_transform;
-                    load_default_transform.set_scale(vec3(0.1f, 0.1f, 0.1f));
-                    load_default_transform.set_rotation(vec3(-90, 0, 0));
-                    actions.add_model_new(Mesh::load(FileSystem::getFilePath().get_path()), load_default_transform);
+                    // load_default_transform.set_scale(vec3(0.1f, 0.1f, 0.1f));
+                    // load_default_transform.set_rotation(vec3(-90, 0, 0));
+                    actions.add_model_new(Mesh::load(FileSystem::select_file_load().get_path()), load_default_transform);
                 });
             }
             ImGui::EndPopup();
@@ -313,25 +363,35 @@ void WorkSpace::render_hierarchy(){
         }
         if (ImGui::BeginDragDropTarget()){
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_Payload_Mesh")){
-                // IM_ASSERT(payload->DataSize == sizeof(CSGNode*));
+                bool ignore = false;
+                if (node->get_type() == CSGNode::Type::Operand && selected_meshes.size() > 1){
+                    // TODO : Log 추가
+                    ignore = true;
+                }
+                if (node->get_type() == CSGNode::Type::Difference && node->children_size() + selected_meshes.size() > 2){
+                    // TODO : Log 추가
+                    ignore = true;
+                }
 
-                for (CSGNode* selected_node : selected_meshes){// TODO : union노드 생겼을경우만 다르게처리해야함.
-                    Model* node_model = node->model; // 추후 작업으로 model값이 변해있을수도 있기때문에 필요.
-                    Model* selected_node_model = selected_node->model;
+                if (!ignore){
+                    for (CSGNode* selected_node : selected_meshes){
+                        Model* node_model = node->model; // 추후 작업으로 model값이 변해있을수도 있기때문에 필요.
+                        Model* selected_node_model = selected_node->model;
 
-                    transaction_manager.add((new TreeEntityModifyTask<CSGNode>("Reparent Mesh", [=](){
-                        return node->reparent_child(selected_node);
-                    }, node_model->get_csg_mesh(),
-                        [=](CSGNode* root){node_model->set_csg_mesh(root, true);
-                    }, selected_node_model->get_csg_mesh(),
-                        [=](CSGNode* root){selected_node_model->set_csg_mesh(root, true);
+                        transaction_manager.add((new TreeEntityModifyTask<CSGNode>("Reparent Mesh", [=](){
+                            return node->reparent_child(selected_node);
+                        }, node_model->get_csg_mesh(),
+                            [=](CSGNode* root){node_model->set_csg_mesh(root, true);
+                        }, selected_node_model->get_csg_mesh(),
+                            [=](CSGNode* root){selected_node_model->set_csg_mesh(root, true);
 
-                    }))->link(new TreeEntityModifyTask("Delete Empty Model", root_model, [=](){
-                        if (selected_node_model->get_csg_mesh() == nullptr){ // empty model
-                            selected_node_model->remove_self();
-                        }
-                        return true;
-                    })));
+                        }))->link(new TreeEntityModifyTask("Delete Empty Model", root_model, [=](){
+                            if (selected_node_model->get_csg_mesh() == nullptr){ // empty model
+                                selected_node_model->remove_self();
+                            }
+                            return true;
+                        })));
+                    }
                 }
             }
             ImGui::EndDragDropTarget();
@@ -623,7 +683,7 @@ void WorkSpace::render_popup_menu_view(Renderer* renderer){
     }
     if (ImGui::BeginPopup("View_Popup_Edit")){
         if (ImGui::MenuItem("Reset Camera")){
-            renderer->camera->get_transform()->set_position(vec3(0, 0, Renderer::default_camera_pos_z));
+            renderer->camera->get_transform()->set_position(vec3(0, 0, Camera::default_pos_z));
             renderer->camera->get_transform()->set_rotation({0,-90,0});
         }
         ImGui::Separator();
@@ -703,9 +763,9 @@ void WorkSpace::render_popup_menu_view(Renderer* renderer){
         if (ImGui::MenuItem("Load Model")){
             Core::get()->task_manager.add([this](){
                 Transform load_default_transform;
-                load_default_transform.set_scale(vec3(0.1f, 0.1f, 0.1f));
-                load_default_transform.set_rotation(vec3(-90, 0, 0));
-                actions.add_model_new(Mesh::load(FileSystem::getFilePath().get_path()), load_default_transform);
+                // load_default_transform.set_scale(vec3(0.1f, 0.1f, 0.1f));
+                // load_default_transform.set_rotation(vec3(-90, 0, 0));
+                actions.add_model_new(Mesh::load(FileSystem::select_file_load().get_path()), load_default_transform);
             });
         }
         ImGui::Separator();

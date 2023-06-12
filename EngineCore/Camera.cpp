@@ -10,10 +10,12 @@ float Camera::speed_move_default = 7.f;
 float Camera::speed_rotate_default = 55.f;
 float Camera::speed_move_fast_multiplier = 2.0f;
 
+float Camera::default_pos_z = 15.0f;
+
 Camera::Camera(float width_, float height_, float fov_) : Component("Camera"),
-    width(width_),
-    height(height_),
-    fov(fov_){
+width(width_),
+height(height_),
+fov(fov_){
     view = mat4(1.0f);
     projection = mat4(1.0f);
 
@@ -43,19 +45,33 @@ Camera::Camera(float width_, float height_, float fov_) : Component("Camera"),
     }));
 }
 
-Camera::~Camera()
-{
+Camera::~Camera(){
 }
 
 void Camera::calculate_view(){
     transform.calculate_matrix();
+    
+    projection = glm::perspective(glm::radians(fov), width / height, near, far);
+    projection[1][1] *= -1;
 
-    mat4 newView = mat4(1.0f);
-    newView = glm::translate(newView, vec3(0.0, 0.0, 0.f));
+    vec3 cameraPos = transform.get_world_position();
+    vec3 cameraRot = transform.get_world_rotation();
+    cameraRot.x = clamp(cameraRot.x, -89.9f, 89.9f);
 
-    mat4 newProjection = mat4(1.0f);
-    float fov = 45.f;
-    projection = glm::perspective(glm::radians(fov), width/ height, near, far);
+    vec3 cameraDir = normalize(Utils::get_vecFromPitchYaw(cameraRot.x, cameraRot.y));
+
+    vec3 up = vec3(0, 1.f, 0); // 수정??
+    vec3 cameraRight = normalize(cross(up, cameraDir));
+
+    vec3 cameraUp = cross(cameraDir, cameraRight);
+    view = lookAt(cameraPos, cameraPos + cameraDir, cameraUp);
+}
+
+void Camera::calculate_view_ortho(){
+    transform.calculate_matrix();
+
+    float scale = Camera::default_pos_z / 2;
+    projection = glm::ortho(-scale * width / height, scale * width / height, -scale, scale, near, far);
     projection[1][1] *= -1;
 
     vec3 cameraPos = transform.get_world_position();
@@ -72,8 +88,7 @@ void Camera::calculate_view(){
 }
 
 
-vec2 Camera::worldPosition_to_screenPosition(const vec3& _worldPosition) 
-{
+vec2 Camera::worldPosition_to_screenPosition(const vec3& _worldPosition){
 
     // Calculate the screen-space position
     vec4 screenPosition = get_projection() * get_view() * glm::vec4(_worldPosition, 1.0f);
@@ -90,7 +105,7 @@ vec2 Camera::worldPosition_to_screenPosition(const vec3& _worldPosition)
         (normalizedScreenPosition.x + 1.0f) / 2.0f * width,
         (1.0f - normalizedScreenPosition.y) / 2.0f * height
     );
-   
+
     return screenSpacePosition;
 }
 

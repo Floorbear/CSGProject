@@ -12,6 +12,16 @@ void CSGNode::CSGNodeTransform::on_local_modify(){
         csg_node->parent->mark_edited();
     }
     TransformComponent::on_local_modify();
+    for (CSGNode* child : csg_node->get_children()){
+        calculate_matrix_recursive();
+    }
+}
+
+void CSGNode::CSGNodeTransform::calculate_matrix_recursive(){
+    calculate_matrix();
+    for (CSGNode* child : csg_node->get_children()){
+        dynamic_cast<CSGNodeTransform*>(child->get_transform())->calculate_matrix_recursive(); // do_recursive()같은거 TreeNode에서 제공해주면 매우 좋을텐데...
+    }
 }
 
 void CSGNode::mark_edited(){

@@ -14,6 +14,8 @@ public:
 	static float speed_rotate_default;
 	static float speed_move_fast_multiplier;
 
+	static float default_pos_z;
+
 	Camera(float width_, float height_, float fov = 45.f);
 	~Camera();
 
@@ -21,6 +23,7 @@ public:
 
 public:
 	void calculate_view();
+	void calculate_view_ortho();
 
 	inline glm::mat4 get_view()
 	{

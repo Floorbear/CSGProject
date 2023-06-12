@@ -27,6 +27,7 @@ private:
     public:
         CSGNodeTransform(CSGNode* csg_node_);
         void on_local_modify() override;
+        void calculate_matrix_recursive();
     };
 
     Mesh result;

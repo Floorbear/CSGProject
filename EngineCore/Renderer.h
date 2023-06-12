@@ -37,8 +37,6 @@ class Renderer{
     PostProcessor* postprocessor_mesh_overlay = nullptr;
 
 public:
-    static float default_camera_pos_z;
-
     WorkSpace* workspace = nullptr;
     Camera* camera = nullptr;
     Gizmo* gizmo = nullptr;
@@ -61,7 +59,7 @@ public:
     void resize(vec2 size);
     vec2 get_viewport_size();
 
-    SelectionPixelObjectInfo find_selection(const std::list<Model*>& models, vec2 mouse_position);
-    SelectionPixelObjectInfo find_selection_gizmo(const std::list<Model*>& models, vec2 mouse_position);
+    SelectionPixelObjectInfo find_selection_objects(const std::list<Model*>& models, vec2 mouse_position);
+    SelectionPixelObjectInfo find_selection_gizmo(const std::list<TransformEntity*>& models, vec2 mouse_position);
 };
 

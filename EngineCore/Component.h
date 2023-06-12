@@ -143,9 +143,11 @@ public:
 };
 
 class ParameterModifyTask : public TransactionTask{
-    std::list<ParameterSnapshot*> snapshots; // 여러개의 entity 동시 수정
+    ParameterSnapshot* snapshot_prev;
+    ParameterSnapshot* snapshot_next;
+
 public:
-    ParameterModifyTask(std::string detail_, std::function<bool()> work_, std::function<void()> work_undo_);
+    ParameterModifyTask(std::string detail_, ParameterSnapshot* snapshot_prev_, ParameterSnapshot* snapshot_next_);
 };
 
 // TODO : undo redo에서 focus가 inputtext인지 확인

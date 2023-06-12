@@ -6,6 +6,7 @@
 #include "WorkSpace.h"
 #include "Core.h"
 #include "FrameBuffer.h"
+#include "FileSystem.h"
 
 // ===== Shortcut ===== //
 
@@ -316,9 +317,14 @@ void GUI::render_menubar(){
                 // 저장 형식 -> CSGProject, stl
             }
             if (ImGui::MenuItem("Save As..")){}
-            if (ImGui::MenuItem("Export Scene")){
-                Core::get()->task_manager.add([](){
-                    // 모든 모델들의 result를 csg
+            if (ImGui::MenuItem("Export Scene", NULL, false, active_workspace->root_model->children_size() != 0)){
+                Core::get()->task_manager.add([this](){
+                    Mesh result;
+                    active_workspace->root_model->make_union_mesh(result);
+                    std::string default_filename = active_workspace->title + ".stl";
+                    std::wstring default_filename_w;
+                    default_filename_w.assign(default_filename.begin(), default_filename.end());
+                    result.save(FileSystem::select_file_save(default_filename_w).get_path());
                 });
             }
             if (ImGui::MenuItem("Close")){}

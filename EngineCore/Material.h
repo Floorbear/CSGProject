@@ -63,8 +63,8 @@ public:
 
 class ColorMaterial : public Material{
 public:
-    vec4 color = {1.0f, 1.0f, 0.0f, 1.0f};
-    float ambient = 0.5f;//0.1f;
+    vec4 color = {0.9f, 0.9f, 0.9f, 1.0f};
+    float ambient = 0.5f;
 
     ColorMaterial();
 

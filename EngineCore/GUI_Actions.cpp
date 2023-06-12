@@ -52,7 +52,7 @@ void WorkSpace_Actions::add_model_new(const Mesh& mesh, const Transform& transfo
     model->set_csg_mesh_new(&mesh);
 
     Camera* camera = workspace->renderer_focused->camera;
-    model->get_transform()->set_position(camera->get_transform()->get_world_position() + camera->get_transform()->get_forward_dir() * Renderer::default_camera_pos_z);
+    model->get_transform()->set_position(camera->get_transform()->get_world_position() + camera->get_transform()->get_forward_dir() * Camera::default_pos_z);
     count++;
 
     workspace->transaction_manager.add(new TreeEntityModifyTask<Model>("Add Model " + mesh.get_name(), workspace->root_model, [=, this](){

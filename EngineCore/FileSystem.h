@@ -44,7 +44,8 @@ public:
 		return NewPath;
 	}
 
-	static EnginePath getFilePath();
+	static EnginePath select_file_load();
+	static EnginePath select_file_save(std::wstring default_filename);
 };
 
 

@@ -13,7 +13,6 @@
 #pragma warning(disable : 4717)
 
 int Renderer::id_counter = 1; // 1부터 시작
-float Renderer::default_camera_pos_z = 15.0f;
 
 Renderer::Renderer(int viewport_width, int viewport_height){
     id = id_counter++;
@@ -22,7 +21,7 @@ Renderer::Renderer(int viewport_width, int viewport_height){
     viewport_size = vec2(viewport_width, viewport_height);
 
     camera = new Camera((float)viewport_width, (float)viewport_height);
-    camera->get_transform()->set_position(vec3(0.0f, 0.0f, default_camera_pos_z));
+    camera->get_transform()->set_position(vec3(0.0f, 0.0f, Camera::default_pos_z));
     camera->get_transform()->set_rotation({0,-90,0});
     gizmo = new Gizmo();
 
@@ -56,17 +55,16 @@ void Renderer::render(const std::list<Model*>& models, const std::list<PointLigh
         framebuffer_screen = new ScreenFrameBuffer(texture_size);
     }
     framebuffer_screen->bind();
-
-    const static ImVec4 clear_color = ImVec4(0.03f, 0.30f, 0.70f, 1.00f);
+    
+    const static ImVec4 clear_color = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
     glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    camera->calculate_view();
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    camera->calculate_view();
     for (Model* model : models){
         model->get_material()->set_uniform_camera(camera);
         model->get_material()->set_uniform_lights(lights);
@@ -232,7 +230,7 @@ void Renderer::render_mesh_overlay_and_outline(const std::list<Model*>& models, 
     glStencilMask(0x00);
 }
 
-SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& models, vec2 mouse_position){
+SelectionPixelObjectInfo Renderer::find_selection_objects(const std::list<Model*>& models, vec2 mouse_position){
     if (models.empty()){
         return SelectionPixelObjectInfo(); // null
     }
@@ -253,15 +251,6 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
         model->render_selection_id(&selection_id_model_acc);
     }
 
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    //기즈모 정보 렌더링
-    std::list<TransformEntity*> transform_entities;
-    for(Model* model : models){
-        transform_entities.push_back(model);
-    }
-    gizmo->render_selection(camera, transform_entities);
-
     // 셀렉션 렌더링 정보 읽기
     SelectionPixelIdInfo pixel = framebuffer_selection->
         read_pixel(texture_size.x * mouse_position.x / viewport_size.x,
@@ -277,25 +266,13 @@ SelectionPixelObjectInfo Renderer::find_selection(const std::list<Model*>& model
                 return info;
             }
         }
-    } else if (pixel.object_type == SelectionPixelInfo::object_type_gizmo){
-        if (pixel.model_id == 0){
-            return SelectionPixelObjectInfo(GizmoAxis::X);
-        } else if (pixel.model_id == 1){
-            return SelectionPixelObjectInfo(GizmoAxis::Y);
-        } else if (pixel.model_id == 2){
-            return SelectionPixelObjectInfo(GizmoAxis::Z);
-        } else if (pixel.model_id == 3){
-            return SelectionPixelObjectInfo(GizmoAxis::XYZ);
-        } else{
-            return SelectionPixelObjectInfo(GizmoAxis::None);
-        }
     }
 
     return SelectionPixelObjectInfo(pixel.object_type);
 }
 
-SelectionPixelObjectInfo Renderer::find_selection_gizmo(const std::list<Model*>& models, vec2 mouse_position){
-    if (models.empty()){
+SelectionPixelObjectInfo Renderer::find_selection_gizmo(const std::list<TransformEntity*>& transform_entities, vec2 mouse_position){
+    if (transform_entities.empty()){
         return SelectionPixelObjectInfo(); // null
     }
 
@@ -307,11 +284,6 @@ SelectionPixelObjectInfo Renderer::find_selection_gizmo(const std::list<Model*>&
     glViewport(0, 0, (GLsizei)texture_size.x, (GLsizei)texture_size.y);
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    std::list<TransformEntity*> transform_entities;
-    for(Model* model : models){
-        transform_entities.push_back(model);
-    }
 
     //기즈모 정보 렌더링
     gizmo->render_selection(camera, transform_entities);

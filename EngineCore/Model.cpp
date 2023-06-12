@@ -150,3 +150,35 @@ SelectionPixelObjectInfo Model::from_selection_id(SelectionPixelIdInfo selection
     }
     return SelectionPixelObjectInfo(); // null
 }
+
+void Model::make_union_mesh(Mesh& result){
+    // result.clear();
+    if (children.empty()){
+        if (get_csg_mesh() == nullptr){
+            result = Mesh();
+        } else{
+            Mesh::transform(*get_csg_mesh()->get_mesh(), get_csg_mesh()->get_transform(), result);
+        }
+    } else{
+        std::list<Model*>::iterator child_it = children.begin();
+        bool succeed = true;
+        Transform mesh_transform;
+        if (get_csg_mesh() == nullptr){
+            result = Mesh();
+        } else{
+            result = *get_csg_mesh()->get_mesh();
+            mesh_transform = *get_csg_mesh()->get_transform();
+        }
+        Mesh children_mesh;
+        (*child_it)->make_union_mesh(children_mesh);
+        succeed = Mesh::compute_union(result, &mesh_transform,
+                                      children_mesh, (*child_it)->get_transform(), result);
+        ++child_it;
+        for (; child_it != children.end(); ++child_it){
+            Mesh children_mesh;
+            (*child_it)->make_union_mesh(children_mesh);
+            succeed |= Mesh::compute_union(result, &Transform::identity,
+                                           children_mesh, (*child_it)->get_transform(), result);
+        }
+    }
+}

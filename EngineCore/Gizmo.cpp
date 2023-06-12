@@ -157,8 +157,13 @@ void Gizmo::render(Camera* camera, std::list<TransformEntity*> transform_entitie
 
     for (TransformEntity* transform_entity : transform_entities){
         for (int i = 0; i < render_order.size(); i++){
+            transform_entity->get_transform()->calculate_matrix();
+
             Transform newTransform = transform_entity->get_transform()->get_value();
-            newTransform.set_scale(vec3(1.0, 1.0, 1.0));
+            // ortho gizmo
+            // float depth = glm::dot(camera->get_transform()->get_forward_dir(), transform_entity->get_transform()->get_position() - camera->get_transform()->get_position()) / 15.0; // TODO : 상수 추출
+            float depth = 1.0f;
+            newTransform.set_scale(vec3(depth, depth, depth));
 
             shader_screen->set_mat4("world", newTransform.get_world_matrix());
             shader_screen->set_mat4("view", camera->get_view());
@@ -190,8 +195,13 @@ void Gizmo::render_selection(Camera* camera, std::list<TransformEntity*> transfo
 
     for (TransformEntity* transform_entity : transform_entities){
         for (int i = 0; i < render_order.size(); i++){
+            transform_entity->get_transform()->calculate_matrix();
+
             Transform newTransform = transform_entity->get_transform()->get_value();
-            newTransform.set_scale(vec3(1.0, 1.0, 1.0));
+            // ortho gizmo
+            // float depth = glm::dot(camera->get_transform()->get_forward_dir(), transform_entity->get_transform()->get_position() - camera->get_transform()->get_position()) / 15.0; // TODO : 상수 추출
+            float depth = 1.0f;
+            newTransform.set_scale(vec3(depth, depth, depth));
 
             shader_selection->set_mat4("world", newTransform.get_world_matrix());
             shader_selection->set_mat4("view", camera->get_view());
