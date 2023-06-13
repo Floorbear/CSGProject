@@ -10,6 +10,7 @@
 #include <CGAL/Polygon_mesh_processing/transform.h>
 #include <CGAL/Aff_transformation_3.h>
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
+#include <CGAL/Polygon_mesh_processing/repair.h>
 #include <CGAL/Mesh_triangulation_3.h>
 #include <CGAL/Mesh_complex_3_in_triangulation_3.h>
 #include <CGAL/make_mesh_3.h>
@@ -622,13 +623,12 @@ bool Mesh::compute_difference(const Mesh& mesh1, Transform* transform1,
         result_valid = false;
     }
 
-    if (!result_valid){
-        // printf("boolean operation failed!\n");
-        return false;
-    }
-
     auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
-    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    if (result_valid){
+        // printf("boolean operation failed!\n");
+        CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+    }
 
     result.cgal_mesh = cgal_result;
     result.name = "[Difference]";
@@ -662,13 +662,12 @@ bool Mesh::compute_intersection(const Mesh& mesh1, Transform* transform1,
         result_valid = false;
     }
 
-    if (!result_valid){
-        // printf("boolean operation failed!\n");
-        return false;
-    }
-
     auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
-    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    if (result_valid){
+        // printf("boolean operation failed!\n");
+        CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+    }
 
     result.cgal_mesh = cgal_result;
     result.name = "[Intersection]";
@@ -700,20 +699,19 @@ bool Mesh::compute_union(const Mesh& mesh1, Transform* transform1,
 
     bool result_valid;
     try{
-        result_valid = CGAL::Polygon_mesh_processing::corefine_and_compute_union(cgal_mesh1, cgal_mesh2, cgal_result); //,
-                                                                                                                            // CGAL::parameters::visitor(Visitor()),
+        result_valid = CGAL::Polygon_mesh_processing::corefine_and_compute_union(cgal_mesh1, cgal_mesh2, cgal_result); //, CGAL::parameters::visitor(Visitor()),
                                                                                                                             // CGAL::parameters::default_values(),
                                                                                                                             // CGAL::parameters::edge_is_constrained_map(is_constrained_map));
     } catch (std::exception){
         result_valid = false;
     }
 
-    if (!result_valid){
-        // printf("boolean operation failed!\n");
-        return false;
-    }
     auto fnormals = cgal_result.add_property_map<Face_index, Kernel::Vector_3>("f:normals", CGAL::NULL_VECTOR).first;
-    CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+
+    if (result_valid){
+        // printf("boolean operation failed!\n");
+        CGAL::Polygon_mesh_processing::compute_face_normals(cgal_result, fnormals);
+    }
 
     result.cgal_mesh = cgal_result;
     result.name = "[Union]";

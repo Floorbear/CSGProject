@@ -213,26 +213,31 @@ void CSGNode::calculate_mesh(){
         if (children.size() == 1){
             result = children.front()->result;
         } else{
+            result = Mesh();
             bool succeed;
             if (type == Type::Union){
                 std::list<CSGNode*>::iterator child_it = children.begin();
                 std::list<CSGNode*>::iterator child_next_it = std::next(child_it, 1);
                 succeed = Mesh::compute_union((*child_it)->result, (*child_it)->get_transform(),
                                               (*child_next_it)->result, (*child_next_it)->get_transform(), result);
-                child_it++;
-                for (; child_next_it != children.end(); child_it++, child_next_it++){
+                child_next_it++;
+                Mesh temp;
+                for (; child_next_it != children.end(); child_next_it++){
                     succeed |= Mesh::compute_union(result, &Transform::identity,
-                                                  (*child_next_it)->result, (*child_next_it)->get_transform(), result);
+                                                  (*child_next_it)->result, (*child_next_it)->get_transform(), temp);
+                    result = temp;
                 }
             } else if (type == Type::Intersection){
                 std::list<CSGNode*>::iterator child_it = children.begin();
                 std::list<CSGNode*>::iterator child_next_it = std::next(child_it, 1);
                 succeed = Mesh::compute_intersection((*child_it)->result, (*child_it)->get_transform(),
                                               (*child_next_it)->result, (*child_next_it)->get_transform(), result);
-                child_it++;
-                for (; child_next_it != children.end(); child_it++, child_next_it++){
+                child_next_it++;
+                Mesh temp;
+                for (; child_next_it != children.end(); child_next_it++){
                     succeed |= Mesh::compute_intersection(result, &Transform::identity,
                                                   (*child_next_it)->result, (*child_next_it)->get_transform(), result);
+                    result = temp;
                 }
             } else if (type == Type::Difference){
                 succeed = Mesh::compute_difference(children.front()->result, children.front()->get_transform(),
