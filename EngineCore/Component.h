@@ -51,7 +51,7 @@ public:
 };
 
 class FloatParameter : public Parameter{
-    float temp;
+    float temp = 0;
     std::function<float()> get;
     std::function<void(float)> set;
 
@@ -101,6 +101,7 @@ public:
     void recover_from(ParameterSnapshot* snapshot) override;
 };
 
+class ComponentSnapshot;
 class Component{
     std::string label;
 
@@ -116,6 +117,8 @@ public:
     void render();
     void set_label(std::string label_);
     std::list<Parameter*> get_parameters();
+
+    ComponentSnapshot* make_snapshot_new();
 };
 
 class Entity{
@@ -130,6 +133,16 @@ public:
     void clear_components();
     // TODO : add_component();
     // TODO : get_component(type);
+};
+
+class ComponentSnapshot{
+public:
+    // TODO : entity의 component 보유 상태로 수정 - ComponentSnapshot (add/remove component가 일어나거나 컴포넌트 안에서 연계 작동하는 파라미터가 있을시 필요)
+    std::list<ParameterSnapshot*> snapshots; // 한 component의 parameter을 캡쳐해서 저장
+
+    ComponentSnapshot(Component* ptr);
+    ~ComponentSnapshot();
+    void recover();
 };
 
 class EntitySnapshot{
@@ -148,6 +161,14 @@ class ParameterModifyTask : public TransactionTask{
 
 public:
     ParameterModifyTask(std::string detail_, ParameterSnapshot* snapshot_prev_, ParameterSnapshot* snapshot_next_);
+};
+
+class ComponentModifyTask : public TransactionTask{
+    ComponentSnapshot* snapshot_prev;
+    ComponentSnapshot* snapshot_next;
+
+public:
+    ComponentModifyTask(std::string detail_, ComponentSnapshot* snapshot_prev_, ComponentSnapshot* snapshot_next_);
 };
 
 // TODO : undo redo에서 focus가 inputtext인지 확인

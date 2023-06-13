@@ -19,7 +19,7 @@ class Model;
 class Renderer;
 class Camera;
 class PointLight;
-class WorkSpace {
+class WorkSpace{
     static int id_counter;
 
     GUI* parent; // WorkSpace는 GUI에 종속
@@ -67,7 +67,7 @@ public:
     vec2 mouse_pos_left_current_view = vec2();
     bool is_background_pressed = false;
     bool is_gizmo_pressed = false; // TODO : pressed_object_type으로 변경
-    
+
     WorkSpace(GUI* parent_);
     WorkSpace(GUI* parent_, std::string title_);
     ~WorkSpace();
@@ -82,8 +82,8 @@ public:
 
     void on_mouse_press_left();
     void on_mouse_drag_left();
-    std::function<void(Camera*,vec2,vec2)> dragDelegate;
     void on_mouse_release_left();
+    std::function<void(Camera*, vec2, vec2)> gizmo_on_move;
     vec2 prevPos;
 
     bool check_model_selected_exact(Model* model);

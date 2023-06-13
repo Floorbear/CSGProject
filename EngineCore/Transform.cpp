@@ -50,7 +50,7 @@ void Transform::set_parent(Transform* parent_, bool fix_position){
     if (fix_position){
         scale3d = scale3d_world / parent_->scale3d_world;
         rotation = rotation_world - parent_->rotation_world;
-        position = (position_world - parent_->position_world) * old_parent_scale / parent_->scale3d_world;
+        position = (position_world - parent_->position_world) * old_parent_scale / parent_->scale3d_world; // TODO : 오류 있음 ㅠㅠ parent scale에 rotation matrix 곱해야할것같음
     }
     parent = parent_;
     is_modified_local = true;
@@ -122,6 +122,15 @@ mat4 Transform::get_local_matrix(){
         matrix_local = glm::rotate(matrix_local, glm::radians(rotation.x), glm::vec3(1.f, 0, 0.f));
         matrix_local = glm::rotate(matrix_local, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f));
         matrix_local = glm::rotate(matrix_local, glm::radians(rotation.z), glm::vec3(0.f, 0, 1.f));
+        if(scale3d.x == 0){
+            scale3d.x = epsilon<float>();
+        }
+        if(scale3d.y == 0){
+            scale3d.y = epsilon<float>();
+        }
+        if(scale3d.z == 0){
+            scale3d.z = epsilon<float>();
+        }
         matrix_local = glm::scale(matrix_local, scale3d);
         is_modified_local = false;
     }
@@ -130,6 +139,14 @@ mat4 Transform::get_local_matrix(){
 
 mat4 Transform::get_world_matrix(){
     return matrix_world;
+}
+
+Transform Transform::get_world_transform(){
+    Transform ret;
+    ret.set_position(position);
+    ret.set_rotation(rotation);
+    ret.set_scale(scale3d);
+    return ret;
 }
 
 // https://stackoverflow.com/questions/31733811/local-variables-before-return-statements-does-it-matter

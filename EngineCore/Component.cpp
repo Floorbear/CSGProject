@@ -73,7 +73,7 @@ void ParameterSnapshot::recover(){
 FloatParameter::FloatParameter(std::string label_, std::function<float()> get_, std::function<void(float)> set_) : Parameter(label_, [this](){
     temp = get();
     ImGui::Text(label.c_str());
-    ImGui::DragFloat(Utils::format("##InputFloat%1%", id).c_str(), &temp, 0.01f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
+    ImGui::DragFloat(Utils::format("##InputFloat%1%", id).c_str(), &temp, 50.0f, 0, 0, "%.3f", 0, edit_callback, (void*)this);
     if (is_edited){ // TODO : 리팩토링
         if (set != nullptr){
             set(temp);
@@ -225,6 +225,10 @@ std::list<Parameter*> Component::get_parameters(){
     return parameters;
 }
 
+ComponentSnapshot* Component::make_snapshot_new(){
+    return new ComponentSnapshot(this);
+}
+
 
 // ===== Entity ===== //
 
@@ -244,6 +248,27 @@ std::list<Component*> Entity::get_components(){
 
 void Entity::clear_components(){
     components.clear();
+}
+
+
+// ===== ComponentSnapshot ===== //
+
+ComponentSnapshot::ComponentSnapshot(Component* ptr){
+    for (Parameter* parameter : ptr->get_parameters()){
+        snapshots.push_back(parameter->make_snapshot_new());
+    }
+}
+
+ComponentSnapshot::~ComponentSnapshot(){
+    for (ParameterSnapshot* snapshot : snapshots){
+        delete snapshot;
+    }
+}
+
+void ComponentSnapshot::recover(){
+    for (ParameterSnapshot* snapshot : snapshots){
+        snapshot->recover();
+    }
 }
 
 
@@ -273,6 +298,18 @@ void EntitySnapshot::recover(){
 // ===== ParameterModifyTask ==== // 
 
 ParameterModifyTask::ParameterModifyTask(std::string detail_, ParameterSnapshot* snapshot_prev_, ParameterSnapshot* snapshot_next_) : TransactionTask(detail_, [=, this](){
+    snapshot_next->recover();
+    return true;
+}, [=, this](){
+    snapshot_prev->recover();
+}), snapshot_prev(snapshot_prev_), snapshot_next(snapshot_next_){
+}
+
+
+
+// ===== ComponentModifyTask ==== // 
+
+ComponentModifyTask::ComponentModifyTask(std::string detail_, ComponentSnapshot* snapshot_prev_, ComponentSnapshot* snapshot_next_) : TransactionTask(detail_, [=, this](){
     snapshot_next->recover();
     return true;
 }, [=, this](){

@@ -51,6 +51,7 @@ public:
     void calculate_matrix();
     mat4 get_local_matrix();
     mat4 get_world_matrix();
+    Transform get_world_transform();
 
     vec3 get_forward_dir();
     vec3 get_right_dir();

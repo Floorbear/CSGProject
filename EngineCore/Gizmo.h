@@ -18,6 +18,13 @@ enum class GizmoAxis{
 class Shader;
 class Camera;
 class Gizmo{
+    struct EntityInfo{
+        TransformEntity* entity;
+        ComponentSnapshot* captured_component;
+        Transform captured_transform;
+        EntityInfo(TransformEntity* entity_, ComponentSnapshot* captured_component_, Transform captured_transform_);
+    };
+
     static bool gizmo_mesh_created;
     static void make_gizmo_mesh();
 
@@ -32,7 +39,10 @@ class Gizmo{
     static Shader* shader_selection;
 
     GizmoMode gizmo_mode = GizmoMode::Translation;
-    GizmoAxis selected_axis = GizmoAxis::None;
+    GizmoAxis selected_axis = GizmoAxis::None; // 호버링 및 클릭시 활성화
+
+    GizmoAxis clicked_axis = GizmoAxis::None; // 클릭된 경우에만 활성화
+    std::list<EntityInfo> clicked_entities;
 
 public:
     Gizmo();
@@ -44,9 +54,11 @@ public:
     void set_gizmo_mode(GizmoMode gizmo_mode_);
     void set_selected_axis(GizmoAxis axis);
 
-    void move(Camera* _camera, std::list<TransformEntity*> transform_entities, vec2 _curPos, vec2 _prevPos, GizmoAxis axis);
+    void on_click(std::list<TransformEntity*> transform_entities, GizmoAxis axis);
+    void on_move(Camera* camera, vec2 cursor_click_position, vec2 cursor_position, GizmoAxis axis);
+    TransactionTask* on_release_task_new();
 private:
-    void move_dot(Camera* _camera, std::list<TransformEntity*> transform_entities, glm::vec2& _curPos, glm::vec2& _prevPos);
+    void move_dot(Camera* _camera, glm::vec2& cursor_delta);
 
     struct zSortStruct{
         int renderOrder = 0;

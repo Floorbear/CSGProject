@@ -375,14 +375,14 @@ Mesh Mesh::cylinder(float radius, float height, int step){
     std::list<Vertex_index> top_circle_vertices;
 
     for (vec2 pt : unit_circle){
-        bottom_circle_vertices.push_back(cgal_result.add_vertex(Kernel::Point_3(radius * pt.x, 0, radius * pt.y)));
-        top_circle_vertices.push_back(cgal_result.add_vertex(Kernel::Point_3(radius * pt.x, height, radius * pt.y)));
+        bottom_circle_vertices.push_back(cgal_result.add_vertex(Kernel::Point_3(radius * pt.x, -height / 2, radius * pt.y)));
+        top_circle_vertices.push_back(cgal_result.add_vertex(Kernel::Point_3(radius * pt.x, height / 2, radius * pt.y)));
     }
     bottom_circle_vertices.push_back(bottom_circle_vertices.front());
     top_circle_vertices.push_back(top_circle_vertices.front());
 
-    Vertex_index bottom_vertex = cgal_result.add_vertex(Kernel::Point_3(0, 0, 0));
-    Vertex_index top_vertex = cgal_result.add_vertex(Kernel::Point_3(0, height, 0));
+    Vertex_index bottom_vertex = cgal_result.add_vertex(Kernel::Point_3(0, -height / 2, 0));
+    Vertex_index top_vertex = cgal_result.add_vertex(Kernel::Point_3(0, height / 2, 0));
 
     std::list<Vertex_index>::iterator bottom_iter = bottom_circle_vertices.begin();
     std::list<Vertex_index>::iterator top_iter = top_circle_vertices.begin();

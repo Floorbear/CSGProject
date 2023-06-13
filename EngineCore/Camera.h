@@ -42,11 +42,13 @@ public:
 
 	//Screen 좌표계 왼쪽 아래가 중점...  y증가하면 위로
 	//Imgui 포지션 : y증가하면 아래로
-	vec2 worldPosition_to_screenPosition(const vec3& _worldPosition);
+	vec3 world_position_to_ndc_position(const vec3& world_position_);
+	vec3 ndc_position_to_world_position(const vec3& ndc_position_);
+	vec2 world_position_to_screen_position(const vec3& world_position_);
 
 private:
 	TransformComponent transform;
-
+public:
 	float width = 0.f;
 	float height = 0.f;
 	float fov = 45.f;
@@ -54,6 +56,7 @@ private:
 	float far = 100.f;
 
 
+private:
 	glm::mat4 view;
 	glm::mat4 projection;
 };

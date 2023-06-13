@@ -137,8 +137,9 @@ void WorkSpace::render_view(Renderer* renderer){
                     }
                 }
             }
-            dragDelegate = [=, this](Camera* camera, vec2 curPos, vec2 prevPos){
-                renderer->gizmo->move(camera, selected_entities, curPos, prevPos, info.gizmo_axis);
+            renderer->gizmo->on_click(selected_entities, info.gizmo_axis);
+            gizmo_on_move = [=, this](Camera* camera, vec2 cursor_click_position, vec2 cursor_position){
+                renderer->gizmo->on_move(camera, cursor_click_position, cursor_position, info.gizmo_axis);
             };
         } else{
             SelectionPixelObjectInfo info = renderer->find_selection_objects(root_model->get_children(), mouse_pos_left_current_view);
@@ -550,7 +551,7 @@ void WorkSpace::render_logs(){
 }
 
 void WorkSpace::render(){
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)){ // release 없이 클릭될수도 있음!
         is_background_pressed = false;
         is_gizmo_pressed = false;
     }
@@ -617,25 +618,28 @@ void WorkSpace::on_mouse_drag_left(){
     vec2 moveDir = mouse_pos_left_current_raw - prevPos;
 
     if (is_background_pressed){
-        if (abs(length(mouse_pos_left_current_raw) - length(prevPos)) > 0.01f){
+        if (abs(length(mouse_pos_left_current_raw - prevPos)) > 0.01f){
             get_main_camera()->get_transform()->rotate(vec3(-moveDir.y * Utils::time_delta() * sensitivity, moveDir.x * Utils::time_delta() * sensitivity, 0));
         }
     } else if (is_gizmo_pressed){
-        //기즈모용 델리게이트 
-        if (dragDelegate != nullptr){
-            dragDelegate(get_main_camera(), mouse_pos_left_current_raw, prevPos);
+        if (gizmo_on_move != nullptr){
+            gizmo_on_move(get_main_camera(), mouse_pos_left_press_view, mouse_pos_left_current_view);
 
         }
     }
     prevPos = mouse_pos_left_current_raw;
 
-    // printf("%lf \n", abs(length(mouse_pos_left_current_raw) - length(prevPos)));
     // camera.transform.set_rotation(Transform(camera_transform_saved).rotate(C * vec3(0, mouse_pos_left_current_raw - mouse_pos_left_press_raw, 0)));
 }
 
 void WorkSpace::on_mouse_release_left(){
-    // TODO : 기즈모 이동이 이루어졌다면 completion으로 task 등록해야함
-    dragDelegate = nullptr;
+    if(is_gizmo_pressed){
+        transaction_manager.add(renderer_focused->gizmo->on_release_task_new());
+    }
+    gizmo_on_move = nullptr;
+
+    is_background_pressed = false;
+    is_gizmo_pressed = false;
 }
 
 bool WorkSpace::check_model_selected_exact(Model* model){

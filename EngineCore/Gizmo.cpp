@@ -8,6 +8,10 @@
 
 #include <algorithm>
 
+Gizmo::EntityInfo::EntityInfo(TransformEntity* entity_, ComponentSnapshot* captured_component_, Transform captured_transform_) :
+    entity(entity_), captured_component(captured_component_), captured_transform(captured_transform_){
+}
+
 bool Gizmo::gizmo_mesh_created = false;
 
 std::map<GizmoMode, std::vector<Mesh*>> Gizmo::gizmo_mesh;
@@ -71,9 +75,9 @@ void Gizmo::make_gizmo_mesh(){
         arrow_cube_y.set_scale({value_small, value_big, value_small});
         arrow_cube_z.set_scale({value_small, value_small, value_big});
 
-        torus_x.set_rotation({90, 0, 0});
-        torus_y.set_rotation({0, 90, 0});
-        torus_z.set_rotation({0, 0, 90});
+        torus_x.set_rotation({0, 0, 90});
+        torus_y.set_rotation({0, 0, 0});
+        torus_z.set_rotation({90, 0, 0});
     }
 
     Mesh dot;
@@ -125,9 +129,9 @@ void Gizmo::make_gizmo_mesh(){
     }
 
     // z sort를 위한 데이터 추가
-    stick_zsort_position.push_back(stick_x.get_position());
-    stick_zsort_position.push_back(stick_y.get_position());
-    stick_zsort_position.push_back(stick_z.get_position());
+    stick_zsort_position.push_back(vec3(1, 0, 0));
+    stick_zsort_position.push_back(vec3(0, 1, 0));
+    stick_zsort_position.push_back(vec3(0, 0, 1));
 
     gizmo_mesh_created = true;
 }
@@ -159,7 +163,7 @@ void Gizmo::render(Camera* camera, std::list<TransformEntity*> transform_entitie
         for (int i = 0; i < render_order.size(); i++){
             transform_entity->get_transform()->calculate_matrix();
 
-            Transform newTransform = transform_entity->get_transform()->get_value();
+            Transform newTransform = transform_entity->get_transform()->get_world_transform();
             // ortho gizmo
             // float depth = glm::dot(camera->get_transform()->get_forward_dir(), transform_entity->get_transform()->get_position() - camera->get_transform()->get_position()) / 15.0; // TODO : 상수 추출
             float depth = 1.0f;
@@ -197,7 +201,7 @@ void Gizmo::render_selection(Camera* camera, std::list<TransformEntity*> transfo
         for (int i = 0; i < render_order.size(); i++){
             transform_entity->get_transform()->calculate_matrix();
 
-            Transform newTransform = transform_entity->get_transform()->get_value();
+            Transform newTransform = transform_entity->get_transform()->get_world_transform();
             // ortho gizmo
             // float depth = glm::dot(camera->get_transform()->get_forward_dir(), transform_entity->get_transform()->get_position() - camera->get_transform()->get_position()) / 15.0; // TODO : 상수 추출
             float depth = 1.0f;
@@ -229,61 +233,97 @@ void Gizmo::set_selected_axis(GizmoAxis axis){
     selected_axis = axis;
 }
 
-void Gizmo::move(Camera* _camera, std::list<TransformEntity*> transform_entities, vec2 _curPos, vec2 _prevPos, GizmoAxis _axis){
-    set_selected_axis(_axis);
-    if (abs(length(_curPos) - length(_prevPos)) < 0.01f){
-        return;
-    }
-
-    if (_axis == GizmoAxis::XYZ){
-        move_dot(_camera, transform_entities, _curPos, _prevPos);
-        return;
-    }
-
+void Gizmo::on_click(std::list<TransformEntity*> transform_entities, GizmoAxis axis){
+    clicked_axis = axis;
+    clicked_entities.clear();
     for (TransformEntity* transform_entity : transform_entities){
+        clicked_entities.push_back(EntityInfo(transform_entity,
+                                              transform_entity->get_transform()->make_snapshot_new(),
+                                              transform_entity->get_transform()->get_value()));
+    }
+}
 
-        //Screen좌표계 : 
-        vec2 parentScreenPositon = _camera->worldPosition_to_screenPosition(transform_entity->get_transform()->get_position());
-        vec2 axisScreenPosition = _camera->worldPosition_to_screenPosition(transform_entity->get_transform()->get_position() + stick_zsort_position[(int)_axis]);
 
+void Gizmo::on_move(Camera* camera, vec2 cursor_click_position, vec2 cursor_position, GizmoAxis axis){
+    set_selected_axis(axis);
+    vec2 cursor_delta = cursor_position - cursor_click_position;
+    if (abs(length(cursor_delta)) < 0.01f){
+        return;
+    }
+
+    if (axis == GizmoAxis::XYZ){
+        move_dot(camera, cursor_delta);
+        return;
+    }
+
+    for (EntityInfo entity_info : clicked_entities){
+        TransformEntity* entity = entity_info.entity;
+
+        /*vec2 parentScreenPositon = camera->world_position_to_screen_position(entity->get_transform()->get_position());
+        vec2 axisScreenPosition = camera->world_position_to_screen_position(entity->get_transform()->get_position() + stick_zsort_position[(int)axis]);
         vec2 screenVector = axisScreenPosition - parentScreenPositon;
         if (length(screenVector) < 0.01f){
             return;
         }
         screenVector = normalize(screenVector);
-        vec2 mouseVector = _curPos - _prevPos;
+        vec2 mouseVector = cursor_delta;
         mouseVector.y = -mouseVector.y;
 
-        float moveForce = dot(screenVector, mouseVector);
+        float moveForce = dot(screenVector, mouseVector);*/
 
-        float speed = 5.f;
+        vec2 screen_position_start = camera->world_position_to_screen_position(entity_info.captured_transform.get_position());
+        vec2 screen_position_end = camera->world_position_to_screen_position(entity_info.captured_transform.get_position() + stick_zsort_position[(int)axis]);
+        vec2 screen_vector = screen_position_end - screen_position_start;
+
+        float projected_cursor_delta_length = dot(cursor_delta, normalize(screen_vector));
+
+        float factor = projected_cursor_delta_length / length(screen_vector);
+
         switch (gizmo_mode){
             case GizmoMode::Translation:
-                transform_entity->get_transform()->add_position(speed * Utils::time_delta() * colors[(int)_axis] * moveForce); // Color는 축역활도 함
+                vec3 entity_position_next = entity_info.captured_transform.get_position() + stick_zsort_position[(int)axis] * factor; // TODO : z축 각도 고려해서 구하거나 알고리즘 바꾸기
+                entity->get_transform()->set_position(entity_position_next);
                 break;
             case GizmoMode::Scale:
-                transform_entity->get_transform()->scale(speed * Utils::time_delta() * colors[(int)_axis] * moveForce);
+                vec3 entity_scale_next = entity_info.captured_transform.get_scale() + stick_zsort_position[(int)axis] * factor; // TODO : z축 각도 고려해서 구하거나 알고리즘 바꾸기
+                entity->get_transform()->set_scale(entity_scale_next);
                 break;
-            case GizmoMode::Rotation:
-                transform_entity->get_transform()->rotate(speed * Utils::time_delta() * colors[(int)_axis] * moveForce);
+            case GizmoMode::Rotation: // TODO : 정확한 각도로 계산!
+                vec2 click_direction_vector = normalize(cursor_click_position - screen_position_start);
+                vec2 direction_vector = normalize(cursor_position - screen_position_start);
+
+                float click_direction = 360 / (M_PI * 2) * atan2(-click_direction_vector.y, click_direction_vector.x);
+                float direction = 360 / (M_PI * 2) * atan2(-direction_vector.y, direction_vector.x);
+
+                vec3 entity_rotation_next = entity_info.captured_transform.get_rotation() + stick_zsort_position[(int)axis] * (direction - click_direction);
+                entity->get_transform()->set_rotation(entity_rotation_next);
         }
     }
 }
 
-void Gizmo::move_dot(Camera* _camera, std::list<TransformEntity*> transform_entities, glm::vec2& _curPos, glm::vec2& _prevPos){
+TransactionTask* Gizmo::on_release_task_new(){
+    MultiTransactionTask* multi_task = new MultiTransactionTask("Transform Edit");
+    for (EntityInfo entity_info : clicked_entities){
+        multi_task->add_task(new ComponentModifyTask("Transform Edit", entity_info.captured_component, entity_info.entity->get_transform()->make_snapshot_new()));
+    }
+    clicked_entities.clear();
+    return multi_task;
+}
+
+void Gizmo::move_dot(Camera* _camera, glm::vec2& cursor_delta){
     vec3 moveRightVector = _camera->get_transform()->get_right_dir();
     vec3 moveUpVecotr = _camera->get_transform()->get_up_dir();
 
-    vec2 mouseVector = _curPos - _prevPos;
+    vec2 mouseVector = cursor_delta;
     mouseVector.y = -mouseVector.y;
 
     vec3 moveDirVector = moveRightVector * mouseVector.x + moveUpVecotr * mouseVector.y;
 
     //카메라가 멀어지면 이동값이 크고 카메라와 오브젝트가 가까우면 이동값이 작아야한다.
     //이때 이동값이 일정하기 위해서는 내적을 해야한다.!
-    for (TransformEntity* transform_entity : transform_entities){
-        float speed = 0.8f * dot(transform_entity->get_transform()->get_position() - _camera->get_transform()->get_position(), _camera->get_transform()->get_forward_dir());
-        transform_entity->get_transform()->add_position(Utils::time_delta() * moveDirVector * speed);
+    for (EntityInfo entity_info : clicked_entities){
+        float speed = 0.8f * dot(entity_info.entity->get_transform()->get_position() - _camera->get_transform()->get_position(), _camera->get_transform()->get_forward_dir());
+        entity_info.entity->get_transform()->add_position(Utils::time_delta() * moveDirVector * speed);
     }
 
 }
